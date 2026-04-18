@@ -25,6 +25,11 @@
    };
 
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
+
+    nixarr = {
+      url = "github:nix-media-server/nixarr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {

@@ -1,5 +1,5 @@
 { inputs, ... }: {
-  flake.nixosModules.nix = { pkgs, ... }: {
+  flake.nixosModules.nix = { pkgs, lib, ... }: {
     imports = [
       inputs.nix-index-database.nixosModules.nix-index
     ];
@@ -19,7 +19,7 @@
     programs.nix-ld.enable = true;
     nixpkgs.config.allowUnfree = true;
 
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = lib.optionals (pkgs.stdenv.hostPlatform.isx86_64) (with pkgs; [
       # Nix tooling
       nil
       nixd
@@ -27,6 +27,6 @@
       alejandra
       manix
       nix-inspect
-    ];
+    ]);
   };
 }
