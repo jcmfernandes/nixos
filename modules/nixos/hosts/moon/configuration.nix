@@ -1,6 +1,41 @@
 { self, inputs, ... }: {
 
-  flake.nixosModules.moonConfiguration = { config, pkgs, lib, ... }: {
+  flake.nixosModules.moonConfiguration = { config, pkgs, lib, ... }: let
+    ntfyNotify = pkgs.writeShellApplication {
+      name = "ntfy-notify";
+      runtimeInputs = with pkgs; [ curl coreutils gawk ];
+      text = ''
+        set -eu
+        subject=""
+        while getopts 's:i:' opt; do
+          case "$opt" in
+            s) subject="$OPTARG" ;;
+            i) : ;;
+            *) : ;;
+          esac
+        done
+        shift $((OPTIND - 1))
+
+        body=$(cat)
+
+        # If no -s (smartd mailer path), extract subject and body from RFC822-style input.
+        if [ -z "$subject" ]; then
+          subject=$(printf '%s\n' "$body" | awk -F': *' '/^Subject:/ {sub(/^Subject: */,""); print; exit}') || true
+          body=$(printf '%s\n' "$body" | awk 'started {print} !started && /^$/ {started=1}')
+        fi
+        [ -z "$subject" ] && subject="moon alert"
+
+        url=$(cat /var/lib/ntfy/url)
+
+        curl -fsS --max-time 10 --retry 3 --retry-delay 5 \
+          -H "Title: $subject" \
+          -H "Priority: high" \
+          -H "Tags: warning" \
+          --data-binary "$body" \
+          "$url" >/dev/null
+      '';
+    };
+  in {
     imports = (with inputs.nixos-raspberrypi.nixosModules; [
       raspberry-pi-5.base
       raspberry-pi-5.display-vc4
@@ -12,6 +47,7 @@
 
     nixpkgs.overlays = let
       upstreamPkgs = import inputs.nixpkgs { system = pkgs.stdenv.hostPlatform.system; };
+      unstablePkgs = import inputs.nixpkgs-unstable { system = pkgs.stdenv.hostPlatform.system; };
     in lib.mkAfter [
       (final: prev: {
         inherit (upstreamPkgs)
@@ -19,6 +55,7 @@
           ffmpeg_7 ffmpeg_7-headless ffmpeg_7-full
           ffmpeg_8 ffmpeg_8-headless ffmpeg_8-full
           servarr-ffmpeg;
+        inherit (unstablePkgs) mergerfs;
       })
     ];
 
@@ -28,13 +65,67 @@
     }];
 
     boot.kernel.sysctl."vm.overcommit_memory" = lib.mkForce "1";
+    boot.kernel.sysctl."vm.swappiness" = 1;
 
     boot.loader.raspberry-pi.bootloader = "kernel";
 
-    boot.supportedFilesystems = [ "zfs" ];
-    boot.kernelParams = [ "zfs.zfs_arc_max=2147483648" ];
-    services.zfs.autoScrub.enable = true;
-    services.zfs.trim.enable = true;
+    services.smartd = {
+      enable = true;
+      autodetect = false;
+      defaults.monitored = "-a -d sat -o on -S on -n standby,q -s (S/../.././03|L/../../7/02) -W 4,40,50";
+      devices = [
+        { device = "/dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L15W"; }
+        { device = "/dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R"; }
+        { device = "/dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q"; }
+      ];
+      notifications.mail = {
+        enable = true;
+        recipient = "root";
+        mailer = "${ntfyNotify}/bin/ntfy-notify";
+      };
+    };
+
+    systemd.services.disk-usage-alert = {
+      description = "Alert via ntfy when any btrfs branch exceeds 80% usage";
+      path = [ pkgs.coreutils pkgs.gawk ntfyNotify ];
+      serviceConfig.Type = "oneshot";
+      script = ''
+        threshold=80
+        for m in /mnt/disk1 /mnt/disk2 /mnt/disk3; do
+          [ -d "$m" ] && mountpoint -q "$m" || continue
+          pct=$(df -P "$m" | awk 'NR==2 {print $5}' | tr -d '%')
+          if [ "$pct" -gt "$threshold" ]; then
+            printf '%s is at %s%% usage (threshold %s%%)' "$m" "$pct" "$threshold" \
+              | ntfy-notify -s "Disk usage alert: $m" root
+          fi
+        done
+      '';
+    };
+
+    systemd.timers.disk-usage-alert = {
+      description = "Periodic disk usage check";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "15min";
+        OnUnitActiveSec = "24h";
+        Unit = "disk-usage-alert.service";
+      };
+    };
+
+    systemd.services.hd-idle = {
+      description = "Spin down idle USB disks";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "local-fs.target" ];
+      serviceConfig = {
+        Type = "simple";
+        Restart = "always";
+        RestartSec = 10;
+        ExecStart = "${pkgs.hd-idle}/bin/hd-idle -i 0 -l /var/log/hd-idle.log"
+          + " -a /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L15W -i 600"
+          + " -a /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R -i 600"
+          + " -a /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q -i 600";
+      };
+    };
 
     networking = {
       hostName = "moon";
@@ -65,7 +156,39 @@
 
     security.sudo.wheelNeedsPassword = false;
 
-    environment.systemPackages = [ pkgs.htop ];
+    environment.systemPackages = [ pkgs.htop pkgs.fastfetch pkgs.mergerfs ];
+
+    environment.etc."crypttab".text = ''
+      data2 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q-part1 /var/lib/luks-keys/data.key luks
+      data3 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R-part1 /var/lib/luks-keys/data.key luks
+    '';
+
+    fileSystems."/mnt/disk2" = {
+      device = "/dev/mapper/data2";
+      fsType = "btrfs";
+      options = [ "compress=zstd:3" "noatime" "nofail" ];
+    };
+
+    fileSystems."/mnt/disk3" = {
+      device = "/dev/mapper/data3";
+      fsType = "btrfs";
+      options = [ "compress=zstd:3" "noatime" "nofail" ];
+    };
+
+    fileSystems."/data" = {
+      device = "/mnt/disk2:/mnt/disk3";
+      fsType = "fuse.mergerfs";
+      options = [
+        "defaults"
+        "allow_other"
+        "use_ino"
+        "category.create=pfrd"
+        "category.action=epall"
+        "moveonenospc=true"
+        "x-systemd.requires-mounts-for=/mnt/disk2"
+        "x-systemd.requires-mounts-for=/mnt/disk3"
+      ];
+    };
 
     services.openssh = {
       enable = true;
@@ -74,9 +197,11 @@
 
     nixarr = {
       enable = true;
+      stateDir = "/data/state/nixarr";
       mediaUsers = [ "nixos" ];
       plex.enable = true;
       sonarr.enable = true;
+      radarr.enable = true;
       bazarr.enable = true;
       prowlarr.enable = true;
       transmission = {
@@ -84,11 +209,21 @@
         extraSettings = {
           port-forwarding-enabled = true;
           rpc-host-whitelist-enabled = false;
+          incomplete-dir-enabled = false;
+          rename-partial-files = false;
         };
       };
     };
 
-    services.flaresolverr.enable = true;
+    virtualisation.podman.enable = true;
+    virtualisation.oci-containers = {
+      backend = "podman";
+      containers.byparr = {
+        image = "ghcr.io/thephaseless/byparr:2.1.0@sha256:01a46a2865d9a6db5eb8ead04ec0dd33b8fbe233e8565ae70b50d4cc0af4cfb0";
+        ports = [ "127.0.0.1:8191:8191" ];
+        autoStart = true;
+      };
+    };
 
     services.immich = {
       enable = true;
@@ -111,6 +246,7 @@
         @immich       host immich.moreirafernandes.com
         @plex         host plex.moreirafernandes.com
         @sonarr       host sonarr.moreirafernandes.com
+        @radarr       host radarr.moreirafernandes.com
         @bazarr       host bazarr.moreirafernandes.com
         @prowlarr     host prowlarr.moreirafernandes.com
         @transmission host transmission.moreirafernandes.com
@@ -118,6 +254,7 @@
         handle @immich       { reverse_proxy 127.0.0.1:2283  }
         handle @plex         { reverse_proxy 127.0.0.1:32400 }
         handle @sonarr       { reverse_proxy 127.0.0.1:8989  }
+        handle @radarr       { reverse_proxy 127.0.0.1:7878  }
         handle @bazarr       { reverse_proxy 127.0.0.1:6767  }
         handle @prowlarr     { reverse_proxy 127.0.0.1:9696  }
         handle @transmission { reverse_proxy 127.0.0.1:9091  }
