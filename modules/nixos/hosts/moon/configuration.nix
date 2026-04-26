@@ -50,6 +50,7 @@
       defaultSopsFile = "${self}/secrets/moon.yaml";
       age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
       secrets = {
+        luks_das_key = { };
         tailscale_authkey = { };
         restic_password = { };
         ntfy_url = { };
@@ -180,8 +181,16 @@
     environment.systemPackages = [ pkgs.htop pkgs.fastfetch pkgs.mergerfs ];
 
     environment.etc."crypttab".text = ''
-      data2 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q-part1 /var/lib/luks-keys/data.key luks
-      data3 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R-part1 /var/lib/luks-keys/data.key luks
+      data2 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q-part1 /var/lib/luks-keys/das.key luks
+      data3 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R-part1 /var/lib/luks-keys/das.key luks
+    '';
+
+    system.activationScripts.luksKey = lib.stringAfter [ "setupSecrets" ] ''
+      install -d -m 700 -o root -g root /var/lib/luks-keys
+      umask 277
+      cp -f ${config.sops.secrets.luks_das_key.path} /var/lib/luks-keys/das.key.tmp
+      mv -f /var/lib/luks-keys/das.key.tmp /var/lib/luks-keys/das.key
+      chmod 400 /var/lib/luks-keys/das.key
     '';
 
     fileSystems."/mnt/disk2" = {

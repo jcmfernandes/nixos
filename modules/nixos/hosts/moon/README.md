@@ -45,7 +45,7 @@ as moon's host key still matches.
 
 What still has to be reprovisioned out-of-band before a restore is possible:
 
-- `/var/lib/luks-keys/data.key` — to unlock the btrfs-on-LUKS data disks.
+- `/var/lib/luks-keys/das.key` —  LUKS key, sops-managed. The sops secret materializes at `/run/secrets/luks_das_key`; an activation script copies it (no transformation) to `/var/lib/luks-keys/das.key` on every `nixos-rebuild switch`, so the file persists across reboots and is available to `cryptsetup` at boot.
 - `/etc/ssh/ssh_host_ed25519_key{,.pub}` — moon's age identity for sops. Lose it and a freshly-installed moon can't decrypt the existing `secrets/moon.yaml` until you re-encrypt to its new host key (see "Re-encrypting sops secrets to a new host key" below).
 
 **Keep off moon, in physical safekeeping:** `data.key`, the offline age backup
