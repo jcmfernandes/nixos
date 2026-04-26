@@ -25,7 +25,7 @@
         fi
         [ -z "$subject" ] && subject="moon alert"
 
-        url=$(cat /var/lib/ntfy/url)
+        url=$(cat ${config.sops.secrets.ntfy_url.path})
 
         curl -fsS --max-time 10 --retry 3 --retry-delay 5 \
           -H "Title: $subject" \
@@ -43,7 +43,28 @@
       self.nixosModules.base
       self.nixosModules.general
       inputs.nixarr.nixosModules.default
+      inputs.sops-nix.nixosModules.sops
     ];
+
+    sops = {
+      defaultSopsFile = "${self}/secrets/moon.yaml";
+      age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+      secrets = {
+        tailscale_authkey = { };
+        restic_password = { };
+        ntfy_url = { };
+        caddy_env = { restartUnits = [ "caddy.service" ]; };
+        njalla_ddns_env = { restartUnits = [ "njalla-ddns.service" ]; };
+        restic_env = {
+          restartUnits = [
+            "restic-backups-immich.service"
+            "restic-backups-state.service"
+          ];
+        };
+        restic_immich_repo = { restartUnits = [ "restic-backups-immich.service" ]; };
+        restic_state_repo  = { restartUnits = [ "restic-backups-state.service"  ]; };
+      };
+    };
 
     nixpkgs.overlays = let
       upstreamPkgs = import inputs.nixpkgs { system = pkgs.stdenv.hostPlatform.system; };
@@ -233,9 +254,9 @@
 
     services.restic.backups.immich = {
       initialize = true;
-      repositoryFile  = "/var/lib/restic/immich.repo";
-      passwordFile    = "/var/lib/restic/immich.password";
-      environmentFile = "/var/lib/restic/ionos.env";
+      repositoryFile  = config.sops.secrets.restic_immich_repo.path;
+      passwordFile    = config.sops.secrets.restic_password.path;
+      environmentFile = config.sops.secrets.restic_env.path;
       paths = [
         "/data/photos"
         "/var/backup/immich-db.sql.gz"
@@ -265,10 +286,9 @@
 
     services.restic.backups.state = {
       initialize = true;
-      repositoryFile  = "/var/lib/restic/state.repo";
-      passwordFile    = "/var/lib/restic/state.password";
-      # We 'll try contabo.com if ionos doesn't hold up.
-      environmentFile = "/var/lib/restic/ionos.env";
+      repositoryFile  = config.sops.secrets.restic_state_repo.path;
+      passwordFile    = config.sops.secrets.restic_password.path;
+      environmentFile = config.sops.secrets.restic_env.path;
       paths = [
         "/data/state/nixarr"
         "/var/backup/sonarr.db"
@@ -325,7 +345,7 @@
         plugins = [ "github.com/caddy-dns/njalla@v0.0.0-20250823094507-f709141f1fe6" ];
         hash = "sha256-rrOAR6noTDpV/I/hZXxhz0OXVJKu0mFQRq87RUrpmzw=";
       };
-      environmentFile = "/var/lib/njalla/caddy.env";
+      environmentFile = config.sops.secrets.caddy_env.path;
       virtualHosts."*.moreirafernandes.com".extraConfig = ''
         tls {
           dns njalla {env.NJALLA_TOKEN}
@@ -354,8 +374,11 @@
     services.tailscale = {
       enable = true;
       useRoutingFeatures = "server";
-      authKeyFile = "/var/lib/tailscale/authkey";
-      extraSetFlags = [ "--advertise-routes=192.168.1.0/24" ];
+      authKeyFile = config.sops.secrets.tailscale_authkey.path;
+      extraSetFlags = [
+        "--advertise-routes=192.168.1.0/24"
+        "--advertise-exit-node"
+      ];
     };
 
     systemd.services.njalla-ddns = {
@@ -365,8 +388,7 @@
       path = [ pkgs.iproute2 pkgs.jq pkgs.curl ];
       serviceConfig = {
         Type = "oneshot";
-        EnvironmentFile = "/var/lib/njalla/ddns.env";
-        DynamicUser = true;
+        EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
       };
       script = ''
         lan_ip=$(ip -4 -j route get 1.1.1.1 | jq -r '.[0].prefsrc')

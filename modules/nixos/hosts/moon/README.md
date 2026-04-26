@@ -36,22 +36,32 @@ Excluded because the dumps are authoritative: the live `*.db{,-shm,-wal}` SQLite
 
 ## What's NOT in either backup (needed to access them)
 
-These must be reprovisioned out-of-band before a restore is possible:
+Most runtime secrets (restic password, IONOS S3 creds, Njalla token/DDNS key,
+Tailscale auth key, ntfy URL) live in `secrets/moon.yaml` in this repo,
+encrypted with sops to three age recipients: a YubiKey-backed identity, a
+paper-stored offline backup key, and moon's SSH host key. They get materialized
+to `/run/secrets/<name>` at activation — nothing to reprovision by hand as long
+as moon's host key still matches.
+
+What still has to be reprovisioned out-of-band before a restore is possible:
 
 - `/var/lib/luks-keys/data.key` — to unlock the btrfs-on-LUKS data disks.
-- `/var/lib/restic/immich.repo`, `/var/lib/restic/immich.password`
-- `/var/lib/restic/state.repo`, `/var/lib/restic/state.password`
-- `/var/lib/restic/ionos.env` — shared IONOS S3 credentials.
-- `/var/lib/njalla/{ddns,caddy}.env` — regenerable in the Njalla panel.
-- `/var/lib/ntfy/url` — regenerable.
+- `/etc/ssh/ssh_host_ed25519_key{,.pub}` — moon's age identity for sops. Lose it and a freshly-installed moon can't decrypt the existing `secrets/moon.yaml` until you re-encrypt to its new host key (see "Re-encrypting sops secrets to a new host key" below).
 
-**Keep `data.key` and both restic passwords somewhere off moon.** Losing any restic password makes its repo permanently unrecoverable.
+**Keep off moon, in physical safekeeping:** `data.key`, the offline age backup
+key (paper), and a copy of moon's SSH host key. The YubiKey lives on your
+person; the offline backup key is the recovery path if it's ever lost.
+
+Losing **all three** age private keys (YubiKey + offline backup + moon's host
+key, simultaneously) makes `secrets/moon.yaml` unrecoverable. As long as any
+one survives you can decrypt and re-encrypt to fresh recipients.
 
 ## Prerequisites for a restore
 
 1. moon (or replacement Pi) booted with this flake applied — `nixos-rebuild switch --flake .#moon --target-host root@moon`.
-2. The five files listed above in place at their expected paths.
-3. `/var/lib/luks-keys/data.key` in place **if** the data disks are already LUKS-formatted with that key (see "Full disaster recovery" if disks are also gone).
+2. The out-of-band files listed above in place at their expected paths.
+3. moon's `/etc/ssh/ssh_host_ed25519_key` matches the recipient in `.sops.yaml`. If the Pi was reinstalled, see "Re-encrypting sops secrets to a new host key".
+4. `/var/lib/luks-keys/data.key` in place **if** the data disks are already LUKS-formatted with that key (see "Full disaster recovery" if disks are also gone).
 
 ### Helper: exporting env for ad-hoc restic commands
 
@@ -208,6 +218,37 @@ restic mount /mnt/restic
 # snapshots appear under /mnt/restic/snapshots/<id>/
 # read-only, cp freely, umount /mnt/restic when done
 ```
+
+## Editing secrets
+
+```sh
+# YubiKey plugged in; PIN + touch when prompted
+nix shell nixpkgs#sops nixpkgs#age-plugin-yubikey -c sops secrets/moon.yaml
+```
+
+After saving, commit `secrets/moon.yaml`. Next `nixos-rebuild switch` re-deploys it; sops-nix restarts the units listed under `restartUnits` in `configuration.nix`.
+
+To add a new recipient (new YubiKey, new host) edit `.sops.yaml` then run:
+
+```sh
+nix shell nixpkgs#sops nixpkgs#age-plugin-yubikey -c sops updatekeys secrets/moon.yaml
+```
+
+## Re-encrypting sops secrets to a new host key
+
+If the Pi is reinstalled (or `/etc/ssh/ssh_host_ed25519_key` is otherwise lost), the existing `secrets/moon.yaml` can no longer be decrypted by moon. From the admin laptop:
+
+```sh
+ssh root@moon cat /etc/ssh/ssh_host_ed25519_key.pub \
+  | nix shell nixpkgs#ssh-to-age -c ssh-to-age
+# replace the &moon line in .sops.yaml with the new age recipient
+
+nix shell nixpkgs#sops nixpkgs#age-plugin-yubikey -c sops updatekeys secrets/moon.yaml
+git commit -am 'sops: rotate moon host recipient'
+nixos-rebuild switch --flake .#moon --target-host root@moon
+```
+
+If you also lost the YubiKey, recover the offline backup key from paper into a temporary `~/.config/sops/age/keys.txt`, then run `sops updatekeys` with `SOPS_AGE_KEY_FILE` pointing at it. Delete the file after.
 
 ## Periodic restore drill (recommended)
 

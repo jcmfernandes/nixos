@@ -1,0 +1,11 @@
+keys:
+  - &yubikey age1yubikey1qw3y59t3sdzjgfpkh0pxyjxvk7vxuch09qlaec392gzegj7xcmf6kdd05uz
+  - &backup  age1xf3tv4dn9c8xwafyppx9vlq86xrqe0rfw8tw7v59kd5sa9e6sg0qhn75jr
+  - &moon    age1scpvuw3kgvsq3x0j7a4f62w6hzna6jewwc2fwuagl7z0pc4r2e9qwugy5g
+
+creation_rules:
+  - path_regex: secrets/moon\.yaml$
+    age:
+      - *yubikey
+      - *backup
+      - *moon
