@@ -231,6 +231,94 @@
       mediaLocation = "/data/photos";
     };
 
+    services.restic.backups.immich = {
+      initialize = true;
+      repositoryFile  = "/var/lib/restic/immich.repo";
+      passwordFile    = "/var/lib/restic/immich.password";
+      environmentFile = "/var/lib/restic/ionos.env";
+      paths = [
+        "/data/photos"
+        "/var/backup/immich-db.sql.gz"
+      ];
+      exclude = [
+        "/data/photos/thumbs"
+        "/data/photos/encoded-video"
+      ];
+      backupPrepareCommand = ''
+        set -eu
+        install -d -m 0700 -o root -g root /var/backup
+        ${pkgs.util-linux}/bin/runuser -u immich -- \
+          ${pkgs.postgresql}/bin/pg_dump --clean --if-exists immich \
+          | ${pkgs.gzip}/bin/gzip -9 > /var/backup/immich-db.sql.gz
+      '';
+      timerConfig = {
+        OnCalendar = "03:30";
+        Persistent = true;
+        RandomizedDelaySec = "30min";
+      };
+      pruneOpts = [
+        "--keep-daily 14"
+        "--keep-weekly 8"
+        "--keep-monthly 24"
+      ];
+    };
+
+    services.restic.backups.state = {
+      initialize = true;
+      repositoryFile  = "/var/lib/restic/state.repo";
+      passwordFile    = "/var/lib/restic/state.password";
+      # We 'll try contabo.com if ionos doesn't hold up.
+      environmentFile = "/var/lib/restic/ionos.env";
+      paths = [
+        "/data/state/nixarr"
+        "/var/backup/sonarr.db"
+        "/var/backup/radarr.db"
+        "/var/backup/prowlarr.db"
+        "/var/backup/bazarr.db"
+        "/var/lib/tailscale/tailscaled.state"
+      ];
+      exclude = [
+        "/data/state/nixarr/plex/Plex Media Server/Cache"
+        "/data/state/nixarr/plex/Plex Media Server/Logs"
+        "/data/state/nixarr/plex/Plex Media Server/Crash Reports"
+        "/data/state/nixarr/sonarr/sonarr.db"
+        "/data/state/nixarr/sonarr/sonarr.db-shm"
+        "/data/state/nixarr/sonarr/sonarr.db-wal"
+        "/data/state/nixarr/radarr/radarr.db"
+        "/data/state/nixarr/radarr/radarr.db-shm"
+        "/data/state/nixarr/radarr/radarr.db-wal"
+        "/data/state/nixarr/prowlarr/prowlarr.db"
+        "/data/state/nixarr/prowlarr/prowlarr.db-shm"
+        "/data/state/nixarr/prowlarr/prowlarr.db-wal"
+        "/data/state/nixarr/bazarr/db/bazarr.db"
+        "/data/state/nixarr/bazarr/db/bazarr.db-shm"
+        "/data/state/nixarr/bazarr/db/bazarr.db-wal"
+      ];
+      backupPrepareCommand = ''
+        set -eu
+        install -d -m 0700 -o root -g root /var/backup
+        for pair in \
+          sonarr:/data/state/nixarr/sonarr/sonarr.db \
+          radarr:/data/state/nixarr/radarr/radarr.db \
+          prowlarr:/data/state/nixarr/prowlarr/prowlarr.db \
+          bazarr:/data/state/nixarr/bazarr/db/bazarr.db; do
+          name=''${pair%%:*}
+          src=''${pair#*:}
+          [ -f "$src" ] || continue
+          ${pkgs.sqlite}/bin/sqlite3 "$src" ".backup /var/backup/$name.db"
+        done
+      '';
+      timerConfig = {
+        OnCalendar = "04:30";
+        Persistent = true;
+        RandomizedDelaySec = "30min";
+      };
+      pruneOpts = [
+        "--keep-daily 7"
+        "--keep-weekly 4"
+      ];
+    };
+
     services.caddy = {
       enable = true;
       package = pkgs.caddy.withPlugins {
