@@ -259,7 +259,7 @@
       containers.profilarr = {
         image = "docker.io/santiagosayshey/profilarr:v1.1.4@sha256:8a514f8429cd33885166facc9eb6504fa9ded056c737609e5e8ef32ae0afb350";
         ports = [ "127.0.0.1:6868:6868" ];
-        environment.TZ = "Europe/Lisbon";
+        environment.TZ = config.time.timeZone;
         volumes = [ "/data/state/profilarr:/config" ];
         autoStart = true;
       };
