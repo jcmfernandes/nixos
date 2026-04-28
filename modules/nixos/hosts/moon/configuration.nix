@@ -160,7 +160,7 @@
 
     time.timeZone = "Europe/Lisbon";
 
-    users.users.nixos = {
+    users.users.jcmfernandes = {
       isNormalUser = true;
       extraGroups = [ "wheel" "video" ];
       initialHashedPassword = "";
