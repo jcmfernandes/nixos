@@ -234,6 +234,9 @@
       radarr.enable = true;
       bazarr.enable = true;
       prowlarr.enable = true;
+      readarr.enable = true;
+      "readarr-audiobook".enable = true;
+      audiobookshelf.enable = true;
       transmission = {
         enable = true;
         extraSettings = {
@@ -251,6 +254,13 @@
       containers.byparr = {
         image = "ghcr.io/thephaseless/byparr:2.1.0@sha256:01a46a2865d9a6db5eb8ead04ec0dd33b8fbe233e8565ae70b50d4cc0af4cfb0";
         ports = [ "127.0.0.1:8191:8191" ];
+        autoStart = true;
+      };
+      containers.profilarr = {
+        image = "docker.io/santiagosayshey/profilarr:v1.1.4@sha256:8a514f8429cd33885166facc9eb6504fa9ded056c737609e5e8ef32ae0afb350";
+        ports = [ "127.0.0.1:6868:6868" ];
+        environment.TZ = "Europe/Lisbon";
+        volumes = [ "/data/state/profilarr:/config" ];
         autoStart = true;
       };
     };
@@ -360,21 +370,29 @@
           dns njalla {env.NJALLA_TOKEN}
         }
 
-        @immich       host immich.moreirafernandes.com
-        @plex         host plex.moreirafernandes.com
-        @sonarr       host sonarr.moreirafernandes.com
-        @radarr       host radarr.moreirafernandes.com
-        @bazarr       host bazarr.moreirafernandes.com
-        @prowlarr     host prowlarr.moreirafernandes.com
-        @transmission host transmission.moreirafernandes.com
+        @immich            host immich.moreirafernandes.com
+        @plex              host plex.moreirafernandes.com
+        @sonarr            host sonarr.moreirafernandes.com
+        @radarr            host radarr.moreirafernandes.com
+        @bazarr            host bazarr.moreirafernandes.com
+        @prowlarr          host prowlarr.moreirafernandes.com
+        @profilarr         host profilarr.moreirafernandes.com
+        @readarr           host readarr.moreirafernandes.com
+        @readarrAudiobook  host readarr-audiobook.moreirafernandes.com
+        @audiobookshelf    host audiobookshelf.moreirafernandes.com
+        @transmission      host transmission.moreirafernandes.com
 
-        handle @immich       { reverse_proxy 127.0.0.1:2283  }
-        handle @plex         { reverse_proxy 127.0.0.1:32400 }
-        handle @sonarr       { reverse_proxy 127.0.0.1:8989  }
-        handle @radarr       { reverse_proxy 127.0.0.1:7878  }
-        handle @bazarr       { reverse_proxy 127.0.0.1:6767  }
-        handle @prowlarr     { reverse_proxy 127.0.0.1:9696  }
-        handle @transmission { reverse_proxy 127.0.0.1:9091  }
+        handle @immich            { reverse_proxy 127.0.0.1:2283  }
+        handle @plex              { reverse_proxy 127.0.0.1:32400 }
+        handle @sonarr            { reverse_proxy 127.0.0.1:8989  }
+        handle @radarr            { reverse_proxy 127.0.0.1:7878  }
+        handle @bazarr            { reverse_proxy 127.0.0.1:6767  }
+        handle @prowlarr          { reverse_proxy 127.0.0.1:9696  }
+        handle @profilarr         { reverse_proxy 127.0.0.1:6868  }
+        handle @readarr           { reverse_proxy 127.0.0.1:8787  }
+        handle @readarrAudiobook  { reverse_proxy 127.0.0.1:9494  }
+        handle @audiobookshelf    { reverse_proxy 127.0.0.1:9292  }
+        handle @transmission      { reverse_proxy 127.0.0.1:9091  }
 
         handle { abort }
       '';
