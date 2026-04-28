@@ -310,10 +310,12 @@
       environmentFile = config.sops.secrets.restic_env.path;
       paths = [
         "/data/state/nixarr"
+        "/data/state/profilarr"
         "/var/backup/sonarr.db"
         "/var/backup/radarr.db"
         "/var/backup/prowlarr.db"
         "/var/backup/bazarr.db"
+        "/var/backup/profilarr.db"
         "/var/lib/tailscale/tailscaled.state"
       ];
       exclude = [
@@ -332,6 +334,9 @@
         "/data/state/nixarr/bazarr/db/bazarr.db"
         "/data/state/nixarr/bazarr/db/bazarr.db-shm"
         "/data/state/nixarr/bazarr/db/bazarr.db-wal"
+        "/data/state/profilarr/data/profilarr.db"
+        "/data/state/profilarr/data/profilarr.db-shm"
+        "/data/state/profilarr/data/profilarr.db-wal"
       ];
       backupPrepareCommand = ''
         set -eu
@@ -340,7 +345,8 @@
           sonarr:/data/state/nixarr/sonarr/sonarr.db \
           radarr:/data/state/nixarr/radarr/radarr.db \
           prowlarr:/data/state/nixarr/prowlarr/prowlarr.db \
-          bazarr:/data/state/nixarr/bazarr/db/bazarr.db; do
+          bazarr:/data/state/nixarr/bazarr/db/bazarr.db \
+          profilarr:/data/state/profilarr/data/profilarr.db; do
           name=''${pair%%:*}
           src=''${pair#*:}
           [ -f "$src" ] || continue
