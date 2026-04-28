@@ -163,7 +163,7 @@
     users.users.jcmfernandes = {
       isNormalUser = true;
       extraGroups = [ "wheel" "video" ];
-      initialHashedPassword = "";
+      hashedPassword = "$y$j9T$TOoPh2.O/045i.kwGlJqN0$bJBya3AjsmTkMAYDM1LRnMXy8IL6pT1oqE0K2yhiSQA";
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKswlDw7JPtBM7bX9yk4Cs3xMJMl3gQh40cKfNuvG4NM jcmfernandes@slashid-laptop"
       ];
