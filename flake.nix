@@ -27,7 +27,10 @@
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
     nixarr = {
-      url = "github:nix-media-server/nixarr";
+      # Pinned: commit before "shelfmark" module was added (which references
+      # services.shelfmark not present in nixpkgs). Bump deliberately when
+      # nixarr restructures or adds wanted features.
+      url = "github:nix-media-server/nixarr/267bb7deb16a03669b9c4d09c552f2df07d7745d";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
