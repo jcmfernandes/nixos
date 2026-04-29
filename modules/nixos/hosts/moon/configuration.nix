@@ -235,6 +235,9 @@
       bazarr.enable = true;
       prowlarr.enable = true;
       audiobookshelf.enable = true;
+      qbittorrent = {
+        enable = true;
+      };
       transmission = {
         enable = true;
         extraSettings = {
@@ -382,6 +385,7 @@
         @prowlarr          host prowlarr.moreirafernandes.com
         @profilarr         host profilarr.moreirafernandes.com
         @audiobookshelf    host audiobookshelf.moreirafernandes.com
+        @qbittorrent       host qbittorrent.moreirafernandes.com
         @transmission      host transmission.moreirafernandes.com
 
         handle @immich            { reverse_proxy 127.0.0.1:2283  }
@@ -392,6 +396,7 @@
         handle @prowlarr          { reverse_proxy 127.0.0.1:9696  }
         handle @profilarr         { reverse_proxy 127.0.0.1:6868  }
         handle @audiobookshelf    { reverse_proxy 127.0.0.1:9292  }
+        handle @qbittorrent       { reverse_proxy 127.0.0.1:5252  }
         handle @transmission      { reverse_proxy 127.0.0.1:9091  }
 
         handle { abort }
