@@ -172,6 +172,7 @@
 
     users.users.root = {
       hashedPassword = "!";
+      initialHashedPassword = lib.mkForce null;
       openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
     };
 
