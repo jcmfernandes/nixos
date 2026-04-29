@@ -84,6 +84,18 @@
         "type": "github"
       }
     },
+    "jcmfernandes-keys": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-5mNdH9edpw3K2mzKt+FAx7LoIE9kO8cxtrxScmEtHQY=",
+        "type": "file",
+        "url": "https://github.com/jcmfernandes.keys"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/jcmfernandes.keys"
+      }
+    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -317,14 +329,36 @@
         "disko": "disko",
         "flake-parts": "flake-parts",
         "import-tree": "import-tree",
+        "jcmfernandes-keys": "jcmfernandes-keys",
         "nix-index-database": "nix-index-database",
         "nixarr": "nixarr",
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "noctalia": "noctalia",
+        "sops-nix": "sops-nix",
         "wrapper-modules": "wrapper-modules",
         "wrappers": "wrappers"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777338324,
+        "narHash": "sha256-bc+ZZCmOTNq86/svGnw0tVpH7vJaLYvGLLKFYP08Q8E=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "8eaee5c45428b28b8c47a83e4c09dccec5f279b5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
       }
     },
     "systems": {
