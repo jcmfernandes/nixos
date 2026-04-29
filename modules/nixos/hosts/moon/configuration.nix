@@ -233,8 +233,6 @@
       radarr.enable = true;
       bazarr.enable = true;
       prowlarr.enable = true;
-      readarr.enable = true;
-      "readarr-audiobook".enable = true;
       audiobookshelf.enable = true;
       transmission = {
         enable = true;
@@ -382,8 +380,6 @@
         @bazarr            host bazarr.moreirafernandes.com
         @prowlarr          host prowlarr.moreirafernandes.com
         @profilarr         host profilarr.moreirafernandes.com
-        @readarr           host readarr.moreirafernandes.com
-        @readarrAudiobook  host readarr-audiobook.moreirafernandes.com
         @audiobookshelf    host audiobookshelf.moreirafernandes.com
         @transmission      host transmission.moreirafernandes.com
 
@@ -394,8 +390,6 @@
         handle @bazarr            { reverse_proxy 127.0.0.1:6767  }
         handle @prowlarr          { reverse_proxy 127.0.0.1:9696  }
         handle @profilarr         { reverse_proxy 127.0.0.1:6868  }
-        handle @readarr           { reverse_proxy 127.0.0.1:8787  }
-        handle @readarrAudiobook  { reverse_proxy 127.0.0.1:9494  }
         handle @audiobookshelf    { reverse_proxy 127.0.0.1:9292  }
         handle @transmission      { reverse_proxy 127.0.0.1:9091  }
 
