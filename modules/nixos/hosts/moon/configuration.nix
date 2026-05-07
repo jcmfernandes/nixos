@@ -443,7 +443,8 @@
       };
     };
 
-    networking.firewall.allowedTCPPorts = [ 80 443 ];
+    networking.firewall.allowedTCPPorts = [ 80 443 32400 ];
+    networking.firewall.allowedUDPPorts = [ 32410 32412 32413 32414 ];
 
     systemd.tmpfiles.rules = [
       "d /data        0755 root   root   - -"
