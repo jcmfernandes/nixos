@@ -41,6 +41,7 @@
   in {
     imports = (with inputs.nixos-raspberrypi.nixosModules; [
       raspberry-pi-5.base
+      raspberry-pi-5.page-size-16k
       raspberry-pi-5.display-vc4
     ]) ++ [
       self.nixosModules.base
@@ -81,6 +82,31 @@
           ffmpeg_8 ffmpeg_8-headless ffmpeg_8-full
           servarr-ffmpeg;
         inherit (unstablePkgs) mergerfs;
+      })
+      # Workarounds for 16 KiB-page rpi5 builds.
+      # See https://github.com/nvmd/nixos-raspberrypi/issues/64
+      (final: prev: {
+        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+          (pyFinal: pyPrev: {
+            # polars vendors `tikv-jemalloc-sys`, which bundles jemalloc
+            # statically at build time. cache.nixos.org builds aarch64 on
+            # 4 KiB-page hosts, so its cached polars aborts on moon with
+            # "Unsupported system page size". Setting this env at build
+            # time gives the override a unique hash (forcing a cache miss
+            # so moon builds locally, where the bundled jemalloc auto-
+            # detects 16 KiB pages and works at runtime).
+            polars = pyPrev.polars.overridePythonAttrs (old: {
+              env = (old.env or {}) // { JEMALLOC_SYS_WITH_LG_PAGE = "14"; };
+            });
+            # astropy: a handful of large-memory tests (test_read_big_table*,
+            # test_heapsize_[PQ]_limit) are flaky on aarch64 / resource-
+            # constrained builders.
+            astropy = pyPrev.astropy.overridePythonAttrs (_: {
+              doCheck = false;
+              dontCheck = true;
+            });
+          })
+        ];
       })
     ];
 
@@ -238,15 +264,6 @@
       qbittorrent = {
         enable = true;
       };
-      transmission = {
-        enable = true;
-        extraSettings = {
-          port-forwarding-enabled = true;
-          rpc-host-whitelist-enabled = false;
-          incomplete-dir-enabled = false;
-          rename-partial-files = false;
-        };
-      };
     };
 
     virtualisation.podman.enable = true;
@@ -369,7 +386,7 @@
       enable = true;
       package = pkgs.caddy.withPlugins {
         plugins = [ "github.com/caddy-dns/njalla@v0.0.0-20250823094507-f709141f1fe6" ];
-        hash = "sha256-rrOAR6noTDpV/I/hZXxhz0OXVJKu0mFQRq87RUrpmzw=";
+        hash = "sha256-Q7FZP8yumc2koGU5BfhlMZVwHLFbaU/b07hh60sCpvI=";
       };
       environmentFile = config.sops.secrets.caddy_env.path;
       virtualHosts."*.moreirafernandes.com".extraConfig = ''
@@ -386,7 +403,6 @@
         @profilarr         host profilarr.moreirafernandes.com
         @audiobookshelf    host audiobookshelf.moreirafernandes.com
         @qbittorrent       host qbittorrent.moreirafernandes.com
-        @transmission      host transmission.moreirafernandes.com
 
         handle @immich            { reverse_proxy 127.0.0.1:2283  }
         handle @plex              { reverse_proxy 127.0.0.1:32400 }
@@ -397,7 +413,6 @@
         handle @profilarr         { reverse_proxy 127.0.0.1:6868  }
         handle @audiobookshelf    { reverse_proxy 127.0.0.1:9292  }
         handle @qbittorrent       { reverse_proxy 127.0.0.1:5252  }
-        handle @transmission      { reverse_proxy 127.0.0.1:9091  }
 
         handle { abort }
       '';
