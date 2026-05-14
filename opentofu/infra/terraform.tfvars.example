@@ -1,0 +1,25 @@
+tenancy_ocid     = "ocid1.tenancy.oc1..REPLACE"
+user_ocid        = "ocid1.user.oc1..REPLACE"
+compartment_ocid = "ocid1.tenancy.oc1..REPLACE" # root compartment = tenancy OCID
+region           = "eu-madrid-1"
+fingerprint      = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+
+ionos_user_id = "REPLACE" # DCD -> Management -> User Management -> click your user, copy UUID
+
+# Sensitive values live in secrets/infra.yaml (encrypted with sops/age).
+# Edit with `sops secrets/infra.yaml` after setting up the age identity
+# referenced in .sops.yaml. Expected keys:
+#   ionos_token, ionos_s3_access_key, ionos_s3_secret_key,
+#   opentofu_state_passphrase, oci_api_key
+
+# Optional, defaults shown:
+# instance_name              = "vivivi"
+# ocpus                      = 4
+# memory_in_gbs              = 24
+# boot_volume_size_in_gbs    = 100
+# ssh_allowed_cidr           = "0.0.0.0/0"
+# ionos_s3_region            = "eu-central-3"
+# nix_cache_bucket_name      = "moreirafernandesdotcom-nix-cache"
+# backups_bucket_name        = "home-infra-backups"
+# opentofu_state_bucket_name = "moreirafernandesdotcom-opentofu-state"
+# ssh_keys_url               = "https://github.com/jcmfernandes.keys"
