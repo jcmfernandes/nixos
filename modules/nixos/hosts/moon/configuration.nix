@@ -207,6 +207,7 @@
     environment.systemPackages = [ pkgs.htop pkgs.fastfetch pkgs.mergerfs ];
 
     environment.etc."crypttab".text = ''
+      data1 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L15W-part1 /var/lib/luks-keys/das.key luks
       data2 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q-part1 /var/lib/luks-keys/das.key luks
       data3 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R-part1 /var/lib/luks-keys/das.key luks
     '';
@@ -218,6 +219,12 @@
       mv -f /var/lib/luks-keys/das.key.tmp /var/lib/luks-keys/das.key
       chmod 400 /var/lib/luks-keys/das.key
     '';
+
+    fileSystems."/mnt/disk1" = {
+      device = "/dev/mapper/data1";
+      fsType = "btrfs";
+      options = [ "compress=zstd:3" "noatime" "nofail" ];
+    };
 
     fileSystems."/mnt/disk2" = {
       device = "/dev/mapper/data2";
@@ -232,7 +239,7 @@
     };
 
     fileSystems."/data" = {
-      device = "/mnt/disk2:/mnt/disk3";
+      device = "/mnt/disk1:/mnt/disk2:/mnt/disk3";
       fsType = "fuse.mergerfs";
       options = [
         "defaults"
@@ -241,6 +248,7 @@
         "category.create=pfrd"
         "category.action=epall"
         "moveonenospc=true"
+        "x-systemd.requires-mounts-for=/mnt/disk1"
         "x-systemd.requires-mounts-for=/mnt/disk2"
         "x-systemd.requires-mounts-for=/mnt/disk3"
       ];
