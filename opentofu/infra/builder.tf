@@ -53,14 +53,34 @@ resource "oci_core_security_list" "vivivi" {
     protocol    = "all"
   }
 
+  # Only tailscale's WireGuard port. SSH and everything else come in via
+  # the tailnet (peer-to-peer through `tailscale0`), so no inbound TCP is
+  # exposed on the public IP. Outbound is unrestricted, which is what
+  # tailscale's control-plane + DERP relay traffic needs to reach
+  # login.tailscale.com and DERP nodes.
   ingress_security_rules {
-    protocol = "6" # TCP
-    source   = var.ssh_allowed_cidr
-    tcp_options {
-      min = 22
-      max = 22
+    protocol = "17" # UDP
+    source   = "0.0.0.0/0"
+    udp_options {
+      min = 41641
+      max = 41641
     }
   }
+
+  # Temporary SSH ingress. Uncomment + `tofu apply` before recreating the
+  # vivivi instance from scratch — fresh Ubuntu has no tailscale yet, so
+  # this is the only way `nixos-anywhere` can reach it for the install.
+  # Re-comment and apply again once the install is done and tailscale is
+  # registered on vivivi. Restricted to var.ssh_allowed_cidr (default
+  # 0.0.0.0/0; narrow to your home WAN when possible).
+  # ingress_security_rules {
+  #   protocol = "6" # TCP
+  #   source   = var.ssh_allowed_cidr
+  #   tcp_options {
+  #     min = 22
+  #     max = 22
+  #   }
+  # }
 }
 
 resource "oci_core_subnet" "vivivi" {
