@@ -9,7 +9,7 @@
       self.nixosModules.general
       inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
-      ./disko.nix
+      self.diskoConfigurations.vivivi
     ];
 
     nixpkgs.hostPlatform = "aarch64-linux";
