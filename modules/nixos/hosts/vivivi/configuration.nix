@@ -28,6 +28,19 @@
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
+    # OCI A1.Flex is KVM/QEMU under the hood. The auto-detected default
+    # initrd module set for aarch64-linux + our custom 16 KiB kernel ends
+    # up missing virtio_blk; without it stage-1 can't find /dev/sda and
+    # panics with "Attempted to kill init". Pin the cloud-VM modules
+    # explicitly so the boot disk shows up before LVM/disko mount.
+    boot.initrd.availableKernelModules = [
+      "virtio_pci"
+      "virtio_blk"
+      "virtio_scsi"
+      "virtio_mmio"
+      "virtio_net"
+    ];
+
     # Same workaround as moon: tikv-jemalloc-sys-bundling crates need their
     # bundled jemalloc compiled for 16 KiB pages, otherwise cache.nixos.org's
     # 4 KiB-built versions are pulled and abort here at runtime.
