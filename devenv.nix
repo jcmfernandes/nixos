@@ -7,5 +7,6 @@
     openssh # ssh-keygen for host-key generation
     nixos-anywhere
     nixos-rebuild
+    attic-client
   ];
 }
