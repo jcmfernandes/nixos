@@ -2,6 +2,7 @@
   packages = with pkgs; [
     opentofu
     terraform-ls
+    oci-cli # Oracle Cloud CLI (`oci ...`)
   ];
 
   enterShell = ''
