@@ -44,7 +44,7 @@ variable "memory_in_gbs" {
 variable "boot_volume_size_in_gbs" {
   type        = number
   description = "Boot volume size in GB. Free tier block storage cap is 200 total."
-  default     = 100
+  default     = 200
 }
 
 variable "ssh_allowed_cidr" {
