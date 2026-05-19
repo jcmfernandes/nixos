@@ -39,11 +39,8 @@
       '';
     };
   in {
-    imports = (with inputs.nixos-raspberrypi.nixosModules; [
-      raspberry-pi-5.base
-      raspberry-pi-5.page-size-16k
-      raspberry-pi-5.display-vc4
-    ]) ++ [
+    imports = [
+      self.nixosModules.moonHardware
       self.nixosModules.base
       self.nixosModules.general
       inputs.nixarr.nixosModules.default
@@ -110,25 +107,11 @@
       })
     ];
 
-    swapDevices = [{
-      device = "/swapfile";
-      size = 4096; # MB
-    }];
-
-    boot.kernel.sysctl."vm.overcommit_memory" = lib.mkForce "1";
-    boot.kernel.sysctl."vm.swappiness" = 1;
-
-    boot.loader.raspberry-pi.bootloader = "kernel";
-
+    # smartd.devices, swap, sysctl, bootloader: see moonHardware.
     services.smartd = {
       enable = true;
       autodetect = false;
       defaults.monitored = "-a -d sat -o on -S on -n standby,q -s (S/../.././03|L/../../7/02) -W 4,40,50";
-      devices = [
-        { device = "/dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L15W"; }
-        { device = "/dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R"; }
-        { device = "/dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q"; }
-      ];
       notifications.mail = {
         enable = true;
         recipient = "root";
@@ -163,24 +146,11 @@
       };
     };
 
-    systemd.services.hd-idle = {
-      description = "Spin down idle USB disks";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "local-fs.target" ];
-      serviceConfig = {
-        Type = "simple";
-        Restart = "always";
-        RestartSec = 10;
-        ExecStart = "${pkgs.hd-idle}/bin/hd-idle -i 0 -l /var/log/hd-idle.log"
-          + " -a /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L15W -i 600"
-          + " -a /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R -i 600"
-          + " -a /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q -i 600";
-      };
-    };
+    # hd-idle systemd unit: see moonHardware.
 
     networking = {
       hostName = "moon";
-      hostId = "cdbfae8b";
+      # hostId is set in hardware.nix
       # DNS:
       # - https://dns.sb
       # - https://joindns4.eu/for-public
@@ -206,11 +176,7 @@
 
     environment.systemPackages = [ pkgs.htop pkgs.fastfetch pkgs.mergerfs ];
 
-    environment.etc."crypttab".text = ''
-      data1 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L15W-part1 /var/lib/luks-keys/das.key luks
-      data2 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK20L42Q-part1 /var/lib/luks-keys/das.key luks
-      data3 /dev/disk/by-id/ata-ST2000DM008-2UB102_ZK30LJ0R-part1 /var/lib/luks-keys/das.key luks
-    '';
+    # crypttab generated in hardware.nix from the disks attrset.
 
     system.activationScripts.luksKey = lib.stringAfter [ "setupSecrets" ] ''
       install -d -m 700 -o root -g root /var/lib/luks-keys
