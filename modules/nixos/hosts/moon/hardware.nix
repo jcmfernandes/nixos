@@ -18,12 +18,19 @@
       raspberry-pi-5.display-vc4
     ];
 
+    nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
+
     networking.hostId = "cdbfae8b";
+
+    # /boot/firmware is declared by raspberry-pi-5.base
+    fileSystems."/" = {
+      device = "/dev/disk/by-label/NIXOS_SD";
+      fsType = "ext4";
+    };
 
     boot.loader.raspberry-pi.bootloader = "kernel";
     boot.kernel.sysctl = {
       "vm.overcommit_memory" = lib.mkForce "1";
-      "vm.swappiness"        = 1;
     };
 
     # smartd device list (merged with the rest of services.smartd's

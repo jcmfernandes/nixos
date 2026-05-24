@@ -182,6 +182,9 @@
     services.openssh = {
       enable = true;
       settings.PermitRootLogin = "prohibit-password";
+      hostKeys = [
+        { type = "ed25519"; path = "/etc/ssh/ssh_host_ed25519_key"; }
+      ];
     };
 
     sops = {
@@ -259,6 +262,19 @@
         };
       };
     };
+
+    # Remote-build SSH user used by moon's nix-daemon. Trusted so it can
+    # import paths and trigger builds without sudo. Authorized key is
+    # paired with moon's sops-encrypted nix_remote_builder_key.
+    users.users.nix-ssh = {
+      isNormalUser = true;
+      description = "Nix remote build user";
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEzh8uavBf8IhXbddXGoWzr2GL0GUD4hDa5XFlbFT5qz nix-builder@moon"
+      ];
+    };
+
+    nix.settings.trusted-users = [ "nix-ssh" ];
 
     users.users.jcmfernandes = {
       isNormalUser = true;
