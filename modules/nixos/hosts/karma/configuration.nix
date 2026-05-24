@@ -1,6 +1,6 @@
 { self, inputs, ... }: {
 
-  flake.nixosModules.karmaConfiguration = { pkgs, lib, ... }: let
+  flake.nixosModules.karmaConfiguration = { config, pkgs, lib, ... }: let
     selfpkgs = self.packages."${pkgs.stdenv.hostPlatform.system}";
   in {
     imports = [
@@ -13,7 +13,18 @@
       # disko
       inputs.disko.nixosModules.disko
       self.diskoConfigurations.karma
+
+      inputs.sops-nix.nixosModules.sops
     ];
+
+    sops = {
+      defaultSopsFile = "${self}/secrets/karma.yaml";
+      age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+      secrets = {
+        tailscale_authkey = { };
+        njalla_ddns_env   = { restartUnits = [ "njalla-ddns.service" ]; };
+      };
+    };
 
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -47,6 +58,43 @@
       flatpak.enable = true;
       udisks2.enable = true;
       printing.enable = true;
+      tailscale = {
+        enable = true;
+        authKeyFile = config.sops.secrets.tailscale_authkey.path;
+      };
+    };
+
+    # Publishes karma's tailscale IPv4 to njal.la as
+    # karma.hosts.moreirafernandes.com. Mirrors vivivi's pattern: we don't
+    # want the LAN/public IP in DNS, just the tailnet address.
+    systemd.services.njalla-ddns = {
+      description = "Update Njalla DDNS record for karma";
+      after = [ "network-online.target" "tailscaled.service" ];
+      wants = [ "network-online.target" "tailscaled.service" ];
+      path = [ config.services.tailscale.package pkgs.curl ];
+      serviceConfig = {
+        Type = "oneshot";
+        EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
+      };
+      script = ''
+        ts_ip=$(tailscale ip -4 | head -n1)
+        if [ -z "$ts_ip" ]; then
+          echo "Could not determine tailscale IP" >&2
+          exit 1
+        fi
+        curl -fsS --max-time 15 --retry 3 --retry-delay 5 \
+          "https://njal.la/update/?h=karma.hosts.moreirafernandes.com&k=$DDNS_KEY&a=$ts_ip&quiet"
+      '';
+    };
+
+    systemd.timers.njalla-ddns = {
+      description = "Periodic Njalla DDNS update for karma";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "30s";
+        OnUnitActiveSec = "5min";
+        Unit = "njalla-ddns.service";
+      };
     };
 
     programs = {
