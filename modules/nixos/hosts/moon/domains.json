@@ -1,0 +1,13 @@
+{
+  "immich":         { "port": 2283  },
+  "plex":           { "port": 32400 },
+  "sonarr":         { "port": 8989  },
+  "radarr":         { "port": 7878  },
+  "bazarr":         { "port": 6767  },
+  "prowlarr":       { "port": 9696  },
+  "profilarr":      { "port": 6868  },
+  "audiobookshelf": { "port": 9292  },
+  "shelfmark":      { "port": 8084  },
+  "seerr":          { "port": 5055  },
+  "qbittorrent":    { "port": 5252  }
+}
