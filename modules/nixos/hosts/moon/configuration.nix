@@ -112,6 +112,48 @@
       };
     };
 
+    # smartd's long self-test only checks drive media; btrfs scrub checks
+    # filesystem data via checksums — the only thing that catches bit-rot.
+    services.btrfs.autoScrub = {
+      enable = true;
+      interval = "monthly";
+      fileSystems = [ "/mnt/disk1" "/mnt/disk2" "/mnt/disk3" ];
+    };
+
+    # btrfs-scrub-*.service only "fails" if the scrub command errors. If it
+    # completes but finds corrupted/uncorrectable extents, that's logged but
+    # the unit succeeds — so we post-check status and ntfy on any nonzero
+    # error count. Triggered after the scheduled scrub finishes.
+    systemd.services.btrfs-scrub-report = {
+      description = "Report btrfs scrub errors to ntfy";
+      path = [ pkgs.btrfs-progs pkgs.coreutils pkgs.gawk ntfyNotify ];
+      serviceConfig.Type = "oneshot";
+      script = ''
+        for m in /mnt/disk1 /mnt/disk2 /mnt/disk3; do
+          mountpoint -q "$m" || continue
+          status=$(btrfs scrub status -R "$m" 2>/dev/null || true)
+          errs=$(printf '%s\n' "$status" \
+            | awk -F: '/_errors:/ {gsub(/ /,"",$2); sum+=$2} END {print sum+0}')
+          if [ "$errs" -gt 0 ]; then
+            printf '%s\n\n%s\n' "$m reported $errs scrub error(s)." "$status" \
+              | ntfy-notify -s "btrfs scrub errors: $m" root
+          fi
+        done
+      '';
+    };
+
+    systemd.timers.btrfs-scrub-report = {
+      description = "Check btrfs scrub results after monthly scrub";
+      wantedBy = [ "timers.target" ];
+      # autoScrub fires at the monthly tick (1st 00:00); scrub of three ~370G
+      # SMR disks finishes in well under a day. Inspect status on the 2nd.
+      timerConfig = {
+        OnCalendar = "*-*-02 03:00:00";
+        Persistent = true;
+        Unit = "btrfs-scrub-report.service";
+      };
+    };
+
     systemd.services.disk-usage-alert = {
       description = "Alert via ntfy when any btrfs branch exceeds 80% usage";
       path = [ pkgs.coreutils pkgs.gawk ntfyNotify ];
@@ -167,7 +209,12 @@
 
     security.sudo.wheelNeedsPassword = false;
 
-    environment.systemPackages = [ pkgs.htop pkgs.fastfetch pkgs.mergerfs ];
+    environment.systemPackages = with pkgs; [
+      htop
+      fastfetch
+      mergerfs
+      smartmontools
+    ];
 
     # crypttab generated in hardware.nix from the disks attrset.
 
