@@ -21,3 +21,7 @@ provider "ionoscloud" {
   s3_access_key = data.sops_file.secrets.data["ionos_s3_access_key"]
   s3_secret_key = data.sops_file.secrets.data["ionos_s3_secret_key"]
 }
+
+provider "njalla" {
+  api_token = data.sops_file.secrets.data["njalla_token"]
+}

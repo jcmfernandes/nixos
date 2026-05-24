@@ -87,3 +87,17 @@ variable "opentofu_state_bucket_name" {
   description = "Bucket holding the remote OpenTofu state for this config."
   default     = "moreirafernandesdotcom-opentofu-state"
 }
+
+# --- DNS (Njalla) ----------------------------------------------------------
+
+variable "apex_domain" {
+  type        = string
+  description = "Apex domain managed at Njalla."
+  default     = "moreirafernandes.com"
+}
+
+variable "dns_ttl" {
+  type        = number
+  description = "TTL for the service CNAME records. Must be one of gonjalla's ValidTTL values."
+  default     = 60
+}
