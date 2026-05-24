@@ -223,7 +223,7 @@
 
     nixarr = {
       enable = true;
-      stateDir = "/data/state/nixarr";
+      stateDir = "/state/nixarr";
       mediaUsers = [ "nixos" ];
       plex.enable = true;
       sonarr.enable = true;
@@ -250,7 +250,7 @@
         image = "docker.io/santiagosayshey/profilarr:v1.1.4@sha256:8a514f8429cd33885166facc9eb6504fa9ded056c737609e5e8ef32ae0afb350";
         ports = [ "127.0.0.1:6868:6868" ];
         environment.TZ = config.time.timeZone;
-        volumes = [ "/data/state/profilarr:/config" ];
+        volumes = [ "/state/profilarr:/config" ];
         autoStart = true;
       };
     };
@@ -299,8 +299,8 @@
       passwordFile    = config.sops.secrets.restic_password.path;
       environmentFile = config.sops.secrets.restic_env.path;
       paths = [
-        "/data/state/nixarr"
-        "/data/state/profilarr"
+        "/state/nixarr"
+        "/state/profilarr"
         "/var/backup/sonarr.db"
         "/var/backup/radarr.db"
         "/var/backup/prowlarr.db"
@@ -311,42 +311,42 @@
         "/var/lib/tailscale/tailscaled.state"
       ];
       exclude = [
-        "/data/state/nixarr/plex/Plex Media Server/Cache"
-        "/data/state/nixarr/plex/Plex Media Server/Logs"
-        "/data/state/nixarr/plex/Plex Media Server/Crash Reports"
-        "/data/state/nixarr/sonarr/sonarr.db"
-        "/data/state/nixarr/sonarr/sonarr.db-shm"
-        "/data/state/nixarr/sonarr/sonarr.db-wal"
-        "/data/state/nixarr/radarr/radarr.db"
-        "/data/state/nixarr/radarr/radarr.db-shm"
-        "/data/state/nixarr/radarr/radarr.db-wal"
-        "/data/state/nixarr/prowlarr/prowlarr.db"
-        "/data/state/nixarr/prowlarr/prowlarr.db-shm"
-        "/data/state/nixarr/prowlarr/prowlarr.db-wal"
-        "/data/state/nixarr/bazarr/db/bazarr.db"
-        "/data/state/nixarr/bazarr/db/bazarr.db-shm"
-        "/data/state/nixarr/bazarr/db/bazarr.db-wal"
-        "/data/state/nixarr/shelfmark/users.db"
-        "/data/state/nixarr/shelfmark/users.db-shm"
-        "/data/state/nixarr/shelfmark/users.db-wal"
-        "/data/state/nixarr/seerr/db/db.sqlite3"
-        "/data/state/nixarr/seerr/db/db.sqlite3-shm"
-        "/data/state/nixarr/seerr/db/db.sqlite3-wal"
-        "/data/state/profilarr/data/profilarr.db"
-        "/data/state/profilarr/data/profilarr.db-shm"
-        "/data/state/profilarr/data/profilarr.db-wal"
+        "/state/nixarr/plex/Plex Media Server/Cache"
+        "/state/nixarr/plex/Plex Media Server/Logs"
+        "/state/nixarr/plex/Plex Media Server/Crash Reports"
+        "/state/nixarr/sonarr/sonarr.db"
+        "/state/nixarr/sonarr/sonarr.db-shm"
+        "/state/nixarr/sonarr/sonarr.db-wal"
+        "/state/nixarr/radarr/radarr.db"
+        "/state/nixarr/radarr/radarr.db-shm"
+        "/state/nixarr/radarr/radarr.db-wal"
+        "/state/nixarr/prowlarr/prowlarr.db"
+        "/state/nixarr/prowlarr/prowlarr.db-shm"
+        "/state/nixarr/prowlarr/prowlarr.db-wal"
+        "/state/nixarr/bazarr/db/bazarr.db"
+        "/state/nixarr/bazarr/db/bazarr.db-shm"
+        "/state/nixarr/bazarr/db/bazarr.db-wal"
+        "/state/nixarr/shelfmark/users.db"
+        "/state/nixarr/shelfmark/users.db-shm"
+        "/state/nixarr/shelfmark/users.db-wal"
+        "/state/nixarr/seerr/db/db.sqlite3"
+        "/state/nixarr/seerr/db/db.sqlite3-shm"
+        "/state/nixarr/seerr/db/db.sqlite3-wal"
+        "/state/profilarr/data/profilarr.db"
+        "/state/profilarr/data/profilarr.db-shm"
+        "/state/profilarr/data/profilarr.db-wal"
       ];
       backupPrepareCommand = ''
         set -eu
         install -d -m 0700 -o root -g root /var/backup
         for pair in \
-          sonarr:/data/state/nixarr/sonarr/sonarr.db \
-          radarr:/data/state/nixarr/radarr/radarr.db \
-          prowlarr:/data/state/nixarr/prowlarr/prowlarr.db \
-          bazarr:/data/state/nixarr/bazarr/db/bazarr.db \
-          shelfmark:/data/state/nixarr/shelfmark/users.db \
-          seerr:/data/state/nixarr/seerr/db/db.sqlite3 \
-          profilarr:/data/state/profilarr/data/profilarr.db; do
+          sonarr:/state/nixarr/sonarr/sonarr.db \
+          radarr:/state/nixarr/radarr/radarr.db \
+          prowlarr:/state/nixarr/prowlarr/prowlarr.db \
+          bazarr:/state/nixarr/bazarr/db/bazarr.db \
+          shelfmark:/state/nixarr/shelfmark/users.db \
+          seerr:/state/nixarr/seerr/db/db.sqlite3 \
+          profilarr:/state/profilarr/data/profilarr.db; do
           name=''${pair%%:*}
           src=''${pair#*:}
           [ -f "$src" ] || continue
