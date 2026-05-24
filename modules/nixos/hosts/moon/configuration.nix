@@ -4,6 +4,12 @@
     jcmfernandesAuthorizedKeys = lib.filter (s: s != "")
       (lib.splitString "\n" (lib.fileContents inputs.jcmfernandes-keys));
 
+    # Shared source of truth for the subdomains Caddy fronts on moon. The
+    # opentofu/infra stack reads the same file to provision matching CNAME
+    # records at Njalla — add/remove entries here and both apply.
+    domains = builtins.fromJSON (builtins.readFile ./domains.json);
+    apex = "moreirafernandes.com";
+
     ntfyNotify = pkgs.writeShellApplication {
       name = "ntfy-notify";
       runtimeInputs = with pkgs; [ curl coreutils gawk ];
@@ -225,6 +231,8 @@
       bazarr.enable = true;
       prowlarr.enable = true;
       audiobookshelf.enable = true;
+      shelfmark.enable = true;
+      seerr.enable = true;
       qbittorrent = {
         enable = true;
       };
@@ -298,6 +306,8 @@
         "/var/backup/prowlarr.db"
         "/var/backup/bazarr.db"
         "/var/backup/profilarr.db"
+        "/var/backup/shelfmark.db"
+        "/var/backup/seerr.db"
         "/var/lib/tailscale/tailscaled.state"
       ];
       exclude = [
@@ -316,6 +326,12 @@
         "/data/state/nixarr/bazarr/db/bazarr.db"
         "/data/state/nixarr/bazarr/db/bazarr.db-shm"
         "/data/state/nixarr/bazarr/db/bazarr.db-wal"
+        "/data/state/nixarr/shelfmark/users.db"
+        "/data/state/nixarr/shelfmark/users.db-shm"
+        "/data/state/nixarr/shelfmark/users.db-wal"
+        "/data/state/nixarr/seerr/db/db.sqlite3"
+        "/data/state/nixarr/seerr/db/db.sqlite3-shm"
+        "/data/state/nixarr/seerr/db/db.sqlite3-wal"
         "/data/state/profilarr/data/profilarr.db"
         "/data/state/profilarr/data/profilarr.db-shm"
         "/data/state/profilarr/data/profilarr.db-wal"
@@ -328,6 +344,8 @@
           radarr:/data/state/nixarr/radarr/radarr.db \
           prowlarr:/data/state/nixarr/prowlarr/prowlarr.db \
           bazarr:/data/state/nixarr/bazarr/db/bazarr.db \
+          shelfmark:/data/state/nixarr/shelfmark/users.db \
+          seerr:/data/state/nixarr/seerr/db/db.sqlite3 \
           profilarr:/data/state/profilarr/data/profilarr.db; do
           name=''${pair%%:*}
           src=''${pair#*:}
@@ -353,30 +371,21 @@
         hash = "sha256-kWYIptO4AAsSlvyC2GGnBw/2DBBoYQ0SfPo6dbrC5DQ=";
       };
       environmentFile = config.sops.secrets.caddy_env.path;
-      virtualHosts."*.moreirafernandes.com".extraConfig = ''
+      virtualHosts."*.${apex}".extraConfig = let
+        matchers = lib.concatStringsSep "\n        "
+          (lib.mapAttrsToList (name: _: "@${name} host ${name}.${apex}") domains);
+        handlers = lib.concatStringsSep "\n        "
+          (lib.mapAttrsToList
+            (name: cfg: "handle @${name} { reverse_proxy 127.0.0.1:${toString cfg.port} }")
+            domains);
+      in ''
         tls {
           dns njalla {env.NJALLA_TOKEN}
         }
 
-        @immich            host immich.moreirafernandes.com
-        @plex              host plex.moreirafernandes.com
-        @sonarr            host sonarr.moreirafernandes.com
-        @radarr            host radarr.moreirafernandes.com
-        @bazarr            host bazarr.moreirafernandes.com
-        @prowlarr          host prowlarr.moreirafernandes.com
-        @profilarr         host profilarr.moreirafernandes.com
-        @audiobookshelf    host audiobookshelf.moreirafernandes.com
-        @qbittorrent       host qbittorrent.moreirafernandes.com
+        ${matchers}
 
-        handle @immich            { reverse_proxy 127.0.0.1:2283  }
-        handle @plex              { reverse_proxy 127.0.0.1:32400 }
-        handle @sonarr            { reverse_proxy 127.0.0.1:8989  }
-        handle @radarr            { reverse_proxy 127.0.0.1:7878  }
-        handle @bazarr            { reverse_proxy 127.0.0.1:6767  }
-        handle @prowlarr          { reverse_proxy 127.0.0.1:9696  }
-        handle @profilarr         { reverse_proxy 127.0.0.1:6868  }
-        handle @audiobookshelf    { reverse_proxy 127.0.0.1:9292  }
-        handle @qbittorrent       { reverse_proxy 127.0.0.1:5252  }
+        ${handlers}
 
         handle { abort }
       '';

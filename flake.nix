@@ -27,11 +27,12 @@
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
     nixarr = {
-      # Pinned: commit before "shelfmark" module was added (which references
-      # services.shelfmark not present in nixpkgs). Bump deliberately when
-      # nixarr restructures or adds wanted features.
-      url = "github:nix-media-server/nixarr/267bb7deb16a03669b9c4d09c552f2df07d7745d";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # services.shelfmark landed in nixpkgs (and nixarr's shelfmark module
+      # now version-gates itself behind nixpkgs >= 26.05), so the original
+      # rationale for pinning behind that commit is gone. Pinned to a known-
+      # good revision; bump deliberately when a wanted feature lands.
+      url = "github:nix-media-server/nixarr/3bde55fe657ee3ec1c2b2c05294ff381cb8f2d43";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     sops-nix = {
