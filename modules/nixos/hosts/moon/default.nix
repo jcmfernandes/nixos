@@ -25,10 +25,11 @@
   # No `system =` arg: nixpkgs.hostPlatform is set by raspberry-pi-5.base
   # inside moonConfiguration, which is the modern convention.
   flake.nixosConfigurations.moon = inputs.nixpkgs-unstable.lib.nixosSystem {
-    specialArgs = inputs;
+    specialArgs = { inherit (inputs) nixos-raspberrypi; };
     modules = [
       inputs.nixos-raspberrypi.lib.inject-overlays
       inputs.nixos-raspberrypi.nixosModules.trusted-nix-caches
+      inputs.nixos-raspberrypi.nixosModules.nixpkgs-rpi
       self.nixosModules.moonConfiguration
     ];
   };

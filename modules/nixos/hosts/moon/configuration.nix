@@ -65,7 +65,30 @@
         };
         restic_immich_repo = { restartUnits = [ "restic-backups-immich.service" ]; };
         restic_state_repo  = { restartUnits = [ "restic-backups-state.service"  ]; };
+        nix_remote_builder_key = { };
       };
+    };
+
+    # Offload builds to vivivi (OCI aarch64, 16 KiB pages — matches moon's
+    # ABI exactly). ssh-ng over the tailnet, authenticated with a dedicated
+    # ed25519 key whose private half lives in sops; vivivi's host pubkey is
+    # pinned in programs.ssh.knownHosts so the daemon never prompts.
+    nix.distributedBuilds = true;
+    nix.settings.max-jobs = 0;
+    nix.buildMachines = [{
+      hostName = "vivivi";
+      systems = [ "aarch64-linux" ];
+      protocol = "ssh-ng";
+      sshUser = "nix-ssh";
+      sshKey = config.sops.secrets.nix_remote_builder_key.path;
+      maxJobs = 4;
+      speedFactor = 4;
+      supportedFeatures = [ "kvm" "big-parallel" "nixos-test" "benchmark" ];
+    }];
+
+    programs.ssh.knownHosts.vivivi = {
+      hostNames = [ "vivivi" "vivivi.hosts.moreirafernandes.com" ];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOuy8a/EmZC+gegkKUOZBA3MQeAZwEzaUBjig/gVQhvC root@vivivi";
     };
 
     nixpkgs.overlays = let
@@ -83,6 +106,16 @@
       # Workarounds for 16 KiB-page rpi5 builds.
       # See https://github.com/nvmd/nixos-raspberrypi/issues/64
       (final: prev: {
+        # arrow-cpp: arrow-azurefs-test flakes against the Azurite Node.js
+        # storage emulator on resource-constrained aarch64 builders. The
+        # ctest run lives in installCheckPhase, not checkPhase, so both
+        # doInstallCheck and dontInstallCheck have to be flipped.
+        arrow-cpp = prev.arrow-cpp.overrideAttrs (_: {
+          doCheck = false;
+          doInstallCheck = false;
+          dontCheck = true;
+          dontInstallCheck = true;
+        });
         pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
           (pyFinal: pyPrev: {
             # polars vendors `tikv-jemalloc-sys`, which bundles jemalloc
@@ -107,7 +140,7 @@
       })
     ];
 
-    # smartd.devices, swap, sysctl, bootloader: see moonHardware.
+    # smartd.devices, sysctl, bootloader: see moonHardware.
     services.smartd = {
       enable = true;
       autodetect = false;
@@ -223,6 +256,9 @@
     services.openssh = {
       enable = true;
       settings.PermitRootLogin = "yes";
+      hostKeys = [
+        { type = "ed25519"; path = "/etc/ssh/ssh_host_ed25519_key"; }
+      ];
     };
 
     nixarr = {
@@ -360,7 +396,7 @@
       enable = true;
       package = pkgs.caddy.withPlugins {
         plugins = [ "github.com/caddy-dns/njalla@v0.0.0-20250823094507-f709141f1fe6" ];
-        hash = "sha256-Q7FZP8yumc2koGU5BfhlMZVwHLFbaU/b07hh60sCpvI=";
+        hash = "sha256-kWYIptO4AAsSlvyC2GGnBw/2DBBoYQ0SfPo6dbrC5DQ=";
       };
       environmentFile = config.sops.secrets.caddy_env.path;
       virtualHosts."*.moreirafernandes.com".extraConfig = ''
