@@ -310,6 +310,11 @@
       mediaLocation = "/data/photos";
     };
 
+
+    # Do at most one RDB snapshot every 15 minutes, and only if there
+    # are more changes.
+    services.redis.servers.immich.save = [ [ 900 1 ] ];
+
     services.restic.backups.immich = {
       initialize = true;
       repositoryFile  = config.sops.secrets.restic_immich_repo.path;
@@ -420,24 +425,30 @@
         hash = "sha256-kWYIptO4AAsSlvyC2GGnBw/2DBBoYQ0SfPo6dbrC5DQ=";
       };
       environmentFile = config.sops.secrets.caddy_env.path;
-      virtualHosts."*.${apex}".extraConfig = let
-        matchers = lib.concatStringsSep "\n        "
-          (lib.mapAttrsToList (name: _: "@${name} host ${name}.${apex}") domains);
-        handlers = lib.concatStringsSep "\n        "
-          (lib.mapAttrsToList
-            (name: cfg: "handle @${name} { reverse_proxy 127.0.0.1:${toString cfg.port} }")
-            domains);
-      in ''
-        tls {
-          dns njalla {env.NJALLA_TOKEN}
-        }
+      virtualHosts."*.${apex}" = {
+        # Default per-vhost logFormat writes an access-*.log file to the SD card
+        # on every request. Send access logs to stderr -> journald (RAM-backed)
+        # instead, keeping them queryable via `journalctl -u caddy` at no SD cost.
+        logFormat = "output stderr";
+        extraConfig = let
+          matchers = lib.concatStringsSep "\n        "
+            (lib.mapAttrsToList (name: _: "@${name} host ${name}.${apex}") domains);
+          handlers = lib.concatStringsSep "\n        "
+            (lib.mapAttrsToList
+              (name: cfg: "handle @${name} { reverse_proxy 127.0.0.1:${toString cfg.port} }")
+              domains);
+        in ''
+          tls {
+            dns njalla {env.NJALLA_TOKEN}
+          }
 
-        ${matchers}
+          ${matchers}
 
-        ${handlers}
+          ${handlers}
 
-        handle { abort }
-      '';
+          handle { abort }
+        '';
+      };
     };
 
     services.tailscale = {
