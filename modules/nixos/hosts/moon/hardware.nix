@@ -22,10 +22,16 @@
 
     networking.hostId = "cdbfae8b";
 
-    # /boot/firmware is declared by raspberry-pi-5.base
-    fileSystems."/" = {
-      device = "/dev/disk/by-label/NIXOS_SD";
-      fsType = "ext4";
+    fileSystems = {
+      "/" = {
+        device = "/dev/disk/by-label/NIXOS_SD";
+        fsType = "ext4";
+      };
+      "/boot/firmware" = {
+        device = "/dev/disk/by-label/FIRMWARE";
+        fsType = "vfat";
+        options = [ "noatime" "nofail" ];
+      };
     };
 
     boot.loader.raspberry-pi.bootloader = "kernel";
