@@ -223,7 +223,6 @@
     ];
 
     # crypttab generated in hardware.nix from the disks attrset.
-
     system.activationScripts.luksKey = lib.stringAfter [ "setupSecrets" ] ''
       install -d -m 700 -o root -g root /var/lib/luks-keys
       umask 277
@@ -232,38 +231,37 @@
       chmod 400 /var/lib/luks-keys/das.key
     '';
 
-    fileSystems."/mnt/disk1" = {
-      device = "/dev/mapper/data1";
-      fsType = "btrfs";
-      options = [ "compress=zstd:3" "noatime" "nofail" ];
-    };
-
-    fileSystems."/mnt/disk2" = {
-      device = "/dev/mapper/data2";
-      fsType = "btrfs";
-      options = [ "compress=zstd:3" "noatime" "nofail" ];
-    };
-
-    fileSystems."/mnt/disk3" = {
-      device = "/dev/mapper/data3";
-      fsType = "btrfs";
-      options = [ "compress=zstd:3" "noatime" "nofail" ];
-    };
-
-    fileSystems."/data" = {
-      device = "/mnt/disk1:/mnt/disk2:/mnt/disk3";
-      fsType = "fuse.mergerfs";
-      options = [
-        "defaults"
-        "allow_other"
-        "use_ino"
-        "category.create=pfrd"
-        "category.action=epall"
-        "moveonenospc=true"
-        "x-systemd.requires-mounts-for=/mnt/disk1"
-        "x-systemd.requires-mounts-for=/mnt/disk2"
-        "x-systemd.requires-mounts-for=/mnt/disk3"
-      ];
+    fileSystems = {
+      "/mnt/disk1" = {
+        device = "/dev/mapper/data1";
+        fsType = "btrfs";
+        options = [ "compress=zstd:3" "noatime" "nofail" ];
+      };
+      "/mnt/disk2" = {
+        device = "/dev/mapper/data2";
+        fsType = "btrfs";
+        options = [ "compress=zstd:3" "noatime" "nofail" ];
+      };
+      "/mnt/disk3" = {
+        device = "/dev/mapper/data3";
+        fsType = "btrfs";
+        options = [ "compress=zstd:3" "noatime" "nofail" ];
+      };
+      "/data" = {
+        device = "/mnt/disk1:/mnt/disk2:/mnt/disk3";
+        fsType = "fuse.mergerfs";
+        options = [
+          "defaults"
+          "allow_other"
+          "use_ino"
+          "category.create=pfrd"
+          "category.action=epall"
+          "moveonenospc=true"
+          "x-systemd.requires-mounts-for=/mnt/disk1"
+          "x-systemd.requires-mounts-for=/mnt/disk2"
+          "x-systemd.requires-mounts-for=/mnt/disk3"
+        ];
+      };
     };
 
     services.openssh = {
@@ -286,9 +284,7 @@
       audiobookshelf.enable = true;
       shelfmark.enable = true;
       seerr.enable = true;
-      qbittorrent = {
-        enable = true;
-      };
+      qbittorrent.enable = true;
     };
 
     virtualisation.podman.enable = true;
