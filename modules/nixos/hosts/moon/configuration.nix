@@ -284,7 +284,103 @@
       audiobookshelf.enable = true;
       shelfmark.enable = true;
       seerr.enable = true;
-      qbittorrent.enable = true;
+      qbittorrent = {
+        enable = true;
+        extraConfig = {
+          Application = {
+            "FileLogger\\Age" = 1;
+            "FileLogger\\AgeType" = 1;
+            "FileLogger\\Backup" = true;
+            "FileLogger\\DeleteOld" = true;
+            "FileLogger\\Enabled" = false;
+            "FileLogger\\MaxSizeBytes" = 66560;
+            "FileLogger\\Path" = "/state/nixarr/qbittorrent/qBittorrent/data/logs";
+          };
+          BitTorrent = {
+            MergeTrackersEnabled = true;
+            "Session\\AddTorrentStopped" = false;
+            "Session\\AnnounceToAllTrackers" = true;
+            "Session\\AnonymousModeEnabled" = false;
+            "Session\\DHTEnabled" = true;
+            "Session\\DefaultSavePath" = "/data/media/qbittorrent";
+            "Session\\DisableAutoTMMByDefault" = false;
+            "Session\\DisableAutoTMMTriggers\\CategorySavePathChanged" = false;
+            "Session\\DisableAutoTMMTriggers\\DefaultSavePathChanged" = false;
+            "Session\\Encryption" = 1;
+            "Session\\ExcludedFileNames" = "";
+            "Session\\GlobalDLSpeedLimit" = 0;
+            "Session\\GlobalMaxInactiveSeedingMinutes" = 5;
+            "Session\\GlobalMaxRatio" = 2;
+            "Session\\GlobalMaxSeedingMinutes" = 60;
+            "Session\\GlobalUPSpeedLimit" = 0;
+            "Session\\IgnoreSlowTorrentsForQueueing" = true;
+            "Session\\LSDEnabled" = true;
+            "Session\\MaxActiveDownloads" = 10;
+            "Session\\MaxActiveTorrents" = 10;
+            "Session\\MaxActiveUploads" = 10;
+            "Session\\MaxConnections" = 500;
+            "Session\\MaxConnectionsPerTorrent" = 100;
+            "Session\\MaxUploads" = 20;
+            "Session\\MaxUploadsPerTorrent" = 4;
+            "Session\\PeXEnabled" = true;
+            "Session\\Port" = 6881;
+            "Session\\Preallocation" = true;
+            "Session\\QueueingSystemEnabled" = true;
+            # qBittorrent-managed (random per-install SSL listen port).
+            "Session\\SSL\\Port" = 58724;
+            "Session\\ShareLimitAction" = "Remove";
+            "Session\\SlowTorrentsDownloadRate" = 2;
+            "Session\\SlowTorrentsInactivityTimer" = 60;
+            "Session\\SlowTorrentsUploadRate" = 2;
+            "Session\\TempPath" = "/data/media/qbittorrent/.incomplete";
+            "Session\\TempPathEnabled" = false;
+          };
+          Core = {
+            AutoDeleteAddedTorrentFile = "Never";
+          };
+          Meta = {
+            # qBittorrent's internal config-format version; bumped by qBittorrent
+            # itself on upgrade. Pinning it can suppress future migrations.
+            MigrationVersion = 8;
+          };
+          Network = {
+            "Proxy\\HostnameLookupEnabled" = false;
+            "Proxy\\Profiles\\BitTorrent" = true;
+            "Proxy\\Profiles\\Misc" = true;
+            "Proxy\\Profiles\\RSS" = true;
+          };
+          Preferences = {
+            "Advanced\\AnnounceToAllTrackers" = true;
+            "Connection\\GlobalDLLimit" = 0;
+            "Connection\\GlobalUPLimit" = 0;
+            "Connection\\ResolvePeerCountries" = true;
+            "Downloads\\PreAllocation" = true;
+            "Downloads\\SavePath" = "/data/media/qbittorrent";
+            "Downloads\\ScanDirsV2" = "{/data/media/qbittorrent/.watch:0}";
+            "Downloads\\TempPath" = "/data/media/qbittorrent/.incomplete";
+            "Downloads\\TempPathEnabled" = true;
+            "ExecutionLog\\enabled" = false;
+            "General\\Locale" = "en";
+            "MailNotification\\req_auth" = true;
+            "WebUI\\Address" = "*";
+            "WebUI\\AlternativeUIEnabled" = false;
+            "WebUI\\AuthSubnetWhitelist" = "192.168.15.0/24";
+            "WebUI\\AuthSubnetWhitelistEnabled" = false;
+            "WebUI\\CSRFProtection" = false;
+            "WebUI\\HostHeaderValidation" = false;
+            "WebUI\\LocalHostAuth" = false;
+            "WebUI\\Port" = 8085;
+            "WebUI\\RootFolder" = "";
+          };
+          RSS = {
+            "AutoDownloader\\DownloadRepacks" = true;
+            # Backslashes are doubled: the .conf stores QSettings-escaped regex,
+            # so each on-disk `\\` needs `\\\\` in this Nix string literal.
+            "AutoDownloader\\SmartEpisodeFilter" = "s(\\\\d+)e(\\\\d+), (\\\\d+)x(\\\\d+), \"(\\\\d{4}[.\\\\-]\\\\d{1,2}[.\\\\-]\\\\d{1,2})\", \"(\\\\d{1,2}[.\\\\-]\\\\d{1,2}[.\\\\-]\\\\d{4})\"";
+          };
+        };
+        qui.enable = true;
+      };
     };
 
     virtualisation.podman.enable = true;
