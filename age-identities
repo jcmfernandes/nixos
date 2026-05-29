@@ -1,0 +1,10 @@
+# created: 2026-04-26T19:53:26+01:00
+# public key: age1xf3tv4dn9c8xwafyppx9vlq86xrqe0rfw8tw7v59kd5sa9e6sg0qhn75jr
+
+#       Serial: 22411522, Slot: 1
+#         Name: nixos-config
+#      Created: Sun, 26 Apr 2026 18:52:31 +0000
+#   PIN policy: Once   (A PIN is required once per session, if set)
+# Touch policy: Cached (A physical touch is required for decryption, and is cached for 15 seconds)
+#    Recipient: age1yubikey1qw3y59t3sdzjgfpkh0pxyjxvk7vxuch09qlaec392gzegj7xcmf6kdd05uz
+AGE-PLUGIN-YUBIKEY-1QTU42QVZKZTJK7QAPKW8L

@@ -1,0 +1,7 @@
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+.devenv/
+.devenv.flake.nix
+devenv.lock
+.direnv/
