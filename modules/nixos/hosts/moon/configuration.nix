@@ -254,7 +254,12 @@
           "defaults"
           "allow_other"
           "use_ino"
-          "category.create=pfrd"
+          # Path-preserving variant of pfrd: new files/dirs are only created on
+          # branches that already contain the parent path. Keeps a media type
+          # confined to the disks that already hold it (fewer HDD spin-ups) and
+          # avoids ENOENT crashes when a branch lacks the parent dir. The
+          # tmpfiles.rules below seed the library skeleton on every branch.
+          "category.create=eppfrd"
           "category.action=epall"
           "moveonenospc=true"
           "x-systemd.requires-mounts-for=/mnt/disk1"
@@ -382,6 +387,15 @@
         qui.enable = true;
       };
     };
+
+    # nixarr's audiobookshelf module sets ProtectSystem=strict but only grants
+    # ReadWritePaths=[stateDir], leaving the media library read-only inside the
+    # service namespace. Uploads mkdir an author folder under the library, which
+    # then fails with EROFS. Grant write access to the library tree (this list
+    # concatenates with the module's stateDir entry).
+    systemd.services.audiobookshelf.serviceConfig.ReadWritePaths = [
+      "${config.nixarr.mediaDir}/library"
+    ];
 
     virtualisation.podman.enable = true;
     virtualisation.oci-containers = {
@@ -593,7 +607,14 @@
     systemd.tmpfiles.rules = [
       "d /data        0755 root   root   - -"
       "d /data/photos 0700 immich immich - -"
-    ];
+    ]
+    # Replicate the media-library skeleton onto every mergerfs branch so the
+    # create policy always finds the parent dir, regardless of which branch it
+    # picks. setgid (2775) so uploads inherit the "media" group.
+    ++ lib.concatMap
+      (disk: map (type: "d ${disk}/media/library/${type} 2775 root media - -")
+        [ "audiobooks" "books" "music" "podcasts" "movies" "shows" ])
+      [ "/mnt/disk1" "/mnt/disk2" "/mnt/disk3" ];
 
     system.stateVersion = config.system.nixos.release;
   };
