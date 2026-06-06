@@ -1,0 +1,13 @@
+# gitleaks config — extends the default ruleset
+[extend]
+useDefault = true
+
+[allowlist]
+description = "ciphertext and hardware-backed identities are not plaintext leaks"
+paths = [
+  # sops-encrypted secrets — ciphertext, meant to live in git
+  '''secrets/.*\.yaml''',
+  # YubiKey-backed age identity — AGE-PLUGIN-YUBIKEY stub points at the token;
+  # the private key never leaves the hardware (PIN + touch required to decrypt)
+  '''age-identities''',
+]

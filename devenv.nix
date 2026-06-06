@@ -8,5 +8,6 @@
     nixos-anywhere
     nixos-rebuild
     attic-client
+    gitleaks
   ];
 }
