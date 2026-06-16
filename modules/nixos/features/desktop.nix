@@ -51,9 +51,7 @@
       LC_TIME = "pt_PT.UTF-8";
     };
 
-    programs.regreet = {
-      enable = true;
-    };
+    services.displayManager.gdm.enable = true;
 
     services.upower.enable = true;
 
