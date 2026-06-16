@@ -64,6 +64,9 @@
         pkgs.yt-dlp
         pkgs.lazygit
 
+        # AI coding agent, auto-updated via the claude-code-nix flake
+        inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+
         pkgs.git
         pkgs.gnumake
         pkgs.sshfs
