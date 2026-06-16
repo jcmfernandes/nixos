@@ -31,11 +31,13 @@
     boot = {
       kernelParams = [ "video=Virtual-1:1920x1080" ];
       kernelPackages = pkgs.linuxPackages_latest;
-      loader.grub = {
-        # no need to set devices, disko will add all devices that have a EF02 partition to the list already
-        # devices = [ ];
-        efiSupport = true;
-        efiInstallAsRemovable = true;
+      loader = {
+        # UEFI-only: systemd-boot installs the removable ESP fallback
+        # (EFI/BOOT/BOOTX64.EFI), so the disk boots after a VM->bare-metal
+        # move without a machine-local NVRAM entry.
+        systemd-boot.enable = true;
+        systemd-boot.configurationLimit = 10;
+        efi.canTouchEfiVariables = false;
       };
     };
 
