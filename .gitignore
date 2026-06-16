@@ -5,3 +5,7 @@
 .devenv.flake.nix
 devenv.lock
 .direnv/
+
+# nix build / nixos-rebuild build output symlinks
+result
+result-*
