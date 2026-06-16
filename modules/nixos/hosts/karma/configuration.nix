@@ -13,6 +13,7 @@
       self.nixosModules.desktop
       self.nixosModules.emacs
       self.nixosModules.yubikey
+      self.nixosModules.mise
 
       # disko
       inputs.disko.nixosModules.disko
