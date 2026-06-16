@@ -2,6 +2,8 @@
 
   flake.nixosModules.karmaConfiguration = { config, pkgs, lib, ... }: let
     selfpkgs = self.packages."${pkgs.stdenv.hostPlatform.system}";
+    jcmfernandesAuthorizedKeys = lib.filter (s: s != "")
+      (lib.splitString "\n" (lib.fileContents inputs.jcmfernandes-keys));
   in {
     imports = [
       self.nixosModules.karmaHardware
@@ -121,9 +123,8 @@
       shell = lib.getExe selfpkgs.environment;
       extraGroups = [ "wheel" "networkmanager" "input" "uinput" "video" "render" ];
       hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJbASIFlmPoZBGPJuhertdKSWBvCZyw60WrAhRu+/4nG nixos-anywhere"
-      ];
+      # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.
+      openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
     };
   
     users.users.root.hashedPassword = "!";
