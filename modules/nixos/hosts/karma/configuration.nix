@@ -10,6 +10,7 @@
       self.nixosModules.general
       self.nixosModules.desktop
       self.nixosModules.emacs
+      self.nixosModules.yubikey
 
       # disko
       inputs.disko.nixosModules.disko
