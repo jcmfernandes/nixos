@@ -9,6 +9,7 @@
       self.nixosModules.base
       self.nixosModules.general
       self.nixosModules.desktop
+      self.nixosModules.emacs
 
       # disko
       inputs.disko.nixosModules.disko
