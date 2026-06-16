@@ -10,8 +10,9 @@
     packages.myZsh = pkgs.lib.makeOverridable ({
       runtimeInputs ? [],
       editor ? "",
+      interactiveInit ? "",
     }: let
-      zshConf =
+      zshenv =
         pkgs.writeTextDir ".zshenv"
         # bash
         ''
@@ -22,6 +23,12 @@
             source "$HOME/.zshenv"
           fi
         '';
+      # Interactive-only init (tool activations etc.) belongs in .zshrc.
+      zshrc = pkgs.writeTextDir ".zshrc" interactiveInit;
+      zshConf = pkgs.symlinkJoin {
+        name = "zsh-config";
+        paths = [zshenv] ++ lib.optional (interactiveInit != "") zshrc;
+      };
     in
       inputs.wrappers.lib.wrapPackage {
         inherit pkgs;
