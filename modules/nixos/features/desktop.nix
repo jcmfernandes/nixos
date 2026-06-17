@@ -19,7 +19,7 @@
 
     environment.systemPackages = [
       selfpkgs.terminal
-      pkgs.pcmanfm
+      pkgs.nautilus
       selfpkgs.noctalia-shell
       pkgs.easyeffects
       pkgs.insync
@@ -57,6 +57,9 @@
     services.displayManager.defaultSession = "niri";
 
     services.upower.enable = true;
+
+    # gvfs backs Nautilus' trash, removable-drive mounting and network shares.
+    services.gvfs.enable = true;
 
     security.polkit.enable = true;
 
