@@ -604,6 +604,15 @@
     networking.firewall.allowedTCPPorts = [ 80 443 32400 ];
     networking.firewall.allowedUDPPorts = [ 32410 32412 32413 32414 ];
 
+    # soju IRC bouncer, tailnet-only: plaintext listener (tailscale encrypts
+    # the transport), with the port reachable only over tailscale0 - never the
+    # public IP. Create users at runtime: `sojuctl create-user <nick> -admin`.
+    services.soju = {
+      enable = true;
+      listen = [ "irc+insecure://:6667" ];
+    };
+    networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 6667 ];
+
     systemd.tmpfiles.rules = [
       "d /data        0755 root   root   - -"
       "d /data/photos 0700 immich immich - -"
