@@ -22,6 +22,7 @@
       pkgs.pcmanfm
       selfpkgs.noctalia-shell
       pkgs.easyeffects
+      pkgs.insync
     ];
 
     fonts.packages = with pkgs; [
