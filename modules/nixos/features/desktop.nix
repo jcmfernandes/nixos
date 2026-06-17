@@ -30,6 +30,8 @@
       pkgs.gimp
       pkgs.zathura
       pkgs.foliate
+      pkgs.qbittorrent
+      pkgs.gparted
     ];
 
     fonts.packages = with pkgs; [
