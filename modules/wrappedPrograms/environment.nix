@@ -79,6 +79,7 @@
         pkgs.sshfs
         pkgs.nano
         pkgs.wl-clipboard
+        pkgs.waypipe
 
         # wrapped
 #        self'.packages.neovimDynamic
