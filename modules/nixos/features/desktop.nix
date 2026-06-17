@@ -85,8 +85,18 @@
       autoStart = true;
     };
     networking.firewall.interfaces.tailscale0 = {
-      allowedTCPPorts = [ 47984 47989 47990 48010 ];
-      allowedUDPPorts = [ 47998 47999 48000 48002 ];
+      allowedTCPPorts = [
+        47984 # Sunshine: HTTPS (client pairing)
+        47989 # Sunshine: HTTP
+        47990 # Sunshine: Web UI
+        48010 # Sunshine: RTSP
+      ];
+      allowedUDPPorts = [
+        47998 # Sunshine: video stream
+        47999 # Sunshine: control
+        48000 # Sunshine: audio stream
+        48002 # Sunshine: mic stream
+      ];
     };
 
     security.polkit.enable = true;
