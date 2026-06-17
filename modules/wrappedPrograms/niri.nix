@@ -184,6 +184,13 @@
 
         spawn-at-startup = [
           noctaliaExe
+          (lib.getExe (
+            pkgs.writeShellScriptBin "wallpaper" ''
+              ${pkgs.swww}/bin/swww-daemon &
+              until ${lib.getExe pkgs.swww} query >/dev/null 2>&1; do sleep 0.1; done
+              ${lib.getExe pkgs.swww} img ${./../nixos/features/wallpaper/gruvbox-mountain-village.png}
+            ''
+          ))
         ];
       };
     };
