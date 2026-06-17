@@ -32,6 +32,7 @@
       pkgs.foliate
       pkgs.qbittorrent
       pkgs.gparted
+      pkgs.wdisplays
     ];
 
     fonts.packages = with pkgs; [
