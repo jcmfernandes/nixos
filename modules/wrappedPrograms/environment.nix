@@ -39,6 +39,7 @@
         pkgs.manix
         pkgs.nix-inspect
         pkgs.nh
+        pkgs.devenv
 
         # other
         pkgs.file
@@ -63,6 +64,10 @@
         pkgs.ffmpeg-full
         pkgs.yt-dlp
         pkgs.lazygit
+
+        # terminal multiplexers
+        pkgs.zellij
+        pkgs.tmux
 
         # AI coding agent, auto-updated via the claude-code-nix flake
         inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
