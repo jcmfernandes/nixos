@@ -26,6 +26,8 @@
       pkgs.vlc
       pkgs.unrar
       pkgs.file-roller
+      pkgs.libreoffice
+      pkgs.gimp
     ];
 
     fonts.packages = with pkgs; [
