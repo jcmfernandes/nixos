@@ -186,9 +186,9 @@
           noctaliaExe
           (lib.getExe (
             pkgs.writeShellScriptBin "wallpaper" ''
-              ${pkgs.swww}/bin/swww-daemon &
-              until ${lib.getExe pkgs.swww} query >/dev/null 2>&1; do sleep 0.1; done
-              ${lib.getExe pkgs.swww} img ${./../nixos/features/wallpaper/gruvbox-mountain-village.png}
+              ${pkgs.awww}/bin/awww-daemon &
+              until ${lib.getExe pkgs.awww} query >/dev/null 2>&1; do sleep 0.1; done
+              ${lib.getExe pkgs.awww} img ${./../nixos/features/wallpaper/gruvbox-mountain-village.png}
             ''
           ))
         ];
