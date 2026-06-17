@@ -59,6 +59,16 @@
     networking = {
       hostName = "karma";
       networkmanager.enable = true;
+
+      # Tailnet-only access, like vivivi. karma lives in a coworking space on
+      # a hostile LAN, so nothing must be reachable from it: tailscale0 is the
+      # only trusted interface, so SSH/Sunshine/etc. are reachable over the
+      # tailnet while the LAN NIC stays fully closed. SSH's own firewall hole
+      # is disabled below (services.openssh.openFirewall = false) so port 22
+      # isn't opened on the LAN. Unlike vivivi there's no cloud security list
+      # backing this up — the NixOS firewall is the only network layer (disk
+      # is LUKS-encrypted and SecureBoot is planned for the physical side).
+      firewall.trustedInterfaces = [ "tailscale0" ];
     };
 
     virtualisation.libvirtd.enable = true;
@@ -73,6 +83,9 @@
 
     services = {
       openssh.enable = true;
+      # Don't punch port 22 in the LAN-facing firewall; SSH is reachable only
+      # over the trusted tailscale0 interface (see networking.firewall above).
+      openssh.openFirewall = false;
       flatpak.enable = true;
       udisks2.enable = true;
       printing.enable = true;

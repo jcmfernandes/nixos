@@ -75,29 +75,22 @@
     services.gvfs.enable = true;
 
     # Sunshine: stream the desktop to Moonlight clients. capSysAdmin is needed
-    # for KMS screen capture on Wayland/niri. Tailnet-only: openFirewall stays
-    # off and its ports (for the default base 47989) are opened solely on
-    # tailscale0. Pair clients with a PIN via the web UI (https://karma:47990).
+    # for KMS screen capture on Wayland/niri. openFirewall stays off and we
+    # open no ports explicitly: Sunshine's TCP 47984/47989/47990/48010 and UDP
+    # 47998-48002 are reachable only over the tailnet because tailscale0 is a
+    # trusted interface (host-wide, set in karma's configuration.nix) while the
+    # LAN is closed. Pair clients with a PIN via the web UI (https://karma:47990).
     services.sunshine = {
       enable = true;
       capSysAdmin = true;
       openFirewall = false;
       autoStart = true;
     };
-    networking.firewall.interfaces.tailscale0 = {
-      allowedTCPPorts = [
-        47984 # Sunshine: HTTPS (client pairing)
-        47989 # Sunshine: HTTP
-        47990 # Sunshine: Web UI
-        48010 # Sunshine: RTSP
-      ];
-      allowedUDPPorts = [
-        47998 # Sunshine: video stream
-        47999 # Sunshine: control
-        48000 # Sunshine: audio stream
-        48002 # Sunshine: mic stream
-      ];
-    };
+    # Sunshine enables avahi with openFirewall = true to advertise itself for
+    # Moonlight's mDNS discovery. On karma's hostile LAN we don't want an mDNS
+    # responder answering, and mDNS doesn't traverse the tailnet anyway (no
+    # multicast) — Moonlight connects to karma by hostname/IP. Close the hole.
+    services.avahi.openFirewall = lib.mkForce false;
 
     security.polkit.enable = true;
 
