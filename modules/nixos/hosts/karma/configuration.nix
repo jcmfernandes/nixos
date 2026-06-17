@@ -154,8 +154,10 @@
   
     users.users.root.hashedPassword = "!";
 
-    # jcmfernandes (wheel) can sudo without a password, matching moon/vivivi.
-    security.sudo.wheelNeedsPassword = false;
+    # Unlike moon/vivivi, sudo requires a password here (the default). karma is
+    # a GUI desktop on a hostile coworking LAN, so an unlocked session left
+    # unattended must not grant instant root — the password keeps a session
+    # compromise from immediately escalating.
 
     system.stateVersion = "25.11";
   };
