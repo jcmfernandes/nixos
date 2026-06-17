@@ -278,6 +278,11 @@
             screenUnlock = "";
             wallpaperChange = "";
           };
+          idle = {
+            enabled = true;
+            lockTimeout = 300; # lock after 5 minutes of inactivity
+            suspendTimeout = 0; # desktop: never auto-suspend
+          };
           location = {
             analogClockInCalendar = false;
             firstDayOfWeek = -1;
