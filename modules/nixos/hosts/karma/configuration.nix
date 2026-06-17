@@ -14,6 +14,7 @@
       self.nixosModules.emacs
       self.nixosModules.yubikey
       self.nixosModules.mise
+      self.nixosModules.flatpak
 
       # disko
       inputs.disko.nixosModules.disko
@@ -129,7 +130,7 @@
     };
   
     users.users.root.hashedPassword = "!";
-  
+
     system.stateVersion = "25.11";
   };
 
