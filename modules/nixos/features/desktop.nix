@@ -23,6 +23,7 @@
       selfpkgs.noctalia-shell
       pkgs.easyeffects
       pkgs.insync
+      pkgs.vlc
     ];
 
     fonts.packages = with pkgs; [
