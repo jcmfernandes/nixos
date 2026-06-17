@@ -35,6 +35,7 @@
       pkgs.celluloid
       pkgs.element-desktop
       pkgs.halloy
+      pkgs.moonlight-qt
     ];
 
     fonts.packages = with pkgs; [
@@ -72,6 +73,21 @@
 
     # gvfs backs Nautilus' trash, removable-drive mounting and network shares.
     services.gvfs.enable = true;
+
+    # Sunshine: stream the desktop to Moonlight clients. capSysAdmin is needed
+    # for KMS screen capture on Wayland/niri. Tailnet-only: openFirewall stays
+    # off and its ports (for the default base 47989) are opened solely on
+    # tailscale0. Pair clients with a PIN via the web UI (https://karma:47990).
+    services.sunshine = {
+      enable = true;
+      capSysAdmin = true;
+      openFirewall = false;
+      autoStart = true;
+    };
+    networking.firewall.interfaces.tailscale0 = {
+      allowedTCPPorts = [ 47984 47989 47990 48010 ];
+      allowedUDPPorts = [ 47998 47999 48000 48002 ];
+    };
 
     security.polkit.enable = true;
 
