@@ -601,8 +601,18 @@
       };
     };
 
-    networking.firewall.allowedTCPPorts = [ 80 443 32400 6667 ];
-    networking.firewall.allowedUDPPorts = [ 32410 32412 32413 32414 ];
+    networking.firewall.allowedTCPPorts = [
+      80 # Caddy: HTTP (ACME challenge / redirect to HTTPS)
+      443 # Caddy: HTTPS reverse proxy
+      32400 # Plex Media Server (web/API)
+      6667 # soju IRC bouncer
+    ];
+    networking.firewall.allowedUDPPorts = [
+      32410 # Plex: network discovery (GDM)
+      32412 # Plex: network discovery (GDM)
+      32413 # Plex: network discovery (GDM)
+      32414 # Plex: network discovery (GDM)
+    ];
 
     # soju IRC bouncer. Plaintext listener on 6667, opened on the firewall so
     # it's reachable from the LAN and the tailnet. moon has no public inbound,
