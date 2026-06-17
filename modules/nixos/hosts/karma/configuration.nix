@@ -47,6 +47,15 @@
       };
     };
 
+    # 32 GiB swapfile. NixOS creates it with `btrfs filesystem mkswapfile`
+    # (NOCOW, uncompressed) so swapon works on the btrfs root.
+    swapDevices = [
+      {
+        device = "/swapfile";
+        size = 32 * 1024; # MiB
+      }
+    ];
+
     networking = {
       hostName = "karma";
       networkmanager.enable = true;
