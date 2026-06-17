@@ -34,6 +34,7 @@
       pkgs.wdisplays
       pkgs.celluloid
       pkgs.element-desktop
+      pkgs.halloy
     ];
 
     fonts.packages = with pkgs; [
