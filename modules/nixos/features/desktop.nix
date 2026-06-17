@@ -33,6 +33,7 @@
       pkgs.gparted
       pkgs.wdisplays
       pkgs.celluloid
+      pkgs.element-desktop
     ];
 
     fonts.packages = with pkgs; [
