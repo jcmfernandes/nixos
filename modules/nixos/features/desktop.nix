@@ -91,6 +91,14 @@
     # responder answering, and mDNS doesn't traverse the tailnet anyway (no
     # multicast) — Moonlight connects to karma by hostname/IP. Close the hole.
     services.avahi.openFirewall = lib.mkForce false;
+    # Sunshine sometimes loses a port-bind race at login (a stale instance from
+    # the previous session can still hold RTSP 48010). On that fatal error it
+    # exits 0, so the upstream unit's Restart=on-failure never fires and it
+    # stays dead. "always" retries regardless of exit code (RestartSec=5s comes
+    # from upstream) so it self-heals once the port frees — no manual start.
+    # A controlled stop at logout (graphical-session.target teardown) is not a
+    # restart trigger, so this won't fight session shutdown.
+    systemd.user.services.sunshine.serviceConfig.Restart = lib.mkForce "always";
 
     security.polkit.enable = true;
 
