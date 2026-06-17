@@ -17,6 +17,8 @@
         "com.slack.Slack"
         "us.zoom.Zoom"
         "com.github.tchx84.Flatseal"
+        "com.discordapp.Discord"
+        "org.signal.Signal"
       ];
     };
   };
