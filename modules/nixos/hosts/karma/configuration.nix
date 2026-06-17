@@ -131,6 +131,9 @@
   
     users.users.root.hashedPassword = "!";
 
+    # jcmfernandes (wheel) can sudo without a password, matching moon/vivivi.
+    security.sudo.wheelNeedsPassword = false;
+
     system.stateVersion = "25.11";
   };
 
