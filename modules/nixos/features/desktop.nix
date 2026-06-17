@@ -32,6 +32,7 @@
       pkgs.qbittorrent
       pkgs.gparted
       pkgs.wdisplays
+      pkgs.celluloid
     ];
 
     fonts.packages = with pkgs; [
