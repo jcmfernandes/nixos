@@ -62,6 +62,7 @@
     };
 
     virtualisation.libvirtd.enable = true;
+    programs.virt-manager.enable = true;
     virtualisation.podman = {
       enable = true;
       dockerCompat = true;
@@ -132,7 +133,7 @@
     users.users.jcmfernandes = {
       isNormalUser = true;
       shell = lib.getExe selfpkgs.environment;
-      extraGroups = [ "wheel" "networkmanager" "input" "uinput" "video" "render" ];
+      extraGroups = [ "wheel" "networkmanager" "input" "uinput" "video" "render" "libvirtd" ];
       hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.
       openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
