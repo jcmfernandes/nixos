@@ -28,6 +28,8 @@
       pkgs.file-roller
       pkgs.libreoffice
       pkgs.gimp
+      pkgs.zathura
+      pkgs.foliate
     ];
 
     fonts.packages = with pkgs; [
