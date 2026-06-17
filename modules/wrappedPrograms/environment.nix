@@ -40,6 +40,7 @@
         pkgs.nix-inspect
         pkgs.nh
         pkgs.devenv
+        pkgs.podman-compose
 
         # other
         pkgs.file
