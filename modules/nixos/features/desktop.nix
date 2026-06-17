@@ -24,6 +24,8 @@
       pkgs.easyeffects
       pkgs.insync
       pkgs.vlc
+      pkgs.unrar
+      pkgs.file-roller
     ];
 
     fonts.packages = with pkgs; [
