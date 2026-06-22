@@ -1,8 +1,17 @@
-{ self, inputs, ... }: {
-
-  flake.nixosModules.karmaConfiguration = { config, pkgs, lib, ... }: let
+{
+  self,
+  inputs,
+  ...
+}: {
+  flake.nixosModules.karmaConfiguration = {
+    config,
+    pkgs,
+    lib,
+    ...
+  }: let
     selfpkgs = self.packages."${pkgs.stdenv.hostPlatform.system}";
-    jcmfernandesAuthorizedKeys = lib.filter (s: s != "")
+    jcmfernandesAuthorizedKeys =
+      lib.filter (s: s != "")
       (lib.splitString "\n" (lib.fileContents inputs.jcmfernandes-keys));
   in {
     imports = [
@@ -25,17 +34,17 @@
 
     sops = {
       defaultSopsFile = "${self}/secrets/karma.yaml";
-      age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+      age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
       secrets = {
-        tailscale_authkey = { };
-        njalla_ddns_env   = { restartUnits = [ "njalla-ddns.service" ]; };
+        tailscale_authkey = {};
+        njalla_ddns_env = {restartUnits = ["njalla-ddns.service"];};
       };
     };
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.experimental-features = ["nix-command" "flakes"];
 
     boot = {
-      kernelParams = [ "video=Virtual-1:1920x1080" ];
+      kernelParams = ["video=Virtual-1:1920x1080"];
       kernelPackages = pkgs.linuxPackages_latest;
       loader = {
         # UEFI-only: systemd-boot installs the removable ESP fallback
@@ -68,7 +77,7 @@
       # isn't opened on the LAN. Unlike vivivi there's no cloud security list
       # backing this up — the NixOS firewall is the only network layer (disk
       # is LUKS-encrypted and SecureBoot is planned for the physical side).
-      firewall.trustedInterfaces = [ "tailscale0" ];
+      firewall.trustedInterfaces = ["tailscale0"];
     };
 
     virtualisation.libvirtd.enable = true;
@@ -100,9 +109,9 @@
     # want the LAN/public IP in DNS, just the tailnet address.
     systemd.services.njalla-ddns = {
       description = "Update Njalla DDNS record for karma";
-      after = [ "network-online.target" "tailscaled.service" ];
-      wants = [ "network-online.target" "tailscaled.service" ];
-      path = [ config.services.tailscale.package pkgs.curl ];
+      after = ["network-online.target" "tailscaled.service"];
+      wants = ["network-online.target" "tailscaled.service"];
+      path = [config.services.tailscale.package pkgs.curl];
       serviceConfig = {
         Type = "oneshot";
         EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
@@ -120,7 +129,7 @@
 
     systemd.timers.njalla-ddns = {
       description = "Periodic Njalla DDNS update for karma";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
         OnBootSec = "30s";
         OnUnitActiveSec = "5min";
@@ -141,17 +150,17 @@
     xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gtk];
     xdg.portal.enable = true;
 
-    environment.shells = [ (lib.getExe selfpkgs.environment) ];
+    environment.shells = [(lib.getExe selfpkgs.environment)];
 
     users.users.jcmfernandes = {
       isNormalUser = true;
       shell = lib.getExe selfpkgs.environment;
-      extraGroups = [ "wheel" "networkmanager" "input" "uinput" "video" "render" "libvirtd" ];
+      extraGroups = ["wheel" "networkmanager" "input" "uinput" "video" "render" "libvirtd"];
       hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.
       openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
     };
-  
+
     users.users.root.hashedPassword = "!";
 
     # Unlike moon/vivivi, sudo requires a password here (the default). karma is
@@ -161,5 +170,4 @@
 
     system.stateVersion = "25.11";
   };
-
 }
