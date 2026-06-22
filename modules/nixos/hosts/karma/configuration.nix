@@ -71,7 +71,7 @@
 
       # Tailnet-only access, like vivivi. karma lives in a coworking space on
       # a hostile LAN, so nothing must be reachable from it: tailscale0 is the
-      # only trusted interface, so SSH/Sunshine/etc. are reachable over the
+      # only trusted interface, so SSH/etc. are reachable over the
       # tailnet while the LAN NIC stays fully closed. SSH's own firewall hole
       # is disabled below (services.openssh.openFirewall = false) so port 22
       # isn't opened on the LAN. Unlike vivivi there's no cloud security list
