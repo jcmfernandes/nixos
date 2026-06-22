@@ -1,11 +1,11 @@
 {self, ...}: {
-  flake.nixosModules.desktop = {lib, pkgs, ...}: let
+  flake.nixosModules.desktop = {pkgs, ...}: let
     selfpkgs = self.packages."${pkgs.stdenv.hostPlatform.system}";
   in {
     imports = [
       self.nixosModules.gtk
 
-#     self.nixosModules.pipewire
+      #     self.nixosModules.pipewire
       self.nixosModules.firefox
     ];
 
@@ -35,7 +35,6 @@
       pkgs.celluloid
       pkgs.element-desktop
       pkgs.halloy
-      pkgs.moonlight-qt
     ];
 
     fonts.packages = with pkgs; [
@@ -73,32 +72,6 @@
 
     # gvfs backs Nautilus' trash, removable-drive mounting and network shares.
     services.gvfs.enable = true;
-
-    # Sunshine: stream the desktop to Moonlight clients. capSysAdmin is needed
-    # for KMS screen capture on Wayland/niri. openFirewall stays off and we
-    # open no ports explicitly: Sunshine's TCP 47984/47989/47990/48010 and UDP
-    # 47998-48002 are reachable only over the tailnet because tailscale0 is a
-    # trusted interface (host-wide, set in karma's configuration.nix) while the
-    # LAN is closed. Pair clients with a PIN via the web UI (https://karma:47990).
-    services.sunshine = {
-      enable = true;
-      capSysAdmin = true;
-      openFirewall = false;
-      autoStart = true;
-    };
-    # Sunshine enables avahi with openFirewall = true to advertise itself for
-    # Moonlight's mDNS discovery. On karma's hostile LAN we don't want an mDNS
-    # responder answering, and mDNS doesn't traverse the tailnet anyway (no
-    # multicast) — Moonlight connects to karma by hostname/IP. Close the hole.
-    services.avahi.openFirewall = lib.mkForce false;
-    # Sunshine sometimes loses a port-bind race at login (a stale instance from
-    # the previous session can still hold RTSP 48010). On that fatal error it
-    # exits 0, so the upstream unit's Restart=on-failure never fires and it
-    # stays dead. "always" retries regardless of exit code (RestartSec=5s comes
-    # from upstream) so it self-heals once the port frees — no manual start.
-    # A controlled stop at logout (graphical-session.target teardown) is not a
-    # restart trigger, so this won't fight session shutdown.
-    systemd.user.services.sunshine.serviceConfig.Restart = lib.mkForce "always";
 
     security.polkit.enable = true;
 
