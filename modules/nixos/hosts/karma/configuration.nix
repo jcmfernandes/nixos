@@ -21,6 +21,7 @@
       self.nixosModules.general
       self.nixosModules.desktop
       self.nixosModules.emacs
+      self.nixosModules.secureboot
       self.nixosModules.yubikey
       self.nixosModules.mise
       self.nixosModules.flatpak
@@ -75,8 +76,9 @@
       # tailnet while the LAN NIC stays fully closed. SSH's own firewall hole
       # is disabled below (services.openssh.openFirewall = false) so port 22
       # isn't opened on the LAN. Unlike vivivi there's no cloud security list
-      # backing this up — the NixOS firewall is the only network layer (disk
-      # is LUKS-encrypted and SecureBoot is planned for the physical side).
+      # backing this up. The NixOS firewall is the only network layer (disk
+      # is LUKS-encrypted; Secure Boot is staged via the secureboot module --
+      # see this host's README to arm it).
       firewall.trustedInterfaces = ["tailscale0"];
     };
 
