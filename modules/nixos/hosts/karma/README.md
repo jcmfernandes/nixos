@@ -89,8 +89,10 @@ Work under the **QEMU/KVM system connection** (`qemu:///system`).
    - **Firmware:** a **UEFI** option, e.g. `OVMF_CODE_4M.fd` (x86_64). Must be
      set now. Use the **plain** variant, *not* `*.secboot.fd` — karma's
      bootloader is unsigned and would fail under enrolled Secure Boot.
-     virt-manager pairs it
-     with the matching writable `OVMF_VARS_4M.fd` automatically.
+     (Correct for the VM-install phase: the bootloader stays unsigned until
+     you arm lanzaboote on real hardware -- see "Arming Secure Boot + TPM2
+     auto-unlock" below.) virt-manager pairs it with the matching writable
+     `OVMF_VARS_4M.fd` automatically.
 3. **Add the SSD as a raw block disk** (*Add Hardware → Storage*):
    - Select **"Select or create custom storage"**, type the path
      **`/dev/nvme0n1`**.
@@ -186,3 +188,53 @@ the physical key present, so do it on the real machine — not in the VM.
 The keyslot is stored in the LUKS2 header on the SSD, independent of the
 YubiKey's existing sops/PIV (age) role — same key, different applet, no
 conflict. Keep at least the passphrase slot as recovery.
+
+## Arming Secure Boot + TPM2 auto-unlock (real hardware)
+
+Secure Boot is **staged** by the `secureboot` module (imported in
+`configuration.nix`) but **off**: `boot.lanzaboote.enable` defaults to
+`false`, so systemd-boot stays the bootloader and `sbctl` is available for
+key generation. Arming is deliberate and must be done at the machine, because
+a bad cutover means physical recovery (live USB / firmware reset). Do the
+steps in order.
+
+1. **Deploy the staged config** and confirm karma boots normally (still
+   systemd-boot). `sbctl` is now on the system.
+2. **Generate keys:** `sudo sbctl create-keys` (writes `/var/lib/sbctl`,
+   persisted on the btrfs root).
+3. **Arm:** set `boot.lanzaboote.enable = true;` in `configuration.nix`,
+   rebuild. This disables systemd-boot and signs the boot chain with the keys
+   above (the initrd is already systemd-based, the 26.05 default). Run
+   `sbctl verify` (expect every listed file signed), then **reboot with Secure
+   Boot still OFF and confirm it boots.** This reboot is the catch point for
+   the lanzaboote removable-fallback assumption -- do not skip it.
+4. **Firmware:** enter setup, put Secure Boot into **Setup Mode** (clear /
+   reset the platform keys).
+5. **Enroll keys (Microsoft certs included):**
+   `sudo sbctl enroll-keys --microsoft` (requires Setup Mode). The Microsoft
+   certs keep firmware/option-ROM code (GPU, NIC) bootable.
+6. **Enable Secure Boot** in firmware, boot, then verify: `bootctl status`
+   shows `Secure Boot: enabled` and `sbctl verify` is clean.
+7. **TPM2 auto-unlock (only now, so PCR 7 reflects the enabled-SB state):**
+
+   ```sh
+   # confirm the LUKS partition first (matches Phase 5's device path)
+   lsblk -o NAME,TYPE,PARTLABEL
+   sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+7 \
+     /dev/disk/by-partlabel/disk-disk1-root
+   ```
+
+   Keep the passphrase keyslot (do not wipe it). Reboot; the disk should
+   unlock automatically.
+
+**Recovery / gotchas**
+- Disk does not auto-unlock: type the LUKS passphrase (slot retained).
+- A firmware update changes PCR 0 and stops auto-unlock until you re-enroll:
+  `sudo systemd-cryptenroll --wipe-slot=tpm2 /dev/disk/by-partlabel/disk-disk1-root`
+  then repeat step 7. (Bind to `--tpm2-pcrs=7` alone to also survive firmware
+  updates, at slightly weaker measurement.)
+- Won't boot after enabling Secure Boot: disable it in firmware, boot, fix.
+- To disarm entirely: set `boot.lanzaboote.enable = false;` and rebuild
+  (systemd-boot returns); optionally turn Secure Boot off in firmware.
+- Requires a TPM2 chip on the real hardware; the VM-install phase has none, so
+  step 7 is real-hardware-only.
