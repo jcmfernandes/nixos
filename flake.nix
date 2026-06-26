@@ -28,6 +28,11 @@
 
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v1.1.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixarr = {
       # services.shelfmark landed in nixpkgs (and nixarr's shelfmark module
       # now version-gates itself behind nixpkgs >= 26.05), so the original
