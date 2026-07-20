@@ -9,6 +9,14 @@
         type = inputs.nixpkgs.lib.types.lazyAttrsOf inputs.nixpkgs.lib.types.raw;
         default = {};
       };
+      homeModules = inputs.nixpkgs.lib.mkOption {
+        # Home Manager module fragments, consumed via
+        # home-manager.users.<name>.imports. deferredModule matches how
+        # flake-parts types nixosModules (flake-parts does not declare
+        # homeModules itself).
+        type = inputs.nixpkgs.lib.types.lazyAttrsOf inputs.nixpkgs.lib.types.deferredModule;
+        default = {};
+      };
     };
   };
 
