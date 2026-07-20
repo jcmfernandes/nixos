@@ -32,6 +32,7 @@
       self.diskoConfigurations.karma
 
       inputs.sops-nix.nixosModules.sops
+      inputs.home-manager.nixosModules.home-manager
     ];
 
     sops = {
@@ -40,6 +41,18 @@
       secrets = {
         tailscale_authkey = {};
         njalla_ddns_env = {restartUnits = ["njalla-ddns.service"];};
+      };
+    };
+
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+      users.jcmfernandes = {
+        imports = [
+          self.homeModules.yubikey-ssh
+          self.homeModules.git
+        ];
+        home.stateVersion = "25.11";
       };
     };
 
