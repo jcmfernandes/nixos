@@ -1,29 +1,27 @@
 # AGENTS.md
 
-This file provides guidance to agentic tools when working with code in this repository.
+This file provides guidance to agentic tools when working with code in this
+repository. The project overview, build/deploy commands, and dev shell are
+in the README, imported here: @README.md
 
-This is a personal NixOS flake managing three hosts plus the cloud
-infrastructure that supports them. Secrets are kept encrypted in-tree with
-sops-nix.
+Deep-dive runbooks live in `docs/` (secrets, infrastructure, vivivi access
+model) and in per-host READMEs (`modules/nixos/hosts/<host>/README.md`).
 
-## Dev environment
+## Dev environment notes
 
-Entered via `direnv allow` at the repo root — `.envrc` loads a `devenv`
-shell (`devenv.nix`) that provides `sops`, `age-plugin-yubikey`,
-`ssh-to-age`, `nixos-anywhere`, `nixos-rebuild`, `attic-client`, `gitleaks`,
-etc. `.envrc` also exports `SOPS_AGE_KEY_FILE=$PWD/age-identities` so sops
-can decrypt using the YubiKey-backed identity stub.
-
-`opentofu/` has its **own** separate `devenv`/`.envrc` — run `direnv allow`
-there too before touching infrastructure.
+- `.envrc` exports `SOPS_AGE_KEY_FILE=$PWD/age-identities` so sops can
+  decrypt using the YubiKey-backed identity stub.
+- `opentofu/` has its **own** separate `devenv`/`.envrc` — run `direnv allow`
+  there too before touching infrastructure (see `docs/infrastructure.md`).
+- Pre-commit hooks (devenv git-hooks) enforce alejandra, statix, shellcheck,
+  and gitleaks on staged files.
 
 ## Common commands
 
 ```sh
-# Format / lint Nix (formatter is alejandra; statix for lints).
-# Part of the deployed shell toolchain; if absent from the dev shell:
-nix run nixpkgs#alejandra -- .       # format
-nix run nixpkgs#statix -- check      # lint
+# Format / lint Nix (both also run as pre-commit hooks)
+nix fmt                              # alejandra, wired as the flake formatter
+statix check                         # lint (in the dev shell)
 
 # Evaluate the whole flake (build all nixosConfigurations, run checks)
 nix flake check
@@ -31,25 +29,18 @@ nix flake check
 # Build a host config without deploying
 nixos-rebuild build --flake .#<host>     # host ∈ {karma, moon, vivivi}
 
-# Deploy locally (on the host itself)
-sudo nixos-rebuild switch --flake .#<host>
-
-# Deploy to a remote host — FIRST copy the flake over (see note below)
-scripts/scp-flake.sh root@<host>
-ssh root@<host> 'nixos-rebuild switch --flake /etc/nixos#<host>'
-# vivivi additionally builds remotely: add --build-host root@vivivi
-
 # Scan git history for leaked secrets
 gitleaks detect --source . --config .gitleaks.toml --redact -v
 ```
 
-**Remote deploys: use `scripts/scp-flake.sh <ssh-target>` to stage the
-flake first** — it streams only the git-tracked/staged/dirty files over ssh
-(via tar), deliberately excluding `.git/`, `.direnv/`, `opentofu/` state,
-and the plaintext `age-identities`. Don't `scp -r .` or rsync the tree.
+Deploy commands are in the README. When staging the flake to a remote host,
+use `scripts/scp-flake.sh <ssh-target>` — never `scp -r .` or rsync: the
+script streams only the git-tracked/staged/dirty files over ssh (via tar),
+deliberately excluding `.git/`, `.direnv/`, `opentofu/` state, and the
+plaintext `age-identities`.
 
 Fresh installs use `nixos-anywhere` + `disko` (each host has a
-`disko.nix`); see the new-host flow in `README.md`.
+`disko.nix`); the sops side of adding a host is in `docs/secrets.md`.
 
 ## Architecture
 
@@ -101,8 +92,8 @@ The three hosts differ significantly:
   rebuilds silently write to an ext4 shadow and the Pi boots a stale gen.
 - **vivivi** — Oracle Cloud builder VM. **Tailnet-only access** (public IP
   firewalled to UDP 41641); built remotely (`--build-host`). Provisioned by
-  OpenTofu. See the "vivivi access model" section of `README.md` before
-  changing any firewall — deploy ordering matters or you lock yourself out.
+  OpenTofu. See `docs/vivivi.md` before changing any firewall — deploy
+  ordering matters or you lock yourself out.
 
 ### Wrapped programs (`modules/wrappedPrograms/`)
 
@@ -114,9 +105,9 @@ CLI toolchain), `packages.terminal` (kitty wrapping the shell), and
 (`kitty.nix`, `niri.nix`, `which-key.nix`, …) declare
 `flake.wrapperModules.<name>` and pull colors from `self.theme`.
 
-### Secrets (sops-nix) — see README.md
+### Secrets (sops-nix) — see docs/secrets.md
 
-`README.md` is the authoritative runbook for secrets. Key facts:
+`docs/secrets.md` is the authoritative runbook for secrets. Key facts:
 
 - Per-host encrypted YAML at `secrets/<host>.yaml`; recipients/rules in
   `.sops.yaml`. Each file is encrypted to the admin YubiKey, an offline
@@ -130,7 +121,7 @@ CLI toolchain), `packages.terminal` (kitty wrapping the shell), and
 - `.gitleaks.toml` allowlists `secrets/*.yaml` (ciphertext) and
   `age-identities` (a hardware-backed stub, not extractable key material).
 
-### Cloud infrastructure (`opentofu/infra/`) — see README.md
+### Cloud infrastructure (`opentofu/infra/`) — see docs/infrastructure.md
 
 OpenTofu manages the OCI `vivivi` VM and IONOS S3 buckets (nix cache,
 restic backups, tofu state). Provider creds and the state-encryption
