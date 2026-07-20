@@ -42,6 +42,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixarr = {
       # services.shelfmark landed in nixpkgs (and nixarr's shelfmark module
       # now version-gates itself behind nixpkgs >= 26.05), so the original
