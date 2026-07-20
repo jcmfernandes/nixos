@@ -1,0 +1,32 @@
+name: check
+
+on:
+  push:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      # Eval only, no builds: catches breakage in any host config without
+      # needing an aarch64 builder for moon.
+      - name: Evaluate host configurations
+        run: |
+          for host in karma moon vivivi; do
+            nix eval --raw ".#nixosConfigurations.${host}.config.system.build.toplevel.drvPath"
+            echo " ${host} OK"
+          done
+      - name: Evaluate the wrapped desktop
+        run: nix eval --raw .#packages.x86_64-linux.desktop.drvPath
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: gitleaks scans every commit.
+          fetch-depth: 0
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - name: Scan git history for leaked secrets
+        run: nix run nixpkgs#gitleaks -- detect --source . --config .gitleaks.toml --redact -v
