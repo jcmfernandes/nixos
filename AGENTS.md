@@ -58,6 +58,9 @@ imported by name:
 - `flake.nixosModules.<name> = { ... }` — a reusable NixOS module (e.g.
   `base`, `persistenceDefaults`, `desktop`, `nix`, and per-host `<host>Configuration` /
   `<host>Hardware`).
+- `flake.homeModules.<name>` — a reusable Home Manager module (e.g.
+  `yubikey-ssh`, `git`), consumed via `home-manager.users.<user>.imports`
+  in a host's configuration.
 - `flake.wrapperModules.<name>` — wrapper-module fragments (see below).
 - `flake.theme` / `flake.themeNoHash` — the gruvbox base16 palette
   (`modules/theme.nix`), consumed as `self.theme.baseNN` by wrapper configs.
