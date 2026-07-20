@@ -3,7 +3,10 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
     import-tree.url = "github:vic/import-tree";
 
     nix-index-database = {
@@ -11,8 +14,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    wrappers.url = "github:Lassulus/wrappers";
-    wrapper-modules.url = "github:BirdeeHub/nix-wrapper-modules";
+    wrappers = {
+      url = "github:Lassulus/wrappers";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    wrapper-modules = {
+      url = "github:BirdeeHub/nix-wrapper-modules";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     disko = {
       url = "github:nix-community/disko";
@@ -72,13 +81,14 @@
     ];
   };
 
-  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-    imports = [
-      (inputs.import-tree ./modules)
-      # Declares `flake.diskoConfigurations` so multiple hosts can each
-      # contribute their own entry without flake-parts complaining about
-      # an undeclared option being defined multiple times.
-      inputs.disko.flakeModule
-    ];
-  };
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake {inherit inputs;} {
+      imports = [
+        (inputs.import-tree ./modules)
+        # Declares `flake.diskoConfigurations` so multiple hosts can each
+        # contribute their own entry without flake-parts complaining about
+        # an undeclared option being defined multiple times.
+        inputs.disko.flakeModule
+      ];
+    };
 }
