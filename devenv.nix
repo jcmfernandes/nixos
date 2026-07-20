@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{pkgs, ...}: {
   packages = with pkgs; [
     yubikey-manager # ykman
     sops
@@ -9,5 +9,7 @@
     nixos-rebuild
     attic-client
     gitleaks
+    alejandra
+    statix
   ];
 }
