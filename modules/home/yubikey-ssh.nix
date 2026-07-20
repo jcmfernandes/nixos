@@ -55,6 +55,8 @@
     home.packages = [yk-ssh-keygen];
 
     home.file.".ssh/id_ist.pub".source = ./yubikey-ssh/id_ist.pub;
+    home.file.".ssh/id_bckground.pub".source = ./yubikey-ssh/id_bckground.pub;
+    home.file.".ssh/id_slashid.pub".source = ./yubikey-ssh/id_slashid.pub;
     home.file.".ssh/allowed_signers".source = ./yubikey-ssh/allowed_signers;
 
     systemd.user.services.yubikey-ssh-agent = {
