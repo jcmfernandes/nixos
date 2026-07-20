@@ -1,0 +1,3 @@
+# W20 (repeated_keys) is off: this repo deliberately repeats top-level keys
+# (services.*, packages.*, boot.*) to group settings by concern.
+disabled = ["repeated_keys"]

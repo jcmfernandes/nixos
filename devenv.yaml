@@ -1,3 +1,8 @@
 inputs:
+  git-hooks:
+    url: tarball+https://github.com/cachix/git-hooks.nix/archive/refs/heads/master.tar.gz
+    inputs:
+      nixpkgs:
+        follows: nixpkgs
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
