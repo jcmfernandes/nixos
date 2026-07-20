@@ -1,32 +1,39 @@
-name: check
+name: "check"
 
 on:
   push:
 
 jobs:
   eval:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v7
+      - uses: "DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25" # v22
+        with:
+          # Keep upstream Nix; since v21 the action defaults to Determinate Nix.
+          determinate: false
       # Eval only, no builds: catches breakage in any host config without
       # needing an aarch64 builder for moon.
-      - name: Evaluate host configurations
+      - name: "Evaluate host configurations"
         run: |
-          for host in karma moon vivivi; do
+          for dir in modules/nixos/hosts/*/; do
+            host="$(basename "$dir")"
             nix eval --raw ".#nixosConfigurations.${host}.config.system.build.toplevel.drvPath"
             echo " ${host} OK"
           done
-      - name: Evaluate the wrapped desktop
-        run: nix eval --raw .#packages.x86_64-linux.desktop.drvPath
+      - name: "Evaluate the wrapped desktop"
+        run: "nix eval --raw .#packages.x86_64-linux.desktop.drvPath"
 
   gitleaks:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v7
         with:
-          # Full history: gitleaks scans every commit.
+          # Fetch the full history because gitleaks scans every commit.
           fetch-depth: 0
-      - uses: DeterminateSystems/nix-installer-action@v16
-      - name: Scan git history for leaked secrets
-        run: nix run nixpkgs#gitleaks -- detect --source . --config .gitleaks.toml --redact -v
+      - uses: "DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25" # v22
+        with:
+          # Keep upstream Nix; since v21 the action defaults to Determinate Nix.
+          determinate: false
+      - name: "Scan git history for leaked secrets"
+        run: "nix run nixpkgs#gitleaks -- detect --source . --config .gitleaks.toml --redact -v"
