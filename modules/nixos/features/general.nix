@@ -9,7 +9,7 @@
       self.nixosModules.nix
     ];
 
-    persistance.data.directories = [
+    persistence.data.directories = [
       "nixconf"
 
       "Videos"
@@ -20,7 +20,7 @@
     ];
 
     # todo: remove
-    persistance.cache.directories = [
+    persistence.cache.directories = [
       ".local/share/direnv"
     ];
   };
