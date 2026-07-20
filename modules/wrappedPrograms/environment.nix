@@ -10,15 +10,14 @@
     ...
   }: {
     # My whole desktop in one package, includes kityy terminal
-    packages.desktop =
-      (inputs.wrappers.wrapperModules.niri.apply ({config, ...}: {
-        inherit pkgs;
-        imports = [self.wrapperModules.niri];
-        terminal = lib.getExe self'.packages.terminal;
-        env = {
-          EDITOR = lib.getExe pkgs.nano;
-        };
-      })).wrapper;
+    packages.desktop = inputs.wrapper-modules.wrappers.niri.wrap {
+      inherit pkgs;
+      imports = [self.wrapperModules.niri];
+      terminal = lib.getExe self'.packages.terminal;
+      env = {
+        EDITOR = lib.getExe pkgs.nano;
+      };
+    };
 
     # My primary flake terminal
     packages.terminal =
@@ -82,12 +81,12 @@
         pkgs.waypipe
 
         # wrapped
-#        self'.packages.neovimDynamic
-#        self'.packages.qalc
-#        self'.packages.lf
-#        self'.packages.git
-#        self'.packages.jujutsu
-#        self'.packages.jjui
+        #        self'.packages.neovimDynamic
+        #        self'.packages.qalc
+        #        self'.packages.lf
+        #        self'.packages.git
+        #        self'.packages.jujutsu
+        #        self'.packages.jjui
         self'.packages.nix-check-bin
       ];
       editor = lib.getExe pkgs.nano;

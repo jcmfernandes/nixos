@@ -6,7 +6,6 @@
   flake.wrapperModules.niri = {
     config,
     lib,
-    pkgs,
     ...
   }: {
     options.terminal = lib.mkOption {
@@ -150,7 +149,7 @@
             {
               key = "s";
               desc = "Pavucontrol";
-              cmd = "${lib.getExe pkgs.pavucontrol}";
+              cmd = "${lib.getExe config.pkgs.pavucontrol}";
             }
           ];
         };
@@ -185,10 +184,10 @@
         spawn-at-startup = [
           noctaliaExe
           (lib.getExe (
-            pkgs.writeShellScriptBin "wallpaper" ''
-              ${pkgs.awww}/bin/awww-daemon &
-              until ${lib.getExe pkgs.awww} query >/dev/null 2>&1; do sleep 0.1; done
-              ${lib.getExe pkgs.awww} img ${./../nixos/features/wallpaper/gruvbox-mountain-village.png}
+            config.pkgs.writeShellScriptBin "wallpaper" ''
+              ${config.pkgs.awww}/bin/awww-daemon &
+              until ${lib.getExe config.pkgs.awww} query >/dev/null 2>&1; do sleep 0.1; done
+              ${lib.getExe config.pkgs.awww} img ${./../nixos/features/wallpaper/gruvbox-mountain-village.png}
             ''
           ))
         ];
