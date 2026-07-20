@@ -18,7 +18,8 @@
       self.nixosModules.karmaHardware
 
       self.nixosModules.base
-      self.nixosModules.general
+      self.nixosModules.nix
+      self.nixosModules.persistenceDefaults
       self.nixosModules.desktop
       self.nixosModules.emacs
       self.nixosModules.secureboot

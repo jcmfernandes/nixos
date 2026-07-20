@@ -16,7 +16,8 @@
     imports = [
       self.nixosModules.viviviHardware
       self.nixosModules.base
-      self.nixosModules.general
+      self.nixosModules.nix
+      self.nixosModules.persistenceDefaults
       inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
       self.diskoConfigurations.vivivi
