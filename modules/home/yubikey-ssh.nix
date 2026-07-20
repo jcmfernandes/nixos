@@ -120,6 +120,7 @@
 
     programs.ssh = {
       enable = true;
+      enableDefaultConfig = false;
       # Authenticate with the YubiKey PIV slot-83 key (ECDSA), served by
       # the dedicated agent the monitor loads on insert. IdentitiesOnly +
       # the pinned public key ensure exactly that key is offered (the agent
