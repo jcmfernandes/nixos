@@ -58,7 +58,8 @@
       self.nixosModules.moonHardware
       self.nixosModules.moonOverlays
       self.nixosModules.base
-      self.nixosModules.general
+      self.nixosModules.nix
+      self.nixosModules.persistenceDefaults
       inputs.nixarr.nixosModules.default
       inputs.sops-nix.nixosModules.sops
     ];

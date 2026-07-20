@@ -56,7 +56,7 @@ Files contribute to the flake by *setting attributes*, not by being
 imported by name:
 
 - `flake.nixosModules.<name> = { ... }` — a reusable NixOS module (e.g.
-  `base`, `general`, `desktop`, `nix`, and per-host `<host>Configuration` /
+  `base`, `persistenceDefaults`, `desktop`, `nix`, and per-host `<host>Configuration` /
   `<host>Hardware`).
 - `flake.wrapperModules.<name>` — wrapper-module fragments (see below).
 - `flake.theme` / `flake.themeNoHash` — the gruvbox base16 palette
@@ -65,7 +65,7 @@ imported by name:
 
 Because flake-parts merges modules, **several files extend the same
 `flake.nixosModules.base`**: `base/base.nix` adds `options.preferences`,
-`base/persistance.nix` adds `options.persistance`. Don't expect one file to
+`base/persistence.nix` adds `options.persistence`. Don't expect one file to
 hold a module's full definition.
 
 ### Hosts
@@ -76,7 +76,7 @@ Each host lives in `modules/nixos/hosts/<host>/`:
   `nixosSystem` with `self.nixosModules.<host>Configuration` in its module
   list.
 - `configuration.nix` *defines* `flake.nixosModules.<host>Configuration`,
-  which `imports` the shared `self.nixosModules.{base,general,desktop,...}`,
+  which `imports` the shared `self.nixosModules.{base,persistenceDefaults,desktop,...}`,
   disko, and `inputs.sops-nix.nixosModules.sops`, then declares
   `sops.secrets.*`.
 
