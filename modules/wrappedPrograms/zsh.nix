@@ -3,10 +3,7 @@
   inputs,
   ...
 }: {
-  perSystem = {
-    pkgs,
-    ...
-  }: {
+  perSystem = {pkgs, ...}: {
     packages.myZsh = pkgs.lib.makeOverridable ({
       runtimeInputs ? [],
       editor ? "",

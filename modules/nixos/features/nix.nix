@@ -1,5 +1,9 @@
-{ inputs, ... }: {
-  flake.nixosModules.nix = { pkgs, lib, ... }: {
+{inputs, ...}: {
+  flake.nixosModules.nix = {
+    pkgs,
+    lib,
+    ...
+  }: {
     imports = [
       inputs.nix-index-database.nixosModules.nix-index
     ];
@@ -16,8 +20,8 @@
     };
 
     nix.settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      trusted-users = [ "root" "@wheel" ];
+      experimental-features = ["nix-command" "flakes"];
+      trusted-users = ["root" "@wheel"];
       download-buffer-size = 512 * 1024 * 1024;
       extra-substituters = [
         "https://nix-community.cachix.org"
@@ -29,7 +33,7 @@
     programs.nix-ld.enable = true;
     nixpkgs.config.allowUnfree = true;
 
-    environment.systemPackages = lib.optionals (pkgs.stdenv.hostPlatform.isx86_64) (with pkgs; [
+    environment.systemPackages = lib.optionals pkgs.stdenv.hostPlatform.isx86_64 (with pkgs; [
       # Nix tooling
       nil
       nixd

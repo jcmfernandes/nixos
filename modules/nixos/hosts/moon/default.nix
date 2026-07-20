@@ -1,5 +1,8 @@
-{ self, inputs, ... }: {
-
+{
+  self,
+  inputs,
+  ...
+}: {
   # nixos-raspberrypi's README ("Options for advanced usage") documents
   # constructing the system with `nixpkgs.lib.nixosSystem` directly. Two
   # requirements beyond a standard nixosSystem call:
@@ -25,7 +28,7 @@
   # No `system =` arg: nixpkgs.hostPlatform is set by raspberry-pi-5.base
   # inside moonConfiguration, which is the modern convention.
   flake.nixosConfigurations.moon = inputs.nixpkgs-unstable.lib.nixosSystem {
-    specialArgs = { inherit (inputs) nixos-raspberrypi; };
+    specialArgs = {inherit (inputs) nixos-raspberrypi;};
     modules = [
       inputs.nixos-raspberrypi.lib.inject-overlays
       inputs.nixos-raspberrypi.nixosModules.trusted-nix-caches
@@ -33,5 +36,4 @@
       self.nixosModules.moonConfiguration
     ];
   };
-
 }

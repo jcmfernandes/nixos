@@ -1,7 +1,16 @@
-{ self, inputs, ... }: {
-
-  flake.nixosModules.viviviConfiguration = { config, pkgs, lib, ... }: let
-    jcmfernandesAuthorizedKeys = lib.filter (s: s != "")
+{
+  self,
+  inputs,
+  ...
+}: {
+  flake.nixosModules.viviviConfiguration = {
+    config,
+    pkgs,
+    lib,
+    ...
+  }: let
+    jcmfernandesAuthorizedKeys =
+      lib.filter (s: s != "")
       (lib.splitString "\n" (lib.fileContents inputs.jcmfernandes-keys));
   in {
     imports = [
@@ -18,20 +27,22 @@
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
     # 16 KiB pages so binaries built here run natively on moon.
-    boot.kernelPatches = [{
-      name = "arm64-16k-pages";
-      patch = null;
-      structuredExtraConfig = with lib.kernel; {
-        ARM64_16K_PAGES = yes;
-        ARM64_4K_PAGES  = lib.mkForce no;
-        ARM64_64K_PAGES = lib.mkForce no;
-      };
-    }];
+    boot.kernelPatches = [
+      {
+        name = "arm64-16k-pages";
+        patch = null;
+        structuredExtraConfig = with lib.kernel; {
+          ARM64_16K_PAGES = yes;
+          ARM64_4K_PAGES = lib.mkForce no;
+          ARM64_64K_PAGES = lib.mkForce no;
+        };
+      }
+    ];
 
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
-# Every built output that ends up on vivivi must be compiled natively
+    # Every built output that ends up on vivivi must be compiled natively
     # here so the closure is consistent with the 16 KiB-page kernel — but
     # we still want sources (fixed-output derivations) substituted from
     # cache.nixos.org, otherwise every fetchurl bottlenecks on flaky
@@ -42,13 +53,13 @@
     # Flip this to point at the local attic once attic has been
     # bootstrapped and contains 16 KiB-built artifacts.
     nix.settings = {
-      substitute          = true;
-      substituters        = lib.mkForce [
+      substitute = true;
+      substituters = lib.mkForce [
         "https://cache.nixos.org/"
         "https://nix-community.cachix.org"
       ];
       trusted-public-keys = lib.mkForce [];
-      require-sigs        = true;
+      require-sigs = true;
     };
 
     # Same workaround as moon: tikv-jemalloc-sys-bundling crates need their
@@ -56,13 +67,15 @@
     # 4 KiB-built versions are pulled and abort here at runtime.
     nixpkgs.overlays = [
       (final: prev: {
-        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-          (pyFinal: pyPrev: {
-            polars = pyPrev.polars.overridePythonAttrs (old: {
-              env = (old.env or {}) // { JEMALLOC_SYS_WITH_LG_PAGE = "14"; };
-            });
-          })
-        ];
+        pythonPackagesExtensions =
+          prev.pythonPackagesExtensions
+          ++ [
+            (pyFinal: pyPrev: {
+              polars = pyPrev.polars.overridePythonAttrs (old: {
+                env = (old.env or {}) // {JEMALLOC_SYS_WITH_LG_PAGE = "14";};
+              });
+            })
+          ];
       })
     ];
 
@@ -81,15 +94,15 @@
     # across reboots as long as vivivi's disk isn't wiped — a fresh
     # install regenerates it server-side.
     systemd.services.attic-bootstrap = {
-      description     = "Idempotently provision the attic 'aarch64-16kb' cache";
-      after           = [ "atticd.service" ];
-      wants           = [ "atticd.service" ];
-      wantedBy        = [ "multi-user.target" ];
-      path            = [ pkgs.attic-server pkgs.attic-client pkgs.curl ];
-      serviceConfig   = {
-        Type            = "oneshot";
+      description = "Idempotently provision the attic 'aarch64-16kb' cache";
+      after = ["atticd.service"];
+      wants = ["atticd.service"];
+      wantedBy = ["multi-user.target"];
+      path = [pkgs.attic-server pkgs.attic-client pkgs.curl];
+      serviceConfig = {
+        Type = "oneshot";
         RemainAfterExit = true;
-        User            = "root";
+        User = "root";
         EnvironmentFile = config.sops.secrets.atticd_env.path;
       };
       script = ''
@@ -127,15 +140,15 @@
     # try to push before the cache exists.
     systemd.services.attic-watch-store = {
       description = "Push new /nix/store paths to attic 'aarch64-16kb'";
-      after       = [ "attic-bootstrap.service" ];
-      wants       = [ "attic-bootstrap.service" ];
-      wantedBy    = [ "multi-user.target" ];
+      after = ["attic-bootstrap.service"];
+      wants = ["attic-bootstrap.service"];
+      wantedBy = ["multi-user.target"];
       serviceConfig = {
-        Type       = "simple";
-        ExecStart  = "${pkgs.attic-client}/bin/attic watch-store aarch64-16kb";
-        Restart    = "always";
+        Type = "simple";
+        ExecStart = "${pkgs.attic-client}/bin/attic watch-store aarch64-16kb";
+        Restart = "always";
         RestartSec = 10;
-        User       = "root";
+        User = "root";
       };
     };
 
@@ -146,23 +159,23 @@
     # outside, or the closure that existed before watch-store first ran).
     systemd.services.attic-seed-current-system = {
       description = "Push current system closure to attic 'aarch64-16kb'";
-      after       = [ "attic-bootstrap.service" ];
-      wants       = [ "attic-bootstrap.service" ];
+      after = ["attic-bootstrap.service"];
+      wants = ["attic-bootstrap.service"];
       serviceConfig = {
-        Type      = "oneshot";
+        Type = "oneshot";
         ExecStart = "${pkgs.attic-client}/bin/attic push aarch64-16kb /run/current-system";
-        User      = "root";
+        User = "root";
       };
     };
 
     systemd.timers.attic-seed-current-system = {
       description = "Daily push of current system closure to attic";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
-        OnBootSec        = "10min";
-        OnUnitActiveSec  = "24h";
-        Unit             = "attic-seed-current-system.service";
-        Persistent       = true;  # run on next boot if missed while powered off
+        OnBootSec = "10min";
+        OnUnitActiveSec = "24h";
+        Unit = "attic-seed-current-system.service";
+        Persistent = true; # run on next boot if missed while powered off
       };
     };
 
@@ -183,17 +196,20 @@
       enable = true;
       settings.PermitRootLogin = "prohibit-password";
       hostKeys = [
-        { type = "ed25519"; path = "/etc/ssh/ssh_host_ed25519_key"; }
+        {
+          type = "ed25519";
+          path = "/etc/ssh/ssh_host_ed25519_key";
+        }
       ];
     };
 
     sops = {
       defaultSopsFile = "${self}/secrets/vivivi.yaml";
-      age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+      age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
       secrets = {
-        atticd_env        = { restartUnits = [ "atticd.service" ]; };
-        tailscale_authkey = { };
-        njalla_ddns_env   = { };
+        atticd_env = {restartUnits = ["atticd.service"];};
+        tailscale_authkey = {};
+        njalla_ddns_env = {};
       };
     };
 
@@ -210,9 +226,9 @@
     # intended security posture.
     systemd.services.njalla-ddns = {
       description = "Update Njalla DDNS record for vivivi";
-      after = [ "network-online.target" "tailscaled.service" ];
-      wants = [ "network-online.target" "tailscaled.service" ];
-      path = [ config.services.tailscale.package pkgs.curl ];
+      after = ["network-online.target" "tailscaled.service"];
+      wants = ["network-online.target" "tailscaled.service"];
+      path = [config.services.tailscale.package pkgs.curl];
       serviceConfig = {
         Type = "oneshot";
         EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
@@ -230,7 +246,7 @@
 
     systemd.timers.njalla-ddns = {
       description = "Periodic Njalla DDNS update for vivivi";
-      wantedBy = [ "timers.target" ];
+      wantedBy = ["timers.target"];
       timerConfig = {
         OnBootSec = "30s";
         OnUnitActiveSec = "5min";
@@ -249,15 +265,15 @@
 
         chunking = {
           nar-size-threshold = 65536;
-          min-size           = 16384;
-          avg-size           = 65536;
-          max-size           = 262144;
+          min-size = 16384;
+          avg-size = 65536;
+          max-size = 262144;
         };
 
         storage = {
-          type     = "s3";
-          bucket   = "moreirafernandesdotcom-nix-cache";
-          region   = "eu-central-3";
+          type = "s3";
+          bucket = "moreirafernandesdotcom-nix-cache";
+          region = "eu-central-3";
           endpoint = "https://s3.eu-central-3.ionoscloud.com";
         };
       };
@@ -274,11 +290,11 @@
       ];
     };
 
-    nix.settings.trusted-users = [ "nix-ssh" ];
+    nix.settings.trusted-users = ["nix-ssh"];
 
     users.users.jcmfernandes = {
       isNormalUser = true;
-      extraGroups = [ "wheel" ];
+      extraGroups = ["wheel"];
       # SHA-512 crypt of "password12345!" — set for serial-console
       # diagnostics. Rotate or set back to "!" once vivivi is healthy.
       hashedPassword = "$6$bl41SF7xj6VGxe7M$PA12whvo7YqLuZUFl9YZ39Hk78b/Vf6olmaDUprbyl3/RaBGJGZRkFA9FTxjHwPaSLOvnvsZ4J.2Bfd6CMYQ60";

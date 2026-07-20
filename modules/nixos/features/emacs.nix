@@ -1,5 +1,5 @@
-{ ... }: {
-  flake.nixosModules.emacs = { pkgs, ... }: let
+_: {
+  flake.nixosModules.emacs = {pkgs, ...}: let
     # Latest stable Emacs (nixpkgs emacs-pgtk == 30.2, i.e. the emacs-30.2
     # release/tag), Wayland-native pure-GTK, with Protesilaos' emacs-git
     # configure flags. Overriding the flags busts the binary cache, so this
@@ -28,6 +28,6 @@
           ];
       });
   in {
-    environment.systemPackages = [ emacs ];
+    environment.systemPackages = [emacs];
   };
 }

@@ -1,8 +1,8 @@
-{ ... }: {
-  flake.nixosModules.mise = { pkgs, ... }: {
+_: {
+  flake.nixosModules.mise = {pkgs, ...}: {
     # mise: polyglot per-project tool/runtime version manager. The interactive
     # shell activates it via `mise activate zsh` (modules/wrappedPrograms).
-    environment.systemPackages = [ pkgs.mise ];
+    environment.systemPackages = [pkgs.mise];
 
     # mise installs mostly precompiled, FHS-linked binaries (node, go, the
     # standalone Python/Ruby builds, ...). nix-ld provides the dynamic loader

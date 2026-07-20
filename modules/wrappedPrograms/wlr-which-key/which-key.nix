@@ -4,7 +4,6 @@
   lib,
   ...
 }: let
-
   mkWhichKey = pkgs: menu:
     (self.wrapperModules.which-key.apply {
       inherit pkgs;
@@ -42,7 +41,7 @@ in {
     in {
       options = {
         settings = lib.mkOption {
-          type = yamlFormat.type;
+          inherit (yamlFormat) type;
         };
       };
 

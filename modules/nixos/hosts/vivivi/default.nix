@@ -1,5 +1,8 @@
-{ self, inputs, ... }: {
-
+{
+  self,
+  inputs,
+  ...
+}: {
   # vivivi rides nixos-unstable wholesale so the stdenv chain is internally
   # consistent under the "build everything from source" policy. Mixing
   # stable's stdenv with individual unstable packages trips
@@ -14,5 +17,4 @@
       self.nixosModules.viviviConfiguration
     ];
   };
-
 }

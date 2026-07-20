@@ -1,4 +1,4 @@
-{ ... }: {
+_: {
   # Exposed as a flake-parts output so the file isn't accidentally loaded
   # as a top-level flake module by `import-tree`. Imported into vivivi's
   # NixOS config via `self.diskoConfigurations.vivivi` — same pattern as
@@ -24,7 +24,7 @@
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-              mountOptions = [ "umask=0077" ];
+              mountOptions = ["umask=0077"];
             };
           };
           root = {
