@@ -1,6 +1,14 @@
-{ self, inputs, ... }: {
-
-  flake.nixosModules.moonHardware = { config, lib, pkgs, ... }: let
+{
+  self,
+  inputs,
+  ...
+}: {
+  flake.nixosModules.moonHardware = {
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     # USB-attached SATA HDDs. The `dataN` label is what crypttab maps
     # the unlocked device to (/dev/mapper/data1 etc.), preserved across
     # the refactor so filesystem mounts in configuration.nix continue
@@ -26,12 +34,12 @@
       "/" = {
         device = "/dev/disk/by-label/NIXOS_SD";
         fsType = "ext4";
-        options = [ "noatime" ];
+        options = ["noatime"];
       };
       "/boot/firmware" = {
         device = "/dev/disk/by-label/FIRMWARE";
         fsType = "vfat";
-        options = [ "noatime" "nofail" ];
+        options = ["noatime" "nofail"];
       };
     };
 
@@ -42,18 +50,18 @@
 
     # smartd device list (merged with the rest of services.smartd's
     # settings — enable/notifications/defaults — in configuration.nix).
-    services.smartd.devices = map (d: { device = d; }) diskList;
+    services.smartd.devices = map (d: {device = d;}) diskList;
 
     # Spin down idle disks after 10 min. One -a per device.
     systemd.services.hd-idle = {
       description = "Spin down idle USB disks";
-      wantedBy = [ "multi-user.target" ];
-      after    = [ "local-fs.target" ];
+      wantedBy = ["multi-user.target"];
+      after = ["local-fs.target"];
       serviceConfig = {
-        Type       = "simple";
-        Restart    = "always";
+        Type = "simple";
+        Restart = "always";
         RestartSec = 10;
-        ExecStart  =
+        ExecStart =
           "${pkgs.hd-idle}/bin/hd-idle -i 0 -l /var/log/hd-idle.log "
           + lib.concatMapStringsSep " " (d: "-a ${d} -i 600") diskList;
       };
@@ -61,9 +69,10 @@
 
     # LUKS crypttab generated from the disks attrset. Keep `dataN`
     # names stable — fileSystems."/mnt/diskN" mounts /dev/mapper/dataN.
-    environment.etc."crypttab".text = lib.concatMapStringsSep "\n"
+    environment.etc."crypttab".text =
+      lib.concatMapStringsSep "\n"
       (name: "${name} ${disks.${name}}-part1 /var/lib/luks-keys/das.key luks")
-      (lib.attrNames disks) + "\n";
+      (lib.attrNames disks)
+      + "\n";
   };
-
 }

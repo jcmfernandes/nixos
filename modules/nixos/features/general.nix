@@ -5,7 +5,7 @@
     ...
   }: {
     imports = [
-#      self.nixosModules.gtk
+      #      self.nixosModules.gtk
       self.nixosModules.nix
     ];
 

@@ -1,4 +1,4 @@
-{...}: let
+_: let
   theme = {
     base00 = "#242424"; # bg
     base01 = "#3c3836"; # dark
@@ -23,7 +23,7 @@
     then builtins.substring 1 (builtins.stringLength str - 1) str
     else str;
 
-  themeNoHash = builtins.mapAttrs (_: v: stripHash v) theme;
+  themeNoHash = builtins.mapAttrs (_: stripHash) theme;
 in {
   flake = {
     inherit theme themeNoHash;

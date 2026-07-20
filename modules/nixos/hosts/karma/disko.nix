@@ -1,4 +1,4 @@
-{ lib, ... }: {
+{lib, ...}: {
   flake.diskoConfigurations.karma = {
     disko.devices = {
       disk.disk1 = {
@@ -53,6 +53,6 @@
           };
         };
       };
-    };  
+    };
   };
 }

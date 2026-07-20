@@ -1,6 +1,6 @@
-{ inputs, ... }: {
+{inputs, ...}: {
   flake.nixosModules.flatpak = {
-    imports = [ inputs.nix-flatpak.nixosModules.nix-flatpak ];
+    imports = [inputs.nix-flatpak.nixosModules.nix-flatpak];
 
     # Apps better delivered via Flathub than nixpkgs (fresher Slack/Zoom,
     # sandboxed). nix-flatpak installs/updates these on nixos-rebuild, so the
