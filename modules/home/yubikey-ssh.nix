@@ -146,7 +146,7 @@
         format = "ssh";
         signer = lib.getExe yk-ssh-keygen;
       };
-      extraConfig.gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
+      settings.gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
     };
   };
 }
