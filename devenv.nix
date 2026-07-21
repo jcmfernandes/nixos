@@ -9,6 +9,7 @@
     nixos-rebuild
     attic-client
     gitleaks
+    nixd # Nix LSP
     alejandra
     statix
   ];
