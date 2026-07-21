@@ -14,7 +14,7 @@
     };
     config = {
       settings = let
-        noctaliaExe = lib.getExe self.packages.${config.pkgs.stdenv.hostPlatform.system}.noctalia-shell;
+        noctaliaExe = lib.getExe inputs.noctalia.packages.${config.pkgs.stdenv.hostPlatform.system}.default;
       in {
         prefer-no-csd = _: {};
 
@@ -86,8 +86,8 @@
           "Mod+Shift+9".move-column-to-workspace = "w8";
           "Mod+Shift+0".move-column-to-workspace = "w9";
 
-          "Mod+S".spawn-sh = "${noctaliaExe} ipc call launcher toggle";
-          "Mod+Escape".spawn-sh = "${noctaliaExe} ipc call lockScreen lock";
+          "Mod+S".spawn-sh = "${noctaliaExe} msg panel-toggle launcher";
+          "Mod+Escape".spawn-sh = "${noctaliaExe} msg session lock";
           "Mod+V".spawn-sh = ''${config.pkgs.alsa-utils}/bin/amixer sset Capture toggle'';
 
           "XF86AudioRaiseVolume".spawn-sh = "wpctl set-volume -l 1.4 @DEFAULT_AUDIO_SINK@ 5%+";
@@ -119,12 +119,12 @@
             {
               key = "b";
               desc = "Bluetooth";
-              cmd = "${noctaliaExe} ipc call bluetooth togglePanel";
+              cmd = "${noctaliaExe} msg panel-toggle control-center bluetooth";
             }
             {
               key = "w";
               desc = "Wifi";
-              cmd = "${noctaliaExe} ipc call wifi togglePanel";
+              cmd = "${noctaliaExe} msg panel-toggle control-center wifi";
             }
             {
               key = "f";
@@ -181,8 +181,9 @@
         xwayland-satellite.path =
           lib.getExe config.pkgs.xwayland-satellite;
 
+        # noctalia itself is started by its systemd user service (see
+        # homeModules.noctalia), not spawned here.
         spawn-at-startup = [
-          noctaliaExe
           (lib.getExe (
             config.pkgs.writeShellScriptBin "wallpaper" ''
               ${config.pkgs.awww}/bin/awww-daemon &

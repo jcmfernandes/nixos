@@ -51,6 +51,7 @@
         imports = [
           self.homeModules.yubikey-ssh
           self.homeModules.git
+          self.homeModules.noctalia
         ];
         home.stateVersion = "25.11";
       };

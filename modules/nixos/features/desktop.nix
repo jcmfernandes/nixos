@@ -14,12 +14,9 @@
       package = selfpkgs.niri;
     };
 
-    preferences.autostart = [selfpkgs.start-noctalia-shell];
-
     environment.systemPackages = [
       selfpkgs.terminal
       pkgs.nautilus
-      selfpkgs.noctalia-shell
       pkgs.easyeffects
       pkgs.insync
       pkgs.vlc
