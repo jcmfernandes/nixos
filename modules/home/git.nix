@@ -8,9 +8,6 @@
     programs.git = {
       enable = true;
 
-      userName = "João Moreira Fernandes";
-      userEmail = "joao.fernandes@ist.utl.pt";
-
       # ~/.gitignore-global equivalent; hm wires core.excludesFile itself.
       ignores = [
         ".aider*"
@@ -18,12 +15,17 @@
         "**/.claude/.cc-writes/"
       ];
 
-      aliases = {
-        lol = "log --graph --decorate --pretty=oneline --abbrev-commit";
-        lola = "log --graph --date=short --pretty=format:'%C(auto)%h %C(dim)%ad%C(auto)%d %s' --all";
-      };
+      settings = {
+        user = {
+          name = "João Moreira Fernandes";
+          email = "joao.fernandes@ist.utl.pt";
+        };
 
-      extraConfig = {
+        alias = {
+          lol = "log --graph --decorate --pretty=oneline --abbrev-commit";
+          lola = "log --graph --date=short --pretty=format:'%C(auto)%h %C(dim)%ad%C(auto)%d %s' --all";
+        };
+
         column.ui = "auto";
         branch.sort = "-committerdate";
         tag.sort = "version:refname";
