@@ -173,6 +173,10 @@
           }
         ];
 
+        # Baremetal secondary screen, mounted rotated. No-op in the VM,
+        # where DP-2 is not connected.
+        outputs."DP-2".transform = "270";
+
         workspaces = let
           settings = {layout.gaps = 5;};
         in {
