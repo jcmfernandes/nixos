@@ -64,6 +64,11 @@
           "Mod+Shift+K".move-window-up = _: {};
           "Mod+Shift+J".move-window-down = _: {};
 
+          "Mod+Ctrl+Shift+K".focus-monitor-left = _: {};
+          "Mod+Ctrl+Shift+J".focus-monitor-right = _: {};
+          "Mod+Ctrl+Shift+H".move-column-to-monitor-left = _: {};
+          "Mod+Ctrl+Shift+L".move-column-to-monitor-right = _: {};
+
           "Mod+1".focus-workspace = "w0";
           "Mod+2".focus-workspace = "w1";
           "Mod+3".focus-workspace = "w2";
