@@ -163,6 +163,16 @@
           };
         };
 
+        # Float the OpenSSH askpass dialog (the YubiKey PIN prompt) rather
+        # than tiling it into a column. lxqt-openssh-askpass sets no app-id,
+        # so match on its fixed window title.
+        window-rules = [
+          {
+            matches = [{title = "^OpenSSH Authentication Passphrase request$";}];
+            open-floating = true;
+          }
+        ];
+
         workspaces = let
           settings = {layout.gaps = 5;};
         in {
