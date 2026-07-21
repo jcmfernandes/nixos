@@ -127,10 +127,10 @@
       # the dedicated agent the monitor loads on insert. IdentitiesOnly +
       # the pinned public key ensure exactly that key is offered (the agent
       # holds all four retired-slot keys).
-      matchBlocks."github.com moon vivivi" = {
-        identitiesOnly = true;
-        identityFile = "~/.ssh/id_ist.pub";
-        extraOptions.IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
+      settings."github.com moon vivivi" = {
+        IdentitiesOnly = true;
+        IdentityFile = "~/.ssh/id_ist.pub";
+        IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
       };
     };
 
