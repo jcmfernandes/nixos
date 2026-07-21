@@ -65,10 +65,14 @@
         Type = "simple";
         ExecStartPre = "-${pkgs.coreutils}/bin/rm -f %t/yubikey-agent.sock";
         # -P: ssh-agent's default PKCS#11 allowlist is /usr/lib*, which
-        # silently rejects nix store paths. The glob (not the exact store
-        # path) tolerates skew between a long-running agent and a newer
-        # ssh-add after a rebuild.
-        ExecStart = "${pkgs.openssh}/bin/ssh-agent -D -a %t/yubikey-agent.sock -P '/nix/store/*/lib/libykcs11.so'";
+        # silently rejects nix store paths. ssh-add canonicalizes the
+        # provider with realpath before the agent's whitelist check, and
+        # libykcs11.so is a symlink to the versioned soname
+        # (libykcs11.so.2.7.3), so the pattern must end in '.so*' to match
+        # the resolved path -- ending it at '.so' refuses every load. The
+        # leading glob (not the exact store hash) also tolerates ssh-add
+        # vs. agent skew across a rebuild.
+        ExecStart = "${pkgs.openssh}/bin/ssh-agent -D -a %t/yubikey-agent.sock -P '/nix/store/*/lib/libykcs11.so*'";
         Restart = "on-failure";
       };
       Install.WantedBy = ["default.target"];
