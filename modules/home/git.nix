@@ -1,10 +1,13 @@
 {
   flake.homeModules.git = {
-    # The personal gitconfig, ported from the admin machine. Signing
+    # The personal gitconfig, ported from the admin machine, including its
+    # per-directory work/personal identities (the includeIf files). Signing
     # machinery (key, signer, allowed signers) lives in
     # homeModules.yubikey-ssh; hm merges both into one config file.
-    # Deliberately absent: work includeIf identities and gh credential
-    # helpers (no work checkouts and no gh on karma).
+    # Deliberately absent: the gh credential helpers (github https is
+    # rewritten to ssh below, so they would never fire) and the admin box's
+    # stale top-level user.signingkey (id_sign_ist.pub, a dangling path that
+    # the own_devel include overrides anyway).
     programs.git = {
       enable = true;
 
@@ -13,6 +16,36 @@
         ".aider*"
         "**/.claude/settings.local.json"
         "**/.claude/.cc-writes/"
+      ];
+
+      # Per-directory identities, mirroring the admin machine's includeIf
+      # blocks. The matching pubkeys ship via homeModules.yubikey-ssh;
+      # gitdirs absent on karma simply never match.
+      includes = [
+        {
+          condition = "gitdir:~/slashid/";
+          contents.user = {
+            name = "João Moreira Fernandes";
+            email = "joao@slashid.dev";
+            signingkey = "~/.ssh/id_slashid.pub";
+          };
+        }
+        {
+          condition = "gitdir:~/bckground/";
+          contents.user = {
+            name = "João Moreira Fernandes";
+            email = "joao@bckground.com";
+            signingkey = "~/.ssh/id_bckground.pub";
+          };
+        }
+        {
+          condition = "gitdir:~/own_devel/";
+          contents.user = {
+            name = "João Moreira Fernandes";
+            email = "joao.fernandes@ist.utl.pt";
+            signingkey = "~/.ssh/id_ist.pub";
+          };
+        }
       ];
 
       settings = {
