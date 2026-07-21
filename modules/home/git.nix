@@ -13,7 +13,6 @@
 
       # ~/.gitignore-global equivalent; hm wires core.excludesFile itself.
       ignores = [
-        ".aider*"
         "**/.claude/settings.local.json"
         "**/.claude/.cc-writes/"
       ];
