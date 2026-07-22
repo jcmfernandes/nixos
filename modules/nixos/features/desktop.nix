@@ -1,7 +1,5 @@
 {self, ...}: {
-  flake.nixosModules.desktop = {pkgs, ...}: let
-    selfpkgs = self.packages."${pkgs.stdenv.hostPlatform.system}";
-  in {
+  flake.nixosModules.desktop = {pkgs, ...}: {
     imports = [
       self.nixosModules.gtk
 
@@ -11,7 +9,7 @@
 
     programs.niri = {
       enable = true;
-      package = selfpkgs.niri;
+      package = pkgs.niri;
     };
 
     environment.systemPackages = [

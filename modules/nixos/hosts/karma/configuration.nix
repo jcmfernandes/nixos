@@ -55,6 +55,7 @@
           self.homeModules.desktop-session
           self.homeModules.which-key
           self.homeModules.kitty
+          self.homeModules.niri
         ];
         home.stateVersion = "25.11";
       };

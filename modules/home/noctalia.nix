@@ -34,7 +34,7 @@
           builtin = "Gruvbox";
         };
         bar.main.position = "left";
-        # Wallpaper is handled by awww (see the niri wrapper).
+        # Wallpaper is handled by awww (see homeModules.niri).
         wallpaper.enabled = false;
         # Lock after 5 minutes of inactivity; desktop, so no idle
         # screen-off/suspend behaviors beyond that.
