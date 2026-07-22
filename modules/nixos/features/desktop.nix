@@ -1,8 +1,6 @@
 {self, ...}: {
   flake.nixosModules.desktop = {pkgs, ...}: {
     imports = [
-      self.nixosModules.gtk
-
       #     self.nixosModules.pipewire
       self.nixosModules.firefox
     ];
@@ -68,6 +66,10 @@
     services.gvfs.enable = true;
 
     security.polkit.enable = true;
+
+    # The dconf daemon; hm's gtk/dconf settings need it (previously enabled
+    # inside the gtk feature module).
+    programs.dconf.enable = true;
 
     # polkit.enable only starts the *daemon*. Actions defaulting to
     # auth_admin (e.g. udisks2's encrypted-unlock-system, which Nautilus hits

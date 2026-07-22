@@ -56,6 +56,7 @@
           self.homeModules.which-key
           self.homeModules.kitty
           self.homeModules.niri
+          self.homeModules.gtk
         ];
         home.stateVersion = "25.11";
       };
