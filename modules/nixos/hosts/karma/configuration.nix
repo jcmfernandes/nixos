@@ -57,6 +57,8 @@
           self.homeModules.kitty
           self.homeModules.niri
           self.homeModules.gtk
+          self.homeModules.desktop-apps
+          self.homeModules.fonts
         ];
         home.stateVersion = "25.11";
       };
