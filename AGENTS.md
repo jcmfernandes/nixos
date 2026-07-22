@@ -62,7 +62,7 @@ imported by name:
   `yubikey-ssh`, `git`), consumed via `home-manager.users.<user>.imports`
   in a host's configuration.
 - `flake.theme` / `flake.themeNoHash` — the gruvbox base16 palette
-  (`modules/theme.nix`), consumed as `self.theme.baseNN` by wrapper configs.
+  (`modules/theme.nix`), consumed as `self.theme.baseNN` by home modules.
 - `perSystem.packages.<name>` — buildable packages (the wrapped shell environment).
 
 Because flake-parts merges modules, **several files extend the same

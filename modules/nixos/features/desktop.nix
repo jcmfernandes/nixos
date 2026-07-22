@@ -1,4 +1,4 @@
-{self, ...}: {
+_: {
   flake.nixosModules.desktop = {pkgs, ...}: {
     programs.niri = {
       enable = true;
