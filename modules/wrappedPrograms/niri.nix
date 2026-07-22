@@ -124,10 +124,12 @@
           "XF86AudioRaiseVolume".spawn-sh = "wpctl set-volume -l 1.4 @DEFAULT_AUDIO_SINK@ 5%+";
           "XF86AudioLowerVolume".spawn-sh = "wpctl set-volume -l 1.4 @DEFAULT_AUDIO_SINK@ 5%-";
 
+          # Fine resize; Mod+R cycles the column through preset widths.
           "Mod+Ctrl+H".set-column-width = "-5%";
           "Mod+Ctrl+L".set-column-width = "+5%";
           "Mod+Ctrl+J".set-window-height = "-5%";
           "Mod+Ctrl+K".set-window-height = "+5%";
+          "Mod+R".switch-preset-column-width = _: {};
 
           "Mod+WheelScrollDown".focus-column-left = _: {};
           "Mod+WheelScrollUp".focus-column-right = _: {};
