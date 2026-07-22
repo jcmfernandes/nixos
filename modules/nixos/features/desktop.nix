@@ -10,39 +10,6 @@
       package = pkgs.niri;
     };
 
-    environment.systemPackages = [
-      pkgs.nautilus
-      pkgs.easyeffects
-      pkgs.insync
-      pkgs.vlc
-      pkgs.unrar
-      pkgs.file-roller
-      pkgs.libreoffice
-      pkgs.gimp
-      pkgs.zathura
-      pkgs.foliate
-      pkgs.qbittorrent
-      pkgs.gparted
-      pkgs.wdisplays
-      pkgs.celluloid
-      pkgs.element-desktop
-      pkgs.halloy
-    ];
-
-    fonts.packages = with pkgs; [
-      nerd-fonts.jetbrains-mono
-      ubuntu-sans
-      cm_unicode
-      corefonts
-      unifont
-    ];
-
-    fonts.fontconfig.defaultFonts = {
-      serif = ["Ubuntu Sans"];
-      sansSerif = ["Ubuntu Sans"];
-      monospace = ["JetBrainsMono Nerd Font"];
-    };
-
     time.timeZone = "Europe/Lisbon";
     i18n.defaultLocale = "en_US.UTF-8";
     i18n.extraLocaleSettings = {
