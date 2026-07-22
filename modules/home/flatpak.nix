@@ -1,10 +1,11 @@
 {inputs, ...}: {
-  flake.nixosModules.flatpak = {
-    imports = [inputs.nix-flatpak.nixosModules.nix-flatpak];
+  flake.homeModules.flatpak = {
+    imports = [inputs.nix-flatpak.homeManagerModules.nix-flatpak];
 
     # Apps better delivered via Flathub than nixpkgs (fresher Slack/Zoom,
-    # sandboxed). nix-flatpak installs/updates these on nixos-rebuild, so the
-    # set stays declarative. services.flatpak.enable is set in the host config.
+    # sandboxed). nix-flatpak installs/updates these on activation, so the
+    # set stays declarative -- now user-scope instead of system-scope.
+    # services.flatpak.enable (the system daemon) is set in the host config.
     services.flatpak = {
       remotes = [
         {

@@ -25,7 +25,6 @@
       self.nixosModules.secureboot
       self.nixosModules.yubikey
       self.nixosModules.mise
-      self.nixosModules.flatpak
 
       # disko
       inputs.disko.nixosModules.disko
@@ -59,6 +58,7 @@
           self.homeModules.gtk
           self.homeModules.desktop-apps
           self.homeModules.fonts
+          self.homeModules.flatpak
         ];
         home.stateVersion = "25.11";
       };
