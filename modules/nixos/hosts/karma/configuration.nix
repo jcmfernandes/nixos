@@ -53,6 +53,7 @@
           self.homeModules.git
           self.homeModules.noctalia
           self.homeModules.desktop-session
+          self.homeModules.which-key
         ];
         home.stateVersion = "25.11";
       };
