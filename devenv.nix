@@ -10,8 +10,8 @@
     attic-client
     gitleaks
     nixd # Nix LSP
-    alejandra
-    statix
+    alejandra # Nix code formatter
+    statix # Nix linter
   ];
 
   git-hooks.hooks = {
