@@ -21,7 +21,6 @@
       self.nixosModules.nix
       self.nixosModules.persistenceDefaults
       self.nixosModules.desktop
-      self.nixosModules.emacs
       self.nixosModules.secureboot
       self.nixosModules.yubikey
       self.nixosModules.mise
@@ -59,6 +58,7 @@
           self.homeModules.desktop-apps
           self.homeModules.fonts
           self.homeModules.flatpak
+          self.homeModules.emacs
         ];
         home.stateVersion = "25.11";
       };
