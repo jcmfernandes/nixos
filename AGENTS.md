@@ -50,7 +50,7 @@ Fresh installs use `nixos-anywhere` + `disko` (each host has a
 `modules/` is auto-discovered and evaluated as a flake-parts module.** There
 is no hand-maintained import list; adding a file under `modules/` wires it
 in. `modules/parts.nix` pins `systems = ["x86_64-linux"]` and declares the
-custom `flake.wrapperModules` option.
+custom `flake.homeModules` option.
 
 Files contribute to the flake by *setting attributes*, not by being
 imported by name:
@@ -61,10 +61,9 @@ imported by name:
 - `flake.homeModules.<name>` — a reusable Home Manager module (e.g.
   `yubikey-ssh`, `git`), consumed via `home-manager.users.<user>.imports`
   in a host's configuration.
-- `flake.wrapperModules.<name>` — wrapper-module fragments (see below).
 - `flake.theme` / `flake.themeNoHash` — the gruvbox base16 palette
   (`modules/theme.nix`), consumed as `self.theme.baseNN` by wrapper configs.
-- `perSystem.packages.<name>` — buildable packages (the wrapped desktop).
+- `perSystem.packages.<name>` — buildable packages (the wrapped shell environment).
 
 Because flake-parts merges modules, **several files extend the same
 `flake.nixosModules.base`**: `base/base.nix` adds `options.preferences`,
