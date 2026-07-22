@@ -1,24 +1,29 @@
-{
-  self,
-  inputs,
-  ...
-}: {
-  flake.wrapperModules.kitty = {
-    config,
+{self, ...}: {
+  flake.homeModules.kitty = {
     lib,
+    pkgs,
     ...
   }: {
-    options.shell = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-    };
-    config = {
-      args = lib.mkAfter (lib.optionals (config.shell != "") [config.shell]);
+    programs.kitty = {
+      enable = true;
+
+      font = {
+        name = "JetBrainsMono Nerd Font";
+        size = 15;
+      };
+
+      # Keep kitty.conf equivalent to the previously wrapped config: the raw
+      # shell_integration value is carried in `settings`, so hm's own
+      # integration plumbing (which force-prepends no-rc) is disabled.
+      shellIntegration = {
+        mode = null;
+        enableBashIntegration = false;
+        enableFishIntegration = false;
+        enableZshIntegration = false;
+      };
+
       settings = {
         enable_audio_bell = "no";
-
-        font_size = 15;
-        font_family = "JetBrainsMono Nerd Font";
 
         cursor_text_color = "background";
 
@@ -27,20 +32,9 @@
 
         cursor_trail = 3;
 
-        map = [
-          "alt+1 goto_tab 1"
-          "alt+2 goto_tab 2"
-          "alt+3 goto_tab 3"
-          "alt+4 goto_tab 4"
-          "alt+5 goto_tab 5"
-          "alt+6 goto_tab 6"
-          "alt+7 goto_tab 7"
-          "alt+8 goto_tab 8"
-          "alt+9 goto_tab 9"
-          "ctrl+shift+w close_tab"
-          "ctrl+t new_tab_with_cwd"
-          "ctrl+shift+t new_tab"
-        ];
+        # The wrapped zsh environment (flake toolchain on PATH) stays the
+        # terminal's shell.
+        shell = lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.environment;
 
         background = self.theme.base00;
         foreground = self.theme.base07;
@@ -71,14 +65,21 @@
         color7 = self.theme.base03;
         color15 = self.theme.base03;
       };
-    };
-  };
 
-  perSystem = {pkgs, ...}: {
-    packages.kitty =
-      (inputs.wrappers.wrapperModules.kitty.apply {
-        inherit pkgs;
-        imports = [self.wrapperModules.kitty];
-      }).wrapper;
+      keybindings = {
+        "alt+1" = "goto_tab 1";
+        "alt+2" = "goto_tab 2";
+        "alt+3" = "goto_tab 3";
+        "alt+4" = "goto_tab 4";
+        "alt+5" = "goto_tab 5";
+        "alt+6" = "goto_tab 6";
+        "alt+7" = "goto_tab 7";
+        "alt+8" = "goto_tab 8";
+        "alt+9" = "goto_tab 9";
+        "ctrl+shift+w" = "close_tab";
+        "ctrl+t" = "new_tab_with_cwd";
+        "ctrl+shift+t" = "new_tab";
+      };
+    };
   };
 }
