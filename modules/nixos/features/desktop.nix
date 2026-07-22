@@ -1,10 +1,5 @@
 {self, ...}: {
   flake.nixosModules.desktop = {pkgs, ...}: {
-    imports = [
-      #     self.nixosModules.pipewire
-      self.nixosModules.firefox
-    ];
-
     programs.niri = {
       enable = true;
       package = pkgs.niri;
