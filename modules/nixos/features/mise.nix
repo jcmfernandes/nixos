@@ -1,7 +1,7 @@
 _: {
   flake.nixosModules.mise = {pkgs, ...}: {
     # mise: polyglot per-project tool/runtime version manager. The interactive
-    # shell activates it via `mise activate zsh` (modules/wrappedPrograms).
+    # shell activates it via `mise activate zsh` (homeModules.shell).
     environment.systemPackages = [pkgs.mise];
 
     # mise installs mostly precompiled, FHS-linked binaries (node, go, the
