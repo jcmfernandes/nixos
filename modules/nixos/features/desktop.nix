@@ -15,7 +15,6 @@
     };
 
     environment.systemPackages = [
-      selfpkgs.terminal
       pkgs.nautilus
       pkgs.easyeffects
       pkgs.insync

@@ -54,6 +54,7 @@
           self.homeModules.noctalia
           self.homeModules.desktop-session
           self.homeModules.which-key
+          self.homeModules.kitty
         ];
         home.stateVersion = "25.11";
       };
