@@ -51,6 +51,7 @@
           "Mod+M".maximize-column = _: {};
           "Mod+F".fullscreen-window = _: {};
           "Mod+G".toggle-window-floating = _: {};
+          "Mod+Shift+G".switch-focus-between-floating-and-tiling = _: {};
           "Mod+S".toggle-column-tabbed-display = _: {};
           "Mod+C".center-column = _: {};
 
