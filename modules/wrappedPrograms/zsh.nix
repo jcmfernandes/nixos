@@ -4,27 +4,30 @@
   ...
 }: {
   perSystem = {pkgs, ...}: {
-    packages.myZsh = pkgs.lib.makeOverridable ({
-      runtimeInputs ? [],
-      editor ? "",
-      interactiveInit ? "",
-    }: let
+    packages.myZsh = pkgs.lib.makeOverridable ({runtimeInputs ? []}: let
       zshenv =
         pkgs.writeTextDir ".zshenv"
         # bash
         ''
           export PATH="${lib.makeBinPath runtimeInputs}:$PATH"
-          ${lib.optionalString (editor != "") ''export EDITOR="${editor}"''}
           # Source user's own zshenv if it exists
           if [[ -f "$HOME/.zshenv" ]]; then
             source "$HOME/.zshenv"
           fi
         '';
-      # Interactive-only init (tool activations etc.) belongs in .zshrc.
-      zshrc = pkgs.writeTextDir ".zshrc" interactiveInit;
+      # Interactive-only init (tool activations etc.) lives in the user's own
+      # ~/.zshrc -- on karma managed by homeModules.desktop-session.
+      zshrc =
+        pkgs.writeTextDir ".zshrc"
+        # bash
+        ''
+          if [[ -f "$HOME/.zshrc" ]]; then
+            source "$HOME/.zshrc"
+          fi
+        '';
       zshConf = pkgs.symlinkJoin {
         name = "zsh-config";
-        paths = [zshenv] ++ lib.optional (interactiveInit != "") zshrc;
+        paths = [zshenv zshrc];
       };
     in
       inputs.wrappers.lib.wrapPackage {

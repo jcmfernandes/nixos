@@ -14,9 +14,6 @@
       inherit pkgs;
       imports = [self.wrapperModules.niri];
       terminal = lib.getExe self'.packages.terminal;
-      env = {
-        EDITOR = lib.getExe pkgs.nano;
-      };
     };
 
     # My primary flake terminal
@@ -89,10 +86,6 @@
         #        self'.packages.jjui
         self'.packages.nix-check-bin
       ];
-      editor = lib.getExe pkgs.nano;
-      # Activate mise for per-project tool versions when the host installs it
-      # (see modules/nixos/features/mise.nix); no-op otherwise.
-      interactiveInit = ''command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"'';
     };
 
     packages.nix-check-bin = pkgs.writeShellApplication {

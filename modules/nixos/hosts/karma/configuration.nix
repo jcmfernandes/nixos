@@ -52,6 +52,7 @@
           self.homeModules.yubikey-ssh
           self.homeModules.git
           self.homeModules.noctalia
+          self.homeModules.desktop-session
         ];
         home.stateVersion = "25.11";
       };
