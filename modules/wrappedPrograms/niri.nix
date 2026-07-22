@@ -18,6 +18,10 @@
       in {
         prefer-no-csd = _: {};
 
+        # Don't pop the "Important Hotkeys" cheat-sheet on every login;
+        # summon it on demand with Mod+Shift+Slash instead.
+        hotkey-overlay.skip-at-startup = _: {};
+
         input = {
           focus-follows-mouse = _: {};
 
@@ -44,10 +48,16 @@
           "Mod+Return".spawn = config.terminal;
 
           "Mod+Q".close-window = _: {};
-          "Mod+F".maximize-column = _: {};
-          "Mod+G".fullscreen-window = _: {};
-          "Mod+Shift+F".toggle-window-floating = _: {};
+          "Mod+M".maximize-column = _: {};
+          "Mod+F".fullscreen-window = _: {};
+          "Mod+G".toggle-window-floating = _: {};
+          "Mod+S".toggle-column-tabbed-display = _: {};
           "Mod+C".center-column = _: {};
+
+          # Loose analog to Pop's "change orientation": pull a window into
+          # the current column (vertical stack) or expel it back out.
+          "Mod+O".consume-or-expel-window-right = _: {};
+          "Mod+Shift+O".consume-or-expel-window-left = _: {};
 
           "Mod+H".focus-column-left = _: {};
           "Mod+L".focus-column-right = _: {};
@@ -59,15 +69,29 @@
           "Mod+Up".focus-window-up = _: {};
           "Mod+Down".focus-window-down = _: {};
 
+          # hjkl = niri structural editing: reorder within the strip/column.
           "Mod+Shift+H".move-column-left = _: {};
           "Mod+Shift+L".move-column-right = _: {};
           "Mod+Shift+K".move-window-up = _: {};
           "Mod+Shift+J".move-window-down = _: {};
 
-          "Mod+Ctrl+Shift+K".focus-monitor-left = _: {};
-          "Mod+Ctrl+Shift+J".focus-monitor-right = _: {};
-          "Mod+Ctrl+Shift+H".move-column-to-monitor-left = _: {};
-          "Mod+Ctrl+Shift+L".move-column-to-monitor-right = _: {};
+          # Arrows = Pop spatial navigation. Ctrl navigates (workspaces
+          # vertically, monitors horizontally); Shift moves the window
+          # there; Ctrl+Shift moves it to a vertically-stacked monitor.
+          "Mod+Ctrl+Up".focus-workspace-up = _: {};
+          "Mod+Ctrl+Down".focus-workspace-down = _: {};
+          "Mod+Ctrl+Left".focus-monitor-left = _: {};
+          "Mod+Ctrl+Right".focus-monitor-right = _: {};
+
+          "Mod+Shift+Up".move-column-to-workspace-up = _: {};
+          "Mod+Shift+Down".move-column-to-workspace-down = _: {};
+          "Mod+Shift+Left".move-column-to-monitor-left = _: {};
+          "Mod+Shift+Right".move-column-to-monitor-right = _: {};
+
+          "Mod+Ctrl+Shift+Up".move-column-to-monitor-up = _: {};
+          "Mod+Ctrl+Shift+Down".move-column-to-monitor-down = _: {};
+
+          "Mod+Tab".toggle-overview = _: {};
 
           "Mod+1".focus-workspace = "w0";
           "Mod+2".focus-workspace = "w1";
@@ -91,7 +115,8 @@
           "Mod+Shift+9".move-column-to-workspace = "w8";
           "Mod+Shift+0".move-column-to-workspace = "w9";
 
-          "Mod+S".spawn-sh = "${noctaliaExe} msg panel-toggle launcher";
+          "Mod+Slash".spawn-sh = "${noctaliaExe} msg panel-toggle launcher";
+          "Mod+Shift+Slash".show-hotkey-overlay = _: {};
           "Mod+Escape".spawn-sh = "${noctaliaExe} msg session lock";
           "Mod+V".spawn-sh = ''${config.pkgs.alsa-utils}/bin/amixer sset Capture toggle'';
 
