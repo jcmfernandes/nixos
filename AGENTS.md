@@ -63,7 +63,6 @@ imported by name:
   in a host's configuration.
 - `flake.theme` / `flake.themeNoHash` — the gruvbox base16 palette
   (`modules/theme.nix`), consumed as `self.theme.baseNN` by home modules.
-- `perSystem.packages.<name>` — buildable packages (the wrapped shell environment).
 
 Because flake-parts merges modules, **several files extend the same
 `flake.nixosModules.base`**: `base/base.nix` adds `options.preferences`,
@@ -97,22 +96,21 @@ The three hosts differ significantly:
   OpenTofu. See `docs/vivivi.md` before changing any firewall — deploy
   ordering matters or you lock yourself out.
 
-### Wrapped programs (`modules/wrappedPrograms/`)
+### Shell & GUI configuration (home-manager)
 
-The interactive shell is a self-contained package built with
-`Lassulus/wrappers`: `packages.environment` wraps zsh with the flake's
-CLI toolchain on PATH and is karma's login shell and the terminal's
-shell. Its store-side zshenv/zshrc source the user's own `~/.zshenv` /
-`~/.zshrc` for personal bits (managed by home-manager on karma).
+The interactive shell is plain zsh: `homeModules.shell` sets
+`programs.zsh` (mise activation, EDITOR) and puts the CLI toolchain on
+the user's PATH via `home.packages`. It is karma's login shell and,
+by default, the terminal's.
 
 GUI configuration (niri, kitty, wlr-which-key, GTK theming, fonts,
 desktop apps, flatpaks, emacs, firefox) lives in Home Manager modules
 under `modules/home/` (`flake.homeModules.*`), consumed via
 `home-manager.users.<user>.imports` in karma's configuration. The niri
 home module renders its settings with `BirdeeHub/nix-wrapper-modules`'
-`evalModule`/`toKdl` (the same DSL a wrapper would use, validated with
-`niri validate` at build time) but delivers the result as
-`~/.config/niri/config.kdl` for plain `pkgs.niri` to read.
+`evalModule`/`toKdl` (validated with `niri validate` at build time)
+and delivers the result as `~/.config/niri/config.kdl` for plain
+`pkgs.niri` to read.
 
 ### Secrets (sops-nix) — see docs/secrets.md
 
