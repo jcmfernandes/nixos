@@ -105,7 +105,7 @@ by default, the terminal's.
 
 GUI configuration (niri, kitty, wlr-which-key, GTK theming, fonts,
 desktop apps, flatpaks, emacs, firefox) lives in Home Manager modules
-under `modules/home/` (`flake.homeModules.*`), consumed via
+under `modules/home/jcmfernandes/` (`flake.homeModules.*`), consumed via
 `home-manager.users.<user>.imports` in karma's configuration. The niri
 home module renders its settings with `BirdeeHub/nix-wrapper-modules`'
 `evalModule`/`toKdl` (validated with `niri validate` at build time)
