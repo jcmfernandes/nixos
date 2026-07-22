@@ -1,5 +1,9 @@
 {
-  flake.homeModules.gtk = {pkgs, ...}: let
+  flake.homeModules.gtk = {
+    config,
+    pkgs,
+    ...
+  }: let
     theme-name = "Gruvbox-Green-Dark-Medium";
     theme-package = pkgs.gruvbox-gtk-theme.override {
       colorVariants = ["dark"];
@@ -25,6 +29,9 @@
         package = icon-theme-package;
       };
       colorScheme = "dark";
+      # Theme gtk4 like gtk3 (the upstream default flips to null at
+      # stateVersion 26.05; we want the themed behavior either way).
+      gtk4.theme = config.gtk.theme;
     };
 
     # Carried over for parity with the old environment.variables.GTK_THEME;
