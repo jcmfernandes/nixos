@@ -1,9 +1,5 @@
 {self, ...}: {
   flake.homeModules.kitty = {
-    lib,
-    pkgs,
-    ...
-  }: {
     programs.kitty = {
       enable = true;
 
@@ -31,10 +27,6 @@
         shell_integration = "enabled";
 
         cursor_trail = 3;
-
-        # The wrapped zsh environment (flake toolchain on PATH) stays the
-        # terminal's shell.
-        shell = lib.getExe self.packages.${pkgs.stdenv.hostPlatform.system}.environment;
 
         background = self.theme.base00;
         foreground = self.theme.base07;
