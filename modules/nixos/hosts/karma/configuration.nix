@@ -9,7 +9,6 @@
     lib,
     ...
   }: let
-    selfpkgs = self.packages."${pkgs.stdenv.hostPlatform.system}";
     jcmfernandesAuthorizedKeys =
       lib.filter (s: s != "")
       (lib.splitString "\n" (lib.fileContents inputs.jcmfernandes-keys));
@@ -50,7 +49,7 @@
           self.homeModules.yubikey-ssh
           self.homeModules.git
           self.homeModules.noctalia
-          self.homeModules.desktop-session
+          self.homeModules.shell
           self.homeModules.which-key
           self.homeModules.kitty
           self.homeModules.niri
@@ -175,11 +174,9 @@
     xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gtk];
     xdg.portal.enable = true;
 
-    environment.shells = [(lib.getExe selfpkgs.environment)];
-
     users.users.jcmfernandes = {
       isNormalUser = true;
-      shell = lib.getExe selfpkgs.environment;
+      shell = pkgs.zsh;
       extraGroups = ["wheel" "networkmanager" "input" "uinput" "video" "render" "libvirtd"];
       hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.
