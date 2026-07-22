@@ -100,13 +100,20 @@ The three hosts differ significantly:
 
 ### Wrapped programs (`modules/wrappedPrograms/`)
 
-Desktop apps are built as self-contained packages using
-`Lassulus/wrappers` + `BirdeeHub/nix-wrapper-modules`. `environment.nix`
-composes them under `perSystem.packages`: `packages.environment` (zsh +
-CLI toolchain), `packages.terminal` (kitty wrapping the shell), and
-`packages.desktop` (niri wrapping the terminal). Per-app config fragments
-(`kitty.nix`, `niri.nix`, `which-key.nix`, …) declare
-`flake.wrapperModules.<name>` and pull colors from `self.theme`.
+The interactive shell is a self-contained package built with
+`Lassulus/wrappers`: `packages.environment` wraps zsh with the flake's
+CLI toolchain on PATH and is karma's login shell and the terminal's
+shell. Its store-side zshenv/zshrc source the user's own `~/.zshenv` /
+`~/.zshrc` for personal bits (managed by home-manager on karma).
+
+GUI configuration (niri, kitty, wlr-which-key, GTK theming, fonts,
+desktop apps, flatpaks, emacs, firefox) lives in Home Manager modules
+under `modules/home/` (`flake.homeModules.*`), consumed via
+`home-manager.users.<user>.imports` in karma's configuration. The niri
+home module renders its settings with `BirdeeHub/nix-wrapper-modules`'
+`evalModule`/`toKdl` (the same DSL a wrapper would use, validated with
+`niri validate` at build time) but delivers the result as
+`~/.config/niri/config.kdl` for plain `pkgs.niri` to read.
 
 ### Secrets (sops-nix) — see docs/secrets.md
 
