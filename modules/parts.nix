@@ -1,14 +1,6 @@
 {inputs, ...}: {
   options = {
     flake = inputs.flake-parts.lib.mkSubmoduleOptions {
-      wrapperModules = inputs.nixpkgs.lib.mkOption {
-        # Values are heterogeneous (plain module fragments, but also
-        # wrapModule results consumed via .apply), so raw: passed through
-        # untouched, and defining the same name twice is an eval error
-        # instead of a silent overwrite.
-        type = inputs.nixpkgs.lib.types.lazyAttrsOf inputs.nixpkgs.lib.types.raw;
-        default = {};
-      };
       homeModules = inputs.nixpkgs.lib.mkOption {
         # Home Manager module fragments, consumed via
         # home-manager.users.<name>.imports. deferredModule matches how
