@@ -180,11 +180,6 @@
       yt-dlp
 
       ###
-      ### terminal multiplexers
-      zellij
-      tmux
-
-      ###
       ### editing & clipboard
       # $EDITOR (see home.sessionVariables above).
       nano

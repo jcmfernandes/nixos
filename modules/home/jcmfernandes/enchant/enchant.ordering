@@ -1,0 +1,17 @@
+# Which Enchant provider serves each language.
+#
+# Without this file the choice depends on whichever dictionary packages a
+# machine happens to have installed: with both aspell-en and hunspell-en-us
+# present, Enchant's built-in ordering picks aspell for en_US, while pt_PT --
+# packaged only for hunspell -- gets hunspell.  Pinning keeps suggestions
+# identical everywhere.
+#
+# hunspell for both: it puts the correct word first as reliably as aspell and
+# returns shorter, less noisy lists, which suits jinx's completing-read picker.
+#
+# NOTE: one line per language.  The `*' wildcard is silently ignored (checked
+# against Enchant 2.3.2) -- a language added here later needs its own line or
+# it falls back to the built-in ordering.
+
+en_US:hunspell
+pt_PT:hunspell
