@@ -138,6 +138,9 @@
 
       ###
       ### system & processes
+      # Symlink-farm manager; deploys hand-managed dotfiles (e.g. ~/.emacs.d
+      # from a dotfiles checkout) without hm involvement.
+      stow
       # Interactive process viewer.
       htop
       # Fancier resource monitor.
