@@ -6,13 +6,8 @@
   flake.nixosModules.karmaConfiguration = {
     config,
     pkgs,
-    lib,
     ...
-  }: let
-    jcmfernandesAuthorizedKeys =
-      lib.filter (s: s != "")
-      (lib.splitString "\n" (lib.fileContents inputs.jcmfernandes-keys));
-  in {
+  }: {
     imports = [
       self.nixosModules.karmaHardware
 
@@ -23,6 +18,7 @@
       self.nixosModules.secureboot
       self.nixosModules.yubikey
       self.nixosModules.mise
+      self.nixosModules.jcmfernandes
 
       # disko
       inputs.disko.nixosModules.disko
@@ -44,24 +40,6 @@
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;
-      users.jcmfernandes = {
-        imports = [
-          self.homeModules.yubikey-ssh
-          self.homeModules.git
-          self.homeModules.noctalia
-          self.homeModules.shell
-          self.homeModules.which-key
-          self.homeModules.kitty
-          self.homeModules.niri
-          self.homeModules.gtk
-          self.homeModules.desktop-apps
-          self.homeModules.fonts
-          self.homeModules.flatpak
-          self.homeModules.firefox
-          self.homeModules.emacs
-        ];
-        home.stateVersion = "25.11";
-      };
     };
 
     nix.settings.experimental-features = ["nix-command" "flakes"];
@@ -173,15 +151,6 @@
 
     xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gtk];
     xdg.portal.enable = true;
-
-    users.users.jcmfernandes = {
-      isNormalUser = true;
-      shell = pkgs.zsh;
-      extraGroups = ["wheel" "networkmanager" "input" "uinput" "video" "render" "libvirtd"];
-      hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
-      # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.
-      openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
-    };
 
     users.users.root.hashedPassword = "!";
 

@@ -60,7 +60,7 @@ imported by name:
   `<host>Hardware`).
 - `flake.homeModules.<name>` — a reusable Home Manager module (e.g.
   `yubikey-ssh`, `git`), consumed via `home-manager.users.<user>.imports`
-  in a host's configuration.
+  in the user's NixOS module (`modules/nixos/users/<user>/`).
 - `flake.theme` / `flake.themeNoHash` — the gruvbox base16 palette
   (`modules/theme.nix`), consumed as `self.theme.baseNN` by home modules.
 
@@ -106,7 +106,9 @@ by default, the terminal's.
 GUI configuration (niri, kitty, wlr-which-key, GTK theming, fonts,
 desktop apps, flatpaks, emacs, firefox) lives in Home Manager modules
 under `modules/home/jcmfernandes/` (`flake.homeModules.*`), consumed via
-`home-manager.users.<user>.imports` in karma's configuration. The niri
+`home-manager.users.<user>.imports` in `nixosModules.jcmfernandes`
+(`modules/nixos/users/jcmfernandes/`, the account + hm payload,
+imported by karma). The niri
 home module renders its settings with `BirdeeHub/nix-wrapper-modules`'
 `evalModule`/`toKdl` (validated with `niri validate` at build time)
 and delivers the result as `~/.config/niri/config.kdl` for plain
