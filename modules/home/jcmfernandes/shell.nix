@@ -31,55 +31,52 @@
 
     # The CLI toolchain, previously baked into the wrapped shell's PATH;
     # the per-user profile now carries it.
-    home.packages = [
+    home.packages = with pkgs; [
       # nix
-      pkgs.nil
-      pkgs.nixd
-      pkgs.statix
-      pkgs.alejandra
-      pkgs.manix
-      pkgs.nix-inspect
-      pkgs.nh
-      pkgs.devenv
-      pkgs.podman-compose
+      manix
+      nix-inspect
+      nh
+      devenv
+      podman-compose
 
       # other
-      pkgs.file
-      pkgs.unzip
-      pkgs.zip
-      pkgs.p7zip
-      pkgs.wget
-      pkgs.killall
-      pkgs.sshfs
-      pkgs.fzf
-      pkgs.htop
-      pkgs.btop
-      pkgs.eza
-      pkgs.fd
-      pkgs.zoxide
-      pkgs.dust
-      pkgs.ripgrep
-      pkgs.fastfetch
-      pkgs.tree-sitter
-      pkgs.imagemagick
-      pkgs.imv
-      pkgs.mpv
-      pkgs.ffmpeg-full
-      pkgs.yt-dlp
-      pkgs.lazygit
+      file
+      unzip
+      zip
+      p7zip
+      wget
+      killall
+      sshfs
+      fzf
+      htop
+      btop
+      eza
+      fd
+      zoxide
+      dust
+      ripgrep
+      fastfetch
+      tree-sitter
+      imagemagick
+      imv
+      mpv
+      ffmpeg-full
+      yt-dlp
+      lazygit
 
       # terminal multiplexers
-      pkgs.zellij
-      pkgs.tmux
+      zellij
+      tmux
 
-      # AI coding agent, auto-updated via the claude-code-nix flake
-      inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+      # AI coding agent, auto-updated via the claude-code-nix flake.
+      inputs.claude-code-nix.packages.${stdenv.hostPlatform.system}.claude-code
 
-      pkgs.git
-      pkgs.gnumake
-      pkgs.nano
-      pkgs.wl-clipboard
-      pkgs.waypipe
+      git
+      gnumake
+      cmake
+      nano
+      wl-clipboard
+      waypipe
 
       nix-check-bin
     ];
