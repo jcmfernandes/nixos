@@ -23,7 +23,9 @@
         keyboard = {
           xkb = {
             layout = "us,pt";
-            options = "grp:alt_shift_toggle,caps:escape";
+            # Layout switching is a niri bind (Mod+Space, see binds), not an
+            # xkb group toggle.
+            options = "caps:escape";
           };
           repeat-rate = 40;
           repeat-delay = 250;
@@ -41,6 +43,8 @@
 
       binds = {
         "Mod+Return".spawn = "kitty";
+
+        "Mod+Space".switch-layout = "next";
 
         "Mod+Q".close-window = _: {};
         "Mod+M".maximize-column = _: {};
