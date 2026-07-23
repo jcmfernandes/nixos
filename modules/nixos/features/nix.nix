@@ -13,7 +13,12 @@
       enable = true;
       silent = false;
       loadInNixShell = true;
-      direnvrcExtra = "";
+      # Define `use devenv` (the `use_devenv` direnv function this repo's
+      # .envrc relies on). devenv prints its own direnvrc; without this the
+      # .envrc fails with "use_devenv: command not found".
+      direnvrcExtra = ''
+        eval "$(${lib.getExe pkgs.devenv} direnvrc)"
+      '';
       nix-direnv = {
         enable = true;
       };
