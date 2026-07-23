@@ -23,7 +23,8 @@
       # client-side expansion in scp-flake.sh); only fail on warnings up.
       args = ["--severity=warning"];
       # .envrc files are direnv scripts: no shebang by design (SC2148).
-      excludes = ["\\.envrc$"];
+      # .zsh files are zsh, which shellcheck does not support.
+      excludes = ["\\.envrc$" "\\.zsh$"];
     };
     gitleaks = {
       enable = true;
