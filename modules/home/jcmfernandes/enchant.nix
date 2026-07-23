@@ -7,6 +7,7 @@
     xdg.configFile."enchant/enchant.ordering".source = ./enchant/enchant.ordering;
 
     home.packages = [
+      pkgs.enchant
       pkgs.hunspellDicts.en_US
       pkgs.hunspellDicts.pt_PT
     ];
