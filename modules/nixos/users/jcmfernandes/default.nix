@@ -38,6 +38,9 @@
         self.homeModules.flatpak
         self.homeModules.firefox
         self.homeModules.emacs
+        self.homeModules.tmux
+        self.homeModules.zellij
+        self.homeModules.enchant
       ];
       home.stateVersion = "25.11";
     };

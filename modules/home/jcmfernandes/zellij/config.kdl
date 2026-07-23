@@ -1,0 +1,72 @@
+// ~/.config/zellij/config.kdl
+//
+// Zellij configuration mirroring ~/.tmux.conf.
+//
+// Prefix model: C-Space is a tmux-style prefix that opens zellij's native
+// (sticky) modes. Press C-Space, then a single letter to enter a mode:
+//
+//   C-Space p  -> pane      C-Space s  -> scroll / copy
+//   C-Space t  -> tab       C-Space o  -> session
+//   C-Space n  -> resize    C-Space m  -> move
+//   C-Space g  -> locked
+//
+// Modes are sticky: once inside, repeat the mode's keys (e.g. h/j/k/l to move
+// focus in pane mode) and press Esc/Enter to return to Normal.
+//
+// Note: C-Space relies on the terminal sending a distinct Ctrl+Space (as it
+// already does for tmux). Terminals supporting the Kitty keyboard protocol
+// (which zellij enables when available) handle this unambiguously.
+
+keybinds {
+    // Remove zellij's direct Ctrl-<letter> mode doorways so C-Space is the
+    // only way into a mode (prefix-only). This also drops each mode's
+    // Ctrl-<letter> "back to Normal" toggle; Esc/Enter still exits every mode.
+    unbind "Ctrl p" "Ctrl t" "Ctrl n" "Ctrl s" "Ctrl o" "Ctrl h" "Ctrl b" "Ctrl g"
+
+    // C-Space opens the prefix. We reuse zellij's built-in "tmux" mode as the
+    // launcher (it is otherwise unused now that Ctrl-b is unbound).
+    shared_except "tmux" "locked" {
+        bind "Ctrl Space" { SwitchToMode "Tmux"; }
+    }
+
+    // The prefix itself: one letter drops into a sticky mode.
+    tmux clear-defaults=true {
+        bind "p" { SwitchToMode "Pane"; }
+        bind "t" { SwitchToMode "Tab"; }
+        bind "n" { SwitchToMode "Resize"; }
+        bind "s" { SwitchToMode "Scroll"; }
+        bind "o" { SwitchToMode "Session"; }
+        bind "m" { SwitchToMode "Move"; }
+        bind "g" { SwitchToMode "Locked"; }
+        bind "Esc" "Enter" { SwitchToMode "Normal"; }
+    }
+
+    // The one deliberate non-prefix key: locked mode must keep a direct escape,
+    // because the prefix is intentionally inert inside locked mode.
+    locked {
+        bind "Ctrl g" { SwitchToMode "Normal"; }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Options mirrored from .tmux.conf
+// ---------------------------------------------------------------------------
+
+// set -g mouse on
+mouse_mode true
+
+// tmux-yank: copy the selection to the system clipboard.
+// copy_on_select copies on mouse release; OSC52 delivers it to the clipboard
+// and works over SSH and in most modern Linux terminals.
+copy_on_select true
+copy_clipboard "system"
+// If your terminal does not honor OSC52, use an explicit copy command instead:
+// copy_command "wl-copy"                     // Wayland
+// copy_command "xclip -selection clipboard"  // X11
+
+// ---------------------------------------------------------------------------
+// Not ported from .tmux.conf (no zellij equivalent):
+//   - status bar content     : the built-in bar shows mode/tabs/hints, not
+//                              whoami::host + session + date (would need a
+//                              third-party plugin such as zjstatus)
+// ---------------------------------------------------------------------------
