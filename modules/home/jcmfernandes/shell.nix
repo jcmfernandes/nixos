@@ -19,13 +19,75 @@
       # Keep the dotfiles at ~/ and silence the upstream default-change
       # warning.
       dotDir = config.home.homeDirectory;
-      # Interactive-only init. Activate mise for per-project tool versions
-      # when the host installs it (see modules/nixos/features/mise.nix);
-      # no-op otherwise.
-      initContent = ''
-        command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
-      '';
+      # No theme set: the prompt comes from starship (below), which runs
+      # after oh-my-zsh's init and overrides any OMZ prompt.
+      oh-my-zsh = {
+        enable = true;
+        # The plugin list from dotfiles2 (the admin machine), minus two:
+        # starship (hm's starship module injects the init itself) and z
+        # (programs.zoxide below replaces it). Plugins for tools karma does
+        # not ship are kept on purpose: they are inert without the tool and
+        # keep the list in sync with the admin machine. The mise plugin
+        # activates mise when the host installs it (see
+        # modules/nixos/features/mise.nix).
+        plugins = [
+          "git"
+          "gh"
+          "sudo"
+          "gpg-agent"
+          "extract"
+          "mise"
+          "direnv"
+          "tmux"
+          "task"
+          "colored-man-pages"
+          "history-substring-search"
+          "fzf"
+          "web-search"
+
+          # languages
+          "ruby"
+          "rails"
+          "golang"
+
+          # emacs
+          "emacs"
+          "cask"
+
+          # containers & infra
+          "docker"
+          "docker-compose"
+          "terraform"
+          "opentofu"
+          "kubectl"
+
+          # clouds
+          "aws"
+          "azure"
+          "gcloud"
+        ];
+        # Auto-sourced *.zsh drop-in dir; the ghostel/emacs integration
+        # below lands there.
+        custom = "${config.xdg.configHome}/omz";
+        extraConfig = ''
+          COMPLETION_WAITING_DOTS="true"
+          HIST_STAMPS="yyyy-mm-dd"
+        '';
+      };
     };
+
+    # Terminal commands drive the running Emacs when inside a ghostel
+    # terminal; sourced by oh-my-zsh from the custom dir above.
+    xdg.configFile."omz/emacs.zsh".source = ./shell/emacs.zsh;
+
+    # Prompt (gruvbox powerline config carried over from dotfiles2).
+    programs.starship.enable = true;
+    xdg.configFile."starship.toml".source = ./shell/starship.toml;
+
+    # Smarter cd; the module wires the zsh init the bare package lacked.
+    programs.zoxide.enable = true;
+
+    home.sessionPath = ["$HOME/bin"];
 
     home.sessionVariables.EDITOR = lib.getExe pkgs.nano;
 
@@ -55,6 +117,8 @@
       git
       # TUI frontend for git.
       lazygit
+      # GitHub CLI.
+      gh
 
       ###
       ### build systems
@@ -69,8 +133,6 @@
       eza
       # Modern find replacement.
       fd
-      # Smarter cd that jumps to frecently used directories.
-      zoxide
       # Fast recursive grep.
       ripgrep
 
