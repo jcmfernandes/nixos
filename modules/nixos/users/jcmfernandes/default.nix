@@ -41,6 +41,7 @@
         self.homeModules.tmux
         self.homeModules.zellij
         self.homeModules.enchant
+        self.homeModules.easyeffects
       ];
       home.stateVersion = "25.11";
     };
