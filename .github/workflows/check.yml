@@ -38,16 +38,19 @@ jobs:
         run: "nix run nixpkgs#gitleaks -- detect --source . --config .gitleaks.toml --redact -v"
       # Push an ntfy alert if (and only if) the scan step failed, i.e. a leak
       # was found. The job still fails afterwards; the alert is an addition,
-      # not a replacement. NTFY_URL is a GitHub Actions secret holding the
-      # full ntfy topic URL.
+      # not a replacement.
       - name: "Notify on leaked secret"
-        if: "failure() && steps.gitleaks.outcome == 'failure'"
+        if: "${{ failure() && steps.gitleaks.outcome == 'failure' }}"
         env:
           NTFY_URL: "${{ secrets.NTFY_URL }}"
         run: |
+          if [ -z "${NTFY_URL}" ]; then
+            echo "NTFY_URL secret not set; skipping alert."
+            exit 0
+          fi
           curl -fsS \
-            -H "Title: gitleaks: leak detected in ${GITHUB_REPOSITORY}" \
+            -H "Title: gitleaks found a secret in ${GITHUB_REPOSITORY}" \
             -H "Priority: urgent" \
-            -H "Tags: rotating_light" \
-            -d "gitleaks failed on ${GITHUB_REF_NAME}@${GITHUB_SHA} -- see ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -H "Tags: rotating_light,lock" \
+            -d "Branch ${GITHUB_REF_NAME} @ ${GITHUB_SHA} by ${GITHUB_ACTOR}. Details: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
             "$NTFY_URL"
