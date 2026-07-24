@@ -34,4 +34,20 @@ jobs:
           # Keep upstream Nix; since v21 the action defaults to Determinate Nix.
           determinate: false
       - name: "Scan git history for leaked secrets"
+        id: "gitleaks"
         run: "nix run nixpkgs#gitleaks -- detect --source . --config .gitleaks.toml --redact -v"
+      # Push an ntfy alert if (and only if) the scan step failed, i.e. a leak
+      # was found. The job still fails afterwards; the alert is an addition,
+      # not a replacement. NTFY_URL is a GitHub Actions secret holding the
+      # full ntfy topic URL.
+      - name: "Notify on leaked secret"
+        if: "failure() && steps.gitleaks.outcome == 'failure'"
+        env:
+          NTFY_URL: "${{ secrets.NTFY_URL }}"
+        run: |
+          curl -fsS \
+            -H "Title: gitleaks: leak detected in ${GITHUB_REPOSITORY}" \
+            -H "Priority: urgent" \
+            -H "Tags: rotating_light" \
+            -d "gitleaks failed on ${GITHUB_REF_NAME}@${GITHUB_SHA} -- see ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            "$NTFY_URL"
