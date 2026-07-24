@@ -123,6 +123,15 @@
 
         "XF86AudioRaiseVolume".spawn-sh = "wpctl set-volume -l 1.4 @DEFAULT_AUDIO_SINK@ 5%+";
         "XF86AudioLowerVolume".spawn-sh = "wpctl set-volume -l 1.4 @DEFAULT_AUDIO_SINK@ 5%-";
+        "XF86AudioMute".spawn-sh = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+
+        # niri only acts on keys it binds; unbound media keys never reach
+        # Spotify (a Wayland flatpak that doesn't grab raw keysyms globally).
+        # Drive it over MPRIS with playerctl instead.
+        "XF86AudioPlay".spawn-sh = "${lib.getExe pkgs.playerctl} play-pause";
+        "XF86AudioPause".spawn-sh = "${lib.getExe pkgs.playerctl} play-pause";
+        "XF86AudioNext".spawn-sh = "${lib.getExe pkgs.playerctl} next";
+        "XF86AudioPrev".spawn-sh = "${lib.getExe pkgs.playerctl} previous";
 
         # Fine resize; Mod+R cycles the column through preset widths.
         "Mod+Ctrl+H".set-column-width = "-5%";
