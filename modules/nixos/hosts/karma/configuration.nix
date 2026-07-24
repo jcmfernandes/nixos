@@ -153,6 +153,66 @@
     xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gtk];
     xdg.portal.enable = true;
 
+    # Pin GDM's Wayland greeter (mutter) to the DP-1 ultrawide. The greeter
+    # draws the login form on the monitor flagged <primary>; without this it
+    # picks one heuristically and can land on the rotated DP-2. mutter reads
+    # this from the gdm user's home (HOME=/run/gdm for the greeter session)
+    # and only honours it if the file matches the *full* set of connected
+    # monitors by EDID spec (vendor PNP-id / product / serial, captured live
+    # from `niri msg outputs` + the panels' EDID). DP-2 keeps scale 1 here
+    # (not niri's 1.5): a fractional scale in monitors.xml needs mutter's
+    # experimental fractional-scaling feature, and if it's off mutter
+    # discards the whole file -- and DP-2 only shows a wallpaper shield at
+    # the greeter, so its scale is cosmetic.
+    systemd.tmpfiles.rules = let
+      gdmMonitors = pkgs.writeText "gdm-monitors.xml" ''
+        <monitors version="2">
+          <configuration>
+            <logicalmonitor>
+              <x>0</x>
+              <y>0</y>
+              <scale>1</scale>
+              <primary>yes</primary>
+              <monitor>
+                <monitorspec>
+                  <connector>DP-1</connector>
+                  <vendor>GSM</vendor>
+                  <product>38GN950</product>
+                  <serial>204NTQDD9340</serial>
+                </monitorspec>
+                <mode>
+                  <width>3840</width>
+                  <height>1600</height>
+                  <rate>143.998</rate>
+                </mode>
+              </monitor>
+            </logicalmonitor>
+            <logicalmonitor>
+              <x>3840</x>
+              <y>0</y>
+              <scale>1</scale>
+              <transform>
+                <rotation>right</rotation>
+              </transform>
+              <monitor>
+                <monitorspec>
+                  <connector>DP-2</connector>
+                  <vendor>BNQ</vendor>
+                  <product>BenQ RD280UG</product>
+                  <serial>EMF6T00067087</serial>
+                </monitorspec>
+                <mode>
+                  <width>3840</width>
+                  <height>2560</height>
+                  <rate>119.991</rate>
+                </mode>
+              </monitor>
+            </logicalmonitor>
+          </configuration>
+        </monitors>
+      '';
+    in ["L+ /run/gdm/.config/monitors.xml - - - - ${gdmMonitors}"];
+
     users.users.root.hashedPassword = "!";
 
     # Unlike moon/vivivi, sudo requires a password here (the default). karma is
