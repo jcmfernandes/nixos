@@ -38,6 +38,7 @@
 
         mouse = {
           accel-profile = "flat";
+          natural-scroll = _: {};
         };
       };
 
