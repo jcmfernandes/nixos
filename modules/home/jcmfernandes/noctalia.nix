@@ -47,12 +47,20 @@
         # wallpaper, which is disabled above). Point it at the same image awww
         # paints.
         lockscreen.wallpaper = "${./niri/gruvbox-mountain-village.png}";
-        # Lock after 5 minutes of inactivity; desktop, so no idle
-        # screen-off/suspend behaviors beyond that.
-        idle.behavior.lock = {
-          enabled = true;
-          timeout = 300;
-          action = "lock";
+        # Lock after 5 minutes of inactivity, then power the displays off
+        # after 10. screen_off drives niri's PowerOffMonitors IPC; noctalia
+        # wakes them on activity (PowerOnMonitors). Desktop, so no suspend.
+        idle.behavior = {
+          lock = {
+            enabled = true;
+            timeout = 300;
+            action = "lock";
+          };
+          screen-off = {
+            enabled = true;
+            timeout = 600;
+            action = "screen_off";
+          };
         };
       };
     };
