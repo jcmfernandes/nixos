@@ -174,8 +174,16 @@
       ];
 
       # Baremetal secondary screen, mounted rotated. No-op in the VM,
-      # where DP-2 is not connected.
-      outputs."DP-2".transform = "270";
+      # where DP-2 is not connected. 119.991 is the panel's ~120Hz mode at
+      # native resolution (the round 120.000 modes only exist at lower res).
+      outputs."DP-2" = {
+        transform = "270";
+        mode = {
+          width = 3840;
+          height = 2560;
+          refresh = 119.991;
+        };
+      };
 
       workspaces = let
         workspaceSettings = {layout.gaps = 5;};
