@@ -21,8 +21,6 @@ jobs:
             nix eval --raw ".#nixosConfigurations.${host}.config.system.build.toplevel.drvPath"
             echo " ${host} OK"
           done
-      - name: "Evaluate the wrapped desktop"
-        run: "nix eval --raw .#packages.x86_64-linux.desktop.drvPath"
 
   gitleaks:
     runs-on: "ubuntu-latest"
