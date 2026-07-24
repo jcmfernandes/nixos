@@ -4,6 +4,15 @@ _: {
     # shell activates it via `mise activate zsh` (homeModules.shell).
     environment.systemPackages = [pkgs.mise];
 
+    # Force mise to fetch precompiled binaries instead of building from source.
+    # Source builds of node/python shell out to a bootstrap `python`, which
+    # NixOS does not provide on PATH, so they fail. This keeps mise on the
+    # FHS-linked prebuilt path that nix-ld below makes runnable.
+    environment.sessionVariables = {
+      MISE_NODE_COMPILE = "0";
+      MISE_PYTHON_COMPILE = "0";
+    };
+
     # mise installs mostly precompiled, FHS-linked binaries (node, go, the
     # standalone Python/Ruby builds, ...). nix-ld provides the dynamic loader
     # at the FHS path plus common libraries so those binaries run on NixOS.
