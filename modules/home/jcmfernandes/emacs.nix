@@ -85,5 +85,24 @@
       categories = ["Development" "TextEditor"];
       terminal = false;
     };
+
+    # Hide the emacsclient.desktop that emacs-pgtk ships (via home.packages).
+    # It is a bare `emacsclient --alternate-editor=`, so if the systemd daemon
+    # is down its empty -a spawns a fresh emacs --daemon in the launcher's
+    # cgroup -- the exact rogue-daemon this setup avoids. Same id shadows it.
+    xdg.desktopEntries.emacsclient = {
+      name = "Emacs (Client)";
+      noDisplay = true;
+    };
+
+    # Same treatment for the two mail entries emacs-pgtk ships; unused here.
+    xdg.desktopEntries.emacs-mail = {
+      name = "Emacs (Mail)";
+      noDisplay = true;
+    };
+    xdg.desktopEntries.emacsclient-mail = {
+      name = "Emacs (Mail, Client)";
+      noDisplay = true;
+    };
   };
 }
