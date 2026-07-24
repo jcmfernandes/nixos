@@ -155,76 +155,70 @@
 
     # Pin GDM's Wayland greeter (mutter) to the DP-1 ultrawide. The greeter
     # draws the login form on the monitor flagged <primary>; without this it
-    # picks one heuristically and can land on the rotated DP-2. mutter reads
-    # this from $HOME/.config/monitors.xml. On GDM 50 the greeter runs as one
-    # of the dynamic `gdm-greeter{,-N}` users (home /run/gdm/home/gdm-greeter
-    # {,-N}), NOT as `gdm` (home /run/gdm), so the file must land in each
-    # greeter user's home -- the user pool and .config ownership mirror
-    # nixpkgs' gdm module (services/display-managers/gdm.nix). We create the
-    # .config dir ourselves too: that module only seeds it when pulseaudio is
-    # enabled, and karma uses pipewire. mutter only honours the file if it
-    # matches the *full* set of connected monitors by EDID spec (vendor
-    # PNP-id / product / serial, captured live from `niri msg outputs` + the
-    # panels' EDID). DP-2 keeps scale 1 here (not niri's 1.5): a fractional
-    # scale in monitors.xml needs mutter's experimental fractional-scaling
-    # feature, and if it's off mutter discards the whole file -- and DP-2 only
-    # shows a wallpaper shield at the greeter, so its scale is cosmetic.
-    systemd.tmpfiles.rules = let
-      gdmMonitors = pkgs.writeText "gdm-monitors.xml" ''
-        <monitors version="2">
-          <configuration>
-            <logicalmonitor>
-              <x>0</x>
-              <y>0</y>
-              <scale>1</scale>
-              <primary>yes</primary>
-              <monitor>
-                <monitorspec>
-                  <connector>DP-1</connector>
-                  <vendor>GSM</vendor>
-                  <product>38GN950</product>
-                  <serial>204NTQDD9340</serial>
-                </monitorspec>
-                <mode>
-                  <width>3840</width>
-                  <height>1600</height>
-                  <rate>143.998</rate>
-                </mode>
-              </monitor>
-            </logicalmonitor>
-            <logicalmonitor>
-              <x>3840</x>
-              <y>0</y>
-              <scale>1</scale>
-              <transform>
-                <rotation>right</rotation>
-              </transform>
-              <monitor>
-                <monitorspec>
-                  <connector>DP-2</connector>
-                  <vendor>BNQ</vendor>
-                  <product>BenQ RD280UG</product>
-                  <serial>EMF6T00067087</serial>
-                </monitorspec>
-                <mode>
-                  <width>3840</width>
-                  <height>2560</height>
-                  <rate>119.991</rate>
-                </mode>
-              </monitor>
-            </logicalmonitor>
-          </configuration>
-        </monitors>
-      '';
-      # GDM assigns the greeter session one of these five dynamic users per
-      # seat; place the config in every one so whichever it picks reads it.
-      greeters = ["gdm-greeter" "gdm-greeter-2" "gdm-greeter-3" "gdm-greeter-4" "gdm-greeter-5"];
-    in
-      builtins.concatMap (u: [
-        "d /run/gdm/home/${u}/.config 0711 ${u} gdm"
-        "L+ /run/gdm/home/${u}/.config/monitors.xml - - - - ${gdmMonitors}"
-      ])
-      greeters;
+    # picks one heuristically and can land on the rotated DP-2. mutter looks
+    # up monitors.xml in the user config dir first and then, as a fallback,
+    # in the XDG system config dirs (g_get_system_config_dirs) -- on karma
+    # XDG_CONFIG_DIRS starts with /etc/xdg (pam_env seeds the greeter from
+    # /etc/pam/environment). Delivering it at /etc/xdg/monitors.xml makes
+    # every greeter session read it. A previous attempt dropped the file into
+    # the greeter users' homes via tmpfiles, but that is a boot-time one-shot
+    # while GDM's GdmDynUserStore creates and removes the greeter home under
+    # /run/gdm/home/gdm-greeter{,-N} around each login, so the file did not
+    # survive past the first login. The system path sidesteps the home
+    # lifecycle entirely. niri ignores this file, so the user's own session
+    # is unaffected. mutter only honours it if it matches the *full* set of
+    # connected monitors by EDID spec (vendor PNP-id / product / serial,
+    # captured live from `niri msg outputs` + the panels' EDID). DP-2 keeps
+    # scale 1 here (not niri's 1.5): a fractional scale in monitors.xml needs
+    # mutter's experimental fractional-scaling feature, and if it's off
+    # mutter discards the whole file -- and DP-2 only shows a wallpaper
+    # shield at the greeter, so its scale is cosmetic.
+    environment.etc."xdg/monitors.xml".text = ''
+      <monitors version="2">
+        <configuration>
+          <logicalmonitor>
+            <x>0</x>
+            <y>0</y>
+            <scale>1</scale>
+            <primary>yes</primary>
+            <monitor>
+              <monitorspec>
+                <connector>DP-1</connector>
+                <vendor>GSM</vendor>
+                <product>38GN950</product>
+                <serial>204NTQDD9340</serial>
+              </monitorspec>
+              <mode>
+                <width>3840</width>
+                <height>1600</height>
+                <rate>143.998</rate>
+              </mode>
+            </monitor>
+          </logicalmonitor>
+          <logicalmonitor>
+            <x>3840</x>
+            <y>0</y>
+            <scale>1</scale>
+            <transform>
+              <rotation>right</rotation>
+            </transform>
+            <monitor>
+              <monitorspec>
+                <connector>DP-2</connector>
+                <vendor>BNQ</vendor>
+                <product>BenQ RD280UG</product>
+                <serial>EMF6T00067087</serial>
+              </monitorspec>
+              <mode>
+                <width>3840</width>
+                <height>2560</height>
+                <rate>119.991</rate>
+              </mode>
+            </monitor>
+          </logicalmonitor>
+        </configuration>
+      </monitors>
+    '';
 
     users.users.root.hashedPassword = "!";
 
