@@ -42,6 +42,11 @@
         };
         # Wallpaper is handled by awww (see homeModules.niri).
         wallpaper.enabled = false;
+        # awww owns the live wallpaper and is invisible to noctalia, so the
+        # lock screen has nothing to fall back to (empty = noctalia's own
+        # wallpaper, which is disabled above). Point it at the same image awww
+        # paints.
+        lockscreen.wallpaper = "${./niri/gruvbox-mountain-village.png}";
         # Lock after 5 minutes of inactivity; desktop, so no idle
         # screen-off/suspend behaviors beyond that.
         idle.behavior.lock = {
