@@ -178,11 +178,7 @@
       # native resolution (the round 120.000 modes only exist at lower res).
       outputs."DP-2" = {
         transform = "270";
-        mode = {
-          width = 3840;
-          height = 2560;
-          refresh = 119.991;
-        };
+        mode = "3840x2560@119.991";
       };
 
       workspaces = let
