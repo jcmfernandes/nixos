@@ -34,6 +34,12 @@
           builtin = "Gruvbox";
         };
         bar.main.position = "left";
+        # Single source of "where am I"; feeds Weather, Night Light, and
+        # Theme auto mode. Geocoded at runtime from the address.
+        location = {
+          auto_locate = false;
+          address = "Lisbon, Portugal";
+        };
         # Wallpaper is handled by awww (see homeModules.niri).
         wallpaper.enabled = false;
         # Lock after 5 minutes of inactivity; desktop, so no idle
