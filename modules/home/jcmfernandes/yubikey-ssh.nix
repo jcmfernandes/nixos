@@ -15,8 +15,14 @@
     # already serves the PIV keys from the machine physically holding the
     # YubiKey, while this host's yubikey-agent.sock is keyless and refuses
     # every signature -- so honour the inherited socket there.
+    #
+    # -S, not -n: the forwarded socket is session-scoped and vanishes with the
+    # session that carried it, so a stale path in the environment is a live
+    # possibility (notably under the emacs daemon, which keeps whatever the
+    # last client handed it). Requiring an actual socket makes both this and
+    # the ssh Match block below fall back rather than aim at a dead path.
     yk-ssh-keygen = pkgs.writeShellScriptBin "yk-ssh-keygen" ''
-      if [ -n "$SSH_CONNECTION" ] && [ -n "$SSH_AUTH_SOCK" ]; then
+      if [ -n "$SSH_CONNECTION" ] && [ -S "$SSH_AUTH_SOCK" ]; then
         exec ${pkgs.openssh}/bin/ssh-keygen "$@"
       fi
       exec env SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/yubikey-agent.sock" ${pkgs.openssh}/bin/ssh-keygen "$@"
@@ -141,8 +147,17 @@
         # inherited SSH_AUTH_SOCK win. First-obtained-value-wins means this
         # block only has to override IdentityAgent -- IdentitiesOnly and
         # IdentityFile still come from the block after it.
+        #
+        # Both conditions are load-bearing. SSH_CONNECTION alone is not
+        # enough: without a usable socket this block still wins and resolves
+        # IdentityAgent to nothing, at which point ssh falls back to reading
+        # the *public* key as a private one and dies with "error in
+        # libcrypto: unsupported" -- worse than never having matched. And a
+        # socket alone is not enough either, because a local session's
+        # SSH_AUTH_SOCK (gnome-keyring's gcr/ssh) is a perfectly good socket
+        # that holds none of the PIV keys.
         forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi"] {
-          header = ''Match host github.com exec "test -n \"$SSH_CONNECTION\""'';
+          header = ''Match host github.com exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
           IdentityAgent = "SSH_AUTH_SOCK";
         };
 
