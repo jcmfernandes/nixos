@@ -1,0 +1,27 @@
+version: 2
+
+updates:
+  # Actions in .github/workflows are pinned by sha with a `# vN` comment;
+  # dependabot rewrites both.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Bumps the `required_providers` constraints in versions.tf. The glob picks
+  # up any future stack alongside infra/; .terraform.lock.hcl is gitignored,
+  # so the lock is refreshed locally by the next `tofu init -upgrade`.
+  - package-ecosystem: "terraform"
+    directories: ["/opentofu/*"]
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "opentofu"
+    groups:
+      providers:
+        patterns: ["*"]
