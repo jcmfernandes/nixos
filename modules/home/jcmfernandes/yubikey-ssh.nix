@@ -10,7 +10,15 @@
     # git's gpg.ssh.program and an interactive helper. Points SSH
     # signing/verification at the dedicated YubiKey ssh-agent (the PIV keys
     # aren't in any default agent).
+    #
+    # Exception: in an ssh session carrying a forwarded agent, that agent
+    # already serves the PIV keys from the machine physically holding the
+    # YubiKey, while this host's yubikey-agent.sock is keyless and refuses
+    # every signature -- so honour the inherited socket there.
     yk-ssh-keygen = pkgs.writeShellScriptBin "yk-ssh-keygen" ''
+      if [ -n "$SSH_CONNECTION" ] && [ -n "$SSH_AUTH_SOCK" ]; then
+        exec ${pkgs.openssh}/bin/ssh-keygen "$@"
+      fi
       exec env SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/yubikey-agent.sock" ${pkgs.openssh}/bin/ssh-keygen "$@"
     '';
 
@@ -127,14 +135,26 @@
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      # Authenticate with the YubiKey PIV slot-83 key (ECDSA), served by
-      # the dedicated agent the monitor loads on insert. IdentitiesOnly +
-      # the pinned public key ensure exactly that key is offered (the agent
-      # holds all four retired-slot keys).
-      settings."github.com moon vivivi" = {
-        IdentitiesOnly = true;
-        IdentityFile = "~/.ssh/id_ist.pub";
-        IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
+      settings = {
+        # Same exception as yk-ssh-keygen: over a forwarded agent the pinned
+        # socket below is keyless and refuses to authenticate, so let the
+        # inherited SSH_AUTH_SOCK win. First-obtained-value-wins means this
+        # block only has to override IdentityAgent -- IdentitiesOnly and
+        # IdentityFile still come from the block after it.
+        forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi"] {
+          header = ''Match host github.com exec "test -n \"$SSH_CONNECTION\""'';
+          IdentityAgent = "SSH_AUTH_SOCK";
+        };
+
+        # Authenticate with the YubiKey PIV slot-83 key (ECDSA), served by
+        # the dedicated agent the monitor loads on insert. IdentitiesOnly +
+        # the pinned public key ensure exactly that key is offered (the agent
+        # holds all four retired-slot keys).
+        "github.com moon vivivi" = {
+          IdentitiesOnly = true;
+          IdentityFile = "~/.ssh/id_ist.pub";
+          IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
+        };
       };
     };
 
