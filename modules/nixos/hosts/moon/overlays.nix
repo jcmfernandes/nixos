@@ -5,8 +5,8 @@
     ...
   }: {
     nixpkgs.overlays = let
-      upstreamPkgs = import inputs.nixpkgs {system = pkgs.stdenv.hostPlatform.system;};
-      unstablePkgs = import inputs.nixpkgs-unstable {system = pkgs.stdenv.hostPlatform.system;};
+      upstreamPkgs = import inputs.nixpkgs {inherit (pkgs.stdenv.hostPlatform) system;};
+      unstablePkgs = import inputs.nixpkgs-unstable {inherit (pkgs.stdenv.hostPlatform) system;};
     in
       lib.mkAfter [
         (final: prev: {
