@@ -149,6 +149,7 @@
       gcc
       git
       glib
+      usbutils
     ];
 
     xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-gtk];
