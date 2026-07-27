@@ -42,6 +42,7 @@
         self.homeModules.zellij
         self.homeModules.enchant
         self.homeModules.easyeffects
+        self.homeModules.upsIndicator
       ];
       home.stateVersion = "25.11";
     };
