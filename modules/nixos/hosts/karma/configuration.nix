@@ -17,6 +17,7 @@
       self.nixosModules.desktop
       self.nixosModules.secureboot
       self.nixosModules.yubikey
+      self.nixosModules.ups
       self.nixosModules.mise
       self.nixosModules.jcmfernandes
 
