@@ -197,6 +197,8 @@
       wl-clipboard
       # Parser toolkit CLI; editors use it for grammars.
       tree-sitter
+      # JSON processor.
+      jq
 
       ###
       ### agentic coding harnesses
