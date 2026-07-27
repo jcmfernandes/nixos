@@ -14,6 +14,7 @@
       pkgs.gparted
       pkgs.wdisplays
       pkgs.celluloid
+      pkgs.pavucontrol
       pkgs.element-desktop
       pkgs.halloy
     ];
