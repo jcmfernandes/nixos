@@ -2,6 +2,7 @@ _: {
   flake.homeModules.upsIndicator = {
     lib,
     pkgs,
+    osConfig,
     ...
   }: let
     # Poll the local NUT server and raise a desktop notification whenever the
@@ -65,20 +66,24 @@ _: {
         done
       '';
     };
-  in {
-    systemd.user.services.ups-notify = {
-      Unit = {
-        Description = "Desktop notifications on UPS (NUT) power state changes";
-        # Gate on a live session so the notification daemon is on the bus.
-        After = ["niri.service"];
-        Wants = ["niri.service"];
+  in
+    # Only on hosts that actually have a UPS (the `ups` NixOS module, imported
+    # by karma, sets power.ups.enable). anuchka and future UPS-less hosts get
+    # nothing.
+    lib.mkIf osConfig.power.ups.enable {
+      systemd.user.services.ups-notify = {
+        Unit = {
+          Description = "Desktop notifications on UPS (NUT) power state changes";
+          # Gate on a live session so the notification daemon is on the bus.
+          After = ["niri.service"];
+          Wants = ["niri.service"];
+        };
+        Service = {
+          ExecStart = lib.getExe ups-notify;
+          Restart = "on-failure";
+          RestartSec = 5;
+        };
+        Install.WantedBy = ["graphical-session.target"];
       };
-      Service = {
-        ExecStart = lib.getExe ups-notify;
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      Install.WantedBy = ["graphical-session.target"];
     };
-  };
 }

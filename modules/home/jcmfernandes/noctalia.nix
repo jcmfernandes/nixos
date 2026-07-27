@@ -1,5 +1,15 @@
 {inputs, ...}: {
-  flake.homeModules.noctalia = {pkgs, ...}: let
+  flake.homeModules.noctalia = {
+    pkgs,
+    lib,
+    osConfig,
+    ...
+  }: let
+    # UPS bar button + widget only on hosts with a UPS (the `ups` NixOS
+    # module, imported by karma, sets power.ups.enable). anuchka and other
+    # UPS-less hosts get a clean bar.
+    upsEnabled = osConfig.power.ups.enable;
+
     # Left-click action for the UPS bar button: pop a desktop notification
     # with the UPS's current charge/status/load. Noctalia v5's custom_button
     # is static (no live glyph/tooltip), so this is the on-demand way to read
@@ -58,68 +68,74 @@
       # Run as a user service (graphical-session.target); restarts
       # automatically when the generated config changes.
       systemd.enable = true;
-      settings = {
-        theme = {
-          mode = "dark";
-          source = "builtin";
-          builtin = "Gruvbox";
-        };
-        bar.main.position = "left";
-        # A static UPS button in the bar's end lane (bottom of the left bar):
-        # a battery glyph that opens live `upsc evo` on click. Noctalia v5's
-        # custom_button cannot poll/display live text, so power-state
-        # awareness comes from homeModules.upsIndicator's notifications; this
-        # is the on-demand "show me the details" affordance. The list is the
-        # built-in default end lane (config_types.h) with "ups" inserted.
-        bar.main.end = [
-          "media"
-          "tray"
-          "notifications"
-          "clipboard"
-          "network"
-          "bluetooth"
-          "volume"
-          "brightness"
-          "ups"
-          "battery"
-          "control-center"
-          "session"
-        ];
-        widget.ups = {
-          type = "custom_button";
-          glyph = "battery";
-          tooltip = "UPS -- click for charge & status";
-          command = pkgs.lib.getExe ups-status-notify;
-        };
-        # Single source of "where am I"; feeds Weather, Night Light, and
-        # Theme auto mode. Geocoded at runtime from the address.
-        location = {
-          auto_locate = false;
-          address = "Lisbon, Portugal";
-        };
-        # Wallpaper is handled by awww (see homeModules.niri).
-        wallpaper.enabled = false;
-        # awww owns the live wallpaper and is invisible to noctalia, so the
-        # lock screen has nothing to fall back to (empty = noctalia's own
-        # wallpaper, which is disabled above). Point it at the same image awww
-        # paints.
-        lockscreen.wallpaper = "${./niri/gruvbox-mountain-village.png}";
-        # Lock after 5 minutes of inactivity, then power the displays off
-        # after 10. screen_off drives niri's PowerOffMonitors IPC; noctalia
-        # wakes them on activity (PowerOnMonitors). Desktop, so no suspend.
-        idle.behavior = {
-          lock = {
-            enabled = true;
-            timeout = 300;
-            action = "lock";
+      settings =
+        {
+          theme = {
+            mode = "dark";
+            source = "builtin";
+            builtin = "Gruvbox";
           };
-          screen-off = {
-            enabled = true;
-            timeout = 600;
-            action = "screen_off";
+          bar.main.position = "left";
+          # The built-in default end lane (config_types.h). On UPS hosts a
+          # static "ups" button (a battery glyph that opens live `upsc evo` on
+          # click) is inserted before "battery": Noctalia v5's custom_button
+          # cannot poll/display live text, so power-state awareness comes from
+          # homeModules.upsIndicator's notifications; this is the on-demand
+          # "show me the details" affordance.
+          bar.main.end =
+            [
+              "media"
+              "tray"
+              "notifications"
+              "clipboard"
+              "network"
+              "bluetooth"
+              "volume"
+              "brightness"
+            ]
+            ++ lib.optional upsEnabled "ups"
+            ++ [
+              "battery"
+              "control-center"
+              "session"
+            ];
+          # Single source of "where am I"; feeds Weather, Night Light, and
+          # Theme auto mode. Geocoded at runtime from the address.
+          location = {
+            auto_locate = false;
+            address = "Lisbon, Portugal";
+          };
+          # Wallpaper is handled by awww (see homeModules.niri).
+          wallpaper.enabled = false;
+          # awww owns the live wallpaper and is invisible to noctalia, so the
+          # lock screen has nothing to fall back to (empty = noctalia's own
+          # wallpaper, which is disabled above). Point it at the same image awww
+          # paints.
+          lockscreen.wallpaper = "${./niri/gruvbox-mountain-village.png}";
+          # Lock after 5 minutes of inactivity, then power the displays off
+          # after 10. screen_off drives niri's PowerOffMonitors IPC; noctalia
+          # wakes them on activity (PowerOnMonitors). Desktop, so no suspend.
+          idle.behavior = {
+            lock = {
+              enabled = true;
+              timeout = 300;
+              action = "lock";
+            };
+            screen-off = {
+              enabled = true;
+              timeout = 600;
+              action = "screen_off";
+            };
+          };
+        }
+        // lib.optionalAttrs upsEnabled {
+          widget.ups = {
+            type = "custom_button";
+            glyph = "battery";
+            tooltip = "UPS -- click for charge & status";
+            command = pkgs.lib.getExe ups-status-notify;
           };
         };
-      };
     };
   };
 }
