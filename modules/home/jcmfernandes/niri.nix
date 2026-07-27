@@ -18,7 +18,9 @@
       hotkey-overlay.skip-at-startup = _: {};
 
       input = {
-        focus-follows-mouse = _: {};
+        # focus-follows-mouse is deliberately NOT set: merely moving the
+        # pointer over a window (a fullscreen one especially) should never
+        # steal focus. Focus changes on click or via the Mod binds below.
 
         keyboard = {
           xkb = {
