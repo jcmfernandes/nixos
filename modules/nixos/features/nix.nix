@@ -22,6 +22,11 @@
       nix-direnv = {
         enable = true;
       };
+      # Drop the "export +FOO +BAR ..." line direnv prints on every load. A
+      # repo like ng-evangelion exports ~150 variables, which buries the rest
+      # of the terminal; the "loading <path>/.envrc" line still shows, so it
+      # stays obvious when an environment is applied.
+      settings.global.hide_env_diff = true;
     };
 
     nix.settings = {
