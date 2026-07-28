@@ -23,6 +23,17 @@
       # after oh-my-zsh's init and overrides any OMZ prompt.
       oh-my-zsh = {
         enable = true;
+        # oh-my-zsh comes from the personal fork (flake input `ohmyzsh`)
+        # rather than nixpkgs' pin: its master is upstream plus the fixes
+        # carried locally while they wait upstream -- currently the mise
+        # plugin's completion job, which prompted on the terminal and left
+        # ghostel panes without a visible cursor. Everything else about the
+        # nixpkgs derivation (the $ZSH rewrite, disabled auto-update, the
+        # unfunctioned self-updaters) still applies; only the source moves.
+        package = pkgs.oh-my-zsh.overrideAttrs (_: {
+          src = inputs.ohmyzsh;
+          version = inputs.ohmyzsh.shortRev;
+        });
         # The plugin list from dotfiles2 (the admin machine), minus two:
         # starship (hm's starship module injects the init itself) and z
         # (programs.zoxide below replaces it). Plugins for tools karma does
@@ -80,14 +91,6 @@
     # Terminal commands drive the running Emacs when inside a ghostel
     # terminal; sourced by oh-my-zsh from the custom dir above.
     xdg.configFile."omz/emacs.zsh".source = ./shell/emacs.zsh;
-
-    # Patched copy of the mise plugin, shadowing the one in the read-only
-    # nixpkgs oh-my-zsh. Upstream's completion job inherits the tty on stderr,
-    # which mise reads as an interactive session and prompts on; that prompt
-    # stops the background job with SIGTTIN after it has hidden the cursor and
-    # before it can restore it, so the pane keeps an invisible cursor until
-    # something else redraws. See the file for details.
-    xdg.configFile."omz/plugins/mise/mise.plugin.zsh".source = ./shell/mise.plugin.zsh;
 
     # Prompt (gruvbox powerline config carried over from dotfiles2).
     programs.starship.enable = true;

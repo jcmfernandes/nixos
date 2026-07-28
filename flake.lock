@@ -409,6 +409,22 @@
         "type": "github"
       }
     },
+    "ohmyzsh": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785248648,
+        "narHash": "sha256-i25XkwMn04hVYcfffLdoSRpHTW9qsX7cvjuZ+W2oYgc=",
+        "owner": "jcmfernandes",
+        "repo": "ohmyzsh",
+        "rev": "c62b6388622e599b60cf65b1db600632fdadb422",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jcmfernandes",
+        "repo": "ohmyzsh",
+        "type": "github"
+      }
+    },
     "pre-commit": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -448,6 +464,7 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "noctalia": "noctalia",
+        "ohmyzsh": "ohmyzsh",
         "sops-nix": "sops-nix",
         "wrapper-modules": "wrapper-modules"
       }

@@ -67,6 +67,16 @@
       type = "file";
       flake = false;
     };
+
+    # Personal oh-my-zsh fork: master is upstream master plus the patches
+    # carried here (each also proposed upstream on its own branch). It is the
+    # source for homeModules.shell's oh-my-zsh package, replacing nixpkgs'
+    # own pin. Rebase master on upstream and `nix flake update ohmyzsh` to
+    # move; drop a patch from the fork once it lands upstream.
+    ohmyzsh = {
+      url = "github:jcmfernandes/ohmyzsh";
+      flake = false;
+    };
   };
 
   nixConfig = {
