@@ -8,6 +8,7 @@
       pkgs.file-roller
       pkgs.libreoffice
       pkgs.gimp
+      pkgs.loupe
       pkgs.zathura
       pkgs.foliate
       pkgs.qbittorrent
