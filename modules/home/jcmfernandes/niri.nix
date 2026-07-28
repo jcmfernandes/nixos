@@ -190,6 +190,15 @@
       outputs."DP-2" = {
         transform = "270";
         mode = "3840x2560@119.991";
+
+        # Portrait, so one column fills the width: windows consumed into it
+        # (Mod+O) stack vertically down the screen. niri has no per-output
+        # layout orientation -- vertical stacking is just "windows in the
+        # same column", and nothing opens new windows there automatically.
+        layout = {
+          default-column-width = {proportion = 1.0;};
+          preset-column-widths = {proportion = 1.0;};
+        };
       };
 
       workspaces = let
