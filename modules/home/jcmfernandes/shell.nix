@@ -81,6 +81,14 @@
     # terminal; sourced by oh-my-zsh from the custom dir above.
     xdg.configFile."omz/emacs.zsh".source = ./shell/emacs.zsh;
 
+    # Patched copy of the mise plugin, shadowing the one in the read-only
+    # nixpkgs oh-my-zsh. Upstream's completion job inherits the tty on stderr,
+    # which mise reads as an interactive session and prompts on; that prompt
+    # stops the background job with SIGTTIN after it has hidden the cursor and
+    # before it can restore it, so the pane keeps an invisible cursor until
+    # something else redraws. See the file for details.
+    xdg.configFile."omz/plugins/mise/mise.plugin.zsh".source = ./shell/mise.plugin.zsh;
+
     # Prompt (gruvbox powerline config carried over from dotfiles2).
     programs.starship.enable = true;
     xdg.configFile."starship.toml".source = ./shell/starship.toml;
