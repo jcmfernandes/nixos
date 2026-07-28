@@ -76,10 +76,12 @@
             builtin = "Gruvbox";
           };
           bar.main.position = "left";
-          # The built-in default end lane (config_types.h). On UPS hosts a
-          # static "ups" button (a battery glyph that opens live `upsc evo` on
-          # click) is inserted before "battery": Noctalia v5's custom_button
-          # cannot poll/display live text, so power-state awareness comes from
+          # The built-in default end lane (config_types.h), plus "nightlight"
+          # next to "brightness" (both are display controls; the button cycles
+          # off / scheduled / always-on). On UPS hosts a static "ups" button (a
+          # battery glyph that opens live `upsc evo` on click) is inserted
+          # before "battery": Noctalia v5's custom_button cannot poll/display
+          # live text, so power-state awareness comes from
           # homeModules.upsIndicator's notifications; this is the on-demand
           # "show me the details" affordance.
           bar.main.end =
@@ -92,6 +94,7 @@
               "bluetooth"
               "volume"
               "brightness"
+              "nightlight"
             ]
             ++ lib.optional upsEnabled "ups"
             ++ [
@@ -105,6 +108,12 @@
             auto_locate = false;
             address = "Lisbon, Portugal";
           };
+          # Warm the screen after sunset -- what redshift did elsewhere.
+          # Noctalia drives the wlr-gamma-control protocol itself (niri
+          # implements it), so no wlsunset/gammastep helper is involved. The
+          # schedule comes from `location` above; the 6500K/4000K day-night
+          # defaults are left alone.
+          nightlight.enabled = true;
           # Wallpaper is handled by awww (see homeModules.niri).
           wallpaper.enabled = false;
           # awww owns the live wallpaper and is invisible to noctalia, so the
