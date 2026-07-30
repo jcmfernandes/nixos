@@ -70,6 +70,16 @@
       systemd.enable = true;
       settings =
         {
+          # Launch apps from the launcher into their own transient unit
+          # (`systemd-run --user --property=ExitType=cgroup
+          # --unit=app-<desktop-id>@<uuid>.service`) instead of letting them
+          # fork inside noctalia.service's cgroup. Without this, home-manager
+          # activation's `systemctl --user restart noctalia` on every switch
+          # takes every launcher-started app down with the bar, because the
+          # default KillMode=control-group SIGTERMs the whole cgroup -- which
+          # is why firefox kept dying on rebuilds. Emacs already dodged this by
+          # running as its own daemon (homeModules.emacs).
+          shell.launch_apps_as_systemd_services = true;
           theme = {
             mode = "dark";
             source = "builtin";
