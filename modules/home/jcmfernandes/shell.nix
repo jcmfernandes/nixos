@@ -186,6 +186,8 @@
       sshfs
       # Run remote Wayland GUI apps over ssh.
       waypipe
+      # Doesn't need an explanation.
+      openssl
 
       ###
       ### media & images
