@@ -117,6 +117,12 @@
       };
     };
 
+    # Silence the "Executing external compose provider ..." banner podman
+    # prints on every `podman compose` / `docker compose` invocation. Handing
+    # off to podman-compose is the intended setup here, so the notice is pure
+    # noise on top of each command's output.
+    virtualisation.containers.containersConf.settings.engine.compose_warning_logs = false;
+
     # Resolve unqualified image names against docker.io only. The NixOS default
     # is ["docker.io" "quay.io"], and with more than one candidate podman's
     # enforcing short-name mode stops to ask which registry to pull from --
