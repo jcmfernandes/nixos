@@ -48,6 +48,17 @@
     boot = {
       kernelParams = ["video=Virtual-1:1920x1080"];
       kernelPackages = pkgs.linuxPackages_latest;
+
+      # Let unprivileged users bind from port 80 up (kernel default is 1024).
+      # The same work dev stack that needs the mutable /etc/hosts below runs
+      # its API gateway container on 80/443, and rootless podman binds those
+      # as the invoking user -- without this the container never starts, which
+      # in turn makes `podman-compose down` abort on the missing container.
+      # Ports 1-79 (and their long tail of classic root-only daemons) stay
+      # privileged, and nothing here is LAN-reachable anyway: the firewall
+      # trusts tailscale0 only.
+      kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
+
       loader = {
         # UEFI-only: systemd-boot installs the removable ESP fallback
         # (EFI/BOOT/BOOTX64.EFI), so the disk boots after a VM->bare-metal
