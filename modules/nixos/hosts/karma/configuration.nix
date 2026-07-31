@@ -106,6 +106,14 @@
       };
     };
 
+    # Resolve unqualified image names against docker.io only. The NixOS default
+    # is ["docker.io" "quay.io"], and with more than one candidate podman's
+    # enforcing short-name mode stops to ask which registry to pull from --
+    # once per image, so a compose file full of short names (redis:..,
+    # postgres:.., neo4j:..) turns every cold start into a quiz. Images that
+    # really do live elsewhere should carry their registry in the reference.
+    virtualisation.containers.registries.search = ["docker.io"];
+
     services = {
       openssh.enable = true;
       # Don't punch port 22 in the LAN-facing firewall; SSH is reachable only
