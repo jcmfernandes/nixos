@@ -188,6 +188,8 @@
       waypipe
       # Doesn't need an explanation.
       openssl
+      # OpenPGP encryption/signing (gpg, gpg-agent).
+      gnupg
 
       ###
       ### media & images
