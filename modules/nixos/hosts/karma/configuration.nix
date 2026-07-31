@@ -83,6 +83,19 @@
       firewall.trustedInterfaces = ["tailscale0"];
     };
 
+    # Ship /etc/hosts as a mutable copy instead of the default symlink into the
+    # store: a work project's local dev stack uses `sudo hostctl add domains
+    # ...` to point its service names at 127.0.0.1, and hostctl edits
+    # /etc/hosts in place. NixOS's etc module only symlinks entries whose mode
+    # is "symlink" (the default); any other mode makes it a root-owned copy
+    # under /etc that root can write. Upstream's networking module sets only
+    # `hosts.source`, so this needs no mkForce.
+    #
+    # Caveat: setup-etc.pl re-copies every non-symlink entry unconditionally on
+    # each activation, so `nixos-rebuild switch` and every boot wipe whatever
+    # hostctl wrote. Re-add the domains after a rebuild.
+    environment.etc.hosts.mode = "0644";
+
     virtualisation.libvirtd.enable = true;
     programs.virt-manager.enable = true;
     virtualisation.podman = {
