@@ -125,6 +125,22 @@
     # really do live elsewhere should carry their registry in the reference.
     virtualisation.containers.registries.search = ["docker.io"];
 
+    # Trust the local mkcert development CA, so that the same work dev stack's
+    # https://*.local endpoints verify. `mkcert -install` normally
+    # appends the CA to the system trust store, but on NixOS /etc/ssl is
+    # generated from the store and the install is silently lost, leaving
+    # curl/OpenSSL to reject every request with "unable to get local issuer
+    # certificate". Adding it here puts it in the generated
+    # /etc/ssl/certs/ca-certificates.crt instead.
+    #
+    # Only the public certificate lives in this repo; the CA key stays in
+    # ~/.local/share/mkcert/rootCA-key.pem. That key can mint a certificate for
+    # *any* host this machine then trusts, so it must not leak -- an acceptable
+    # trade on a single-user desktop, not on a shared box. Regenerating the CA
+    # (`mkcert -uninstall`, or wiping that directory) invalidates the copy here:
+    # re-copy rootCA.pem and rebuild.
+    security.pki.certificateFiles = [./mkcert-rootCA.pem];
+
     services = {
       openssh.enable = true;
       # Don't punch port 22 in the LAN-facing firewall; SSH is reachable only
