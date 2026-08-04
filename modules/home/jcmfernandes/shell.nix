@@ -94,6 +94,17 @@
     home.sessionVariables.EDITOR = "${pkgs.emacs-pgtk}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
     home.sessionVariables.VISUAL = "${pkgs.emacs-pgtk}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
 
+    # Point Docker-API clients (testcontainers, Docker SDKs, act, IDE docker
+    # plugins) at rootless podman's socket -- they'd otherwise probe
+    # /var/run/docker.sock, which doesn't exist here (dockerCompat only ships
+    # the `docker` CLI shim, and dockerSocket is off). The CLI shim and
+    # podman-compose talk to podman directly and ignore this.
+    # Set twice on purpose: home.sessionVariables reaches interactive shells,
+    # systemd.user.sessionVariables reaches GUI apps started by the user
+    # manager. Both expand $XDG_RUNTIME_DIR at read time, so no uid is baked in.
+    home.sessionVariables.DOCKER_HOST = "unix://$XDG_RUNTIME_DIR/podman/podman.sock";
+    systemd.user.sessionVariables.DOCKER_HOST = "unix://\${XDG_RUNTIME_DIR}/podman/podman.sock";
+
     # The CLI toolchain, previously baked into the wrapped shell's PATH;
     # the per-user profile now carries it.
     home.packages = with pkgs; [
