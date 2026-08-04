@@ -51,32 +51,17 @@
           "mise"
           "direnv"
           "tmux"
-          "task"
           "colored-man-pages"
           "history-substring-search"
           "fzf"
           "web-search"
 
-          # languages
-          "ruby"
-          "rails"
-          "golang"
-
-          # emacs
+          # emacs (lol)
           "emacs"
-          "cask"
 
           # containers & infra
           "docker"
           "docker-compose"
-          "terraform"
-          "opentofu"
-          "kubectl"
-
-          # clouds
-          "aws"
-          "azure"
-          "gcloud"
         ];
         # Auto-sourced *.zsh drop-in dir; the ghostel/emacs integration
         # below lands there.
