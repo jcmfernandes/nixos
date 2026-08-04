@@ -8,8 +8,9 @@
 # in here.
 
 # CNAME each Caddy-fronted service subdomain on moon to the DDNS-managed
-# host. Resolution chases the CNAME → DDNS A record, so a LAN-IP change is
-# picked up by every subdomain without any tofu run.
+# host. Resolution chases the CNAME → DDNS A record, so an address change is
+# picked up by every subdomain without any tofu run. moon publishes its
+# tailscale IP there, so these services resolve usefully only on the tailnet.
 #
 # Subdomain list is the same JSON file moon's Caddy config reads, so add/
 # remove there and both apply.

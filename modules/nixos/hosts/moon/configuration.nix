@@ -587,23 +587,29 @@
       ];
     };
 
+    # Publishes moon's tailscale IPv4 to njal.la as
+    # moon.hosts.moreirafernandes.com, same as karma and vivivi. The LAN IP
+    # this used to publish only worked from home; the tailnet address works
+    # from anywhere and, on the LAN, tailscale still finds the direct path
+    # over the local link. Note every service subdomain CNAMEs here
+    # (opentofu/infra/dns.tf), so they become tailnet-only.
     systemd.services.njalla-ddns = {
       description = "Update Njalla DDNS record for moon";
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      path = [pkgs.iproute2 pkgs.jq pkgs.curl];
+      after = ["network-online.target" "tailscaled.service"];
+      wants = ["network-online.target" "tailscaled.service"];
+      path = [config.services.tailscale.package pkgs.curl];
       serviceConfig = {
         Type = "oneshot";
         EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
       };
       script = ''
-        lan_ip=$(ip -4 -j route get 1.1.1.1 | jq -r '.[0].prefsrc')
-        if [ -z "$lan_ip" ] || [ "$lan_ip" = "null" ]; then
-          echo "Could not determine LAN IP" >&2
+        ts_ip=$(tailscale ip -4 | head -n1)
+        if [ -z "$ts_ip" ]; then
+          echo "Could not determine tailscale IP" >&2
           exit 1
         fi
         curl -fsS --max-time 15 --retry 3 --retry-delay 5 \
-          "https://njal.la/update/?h=moon.hosts.moreirafernandes.com&k=$DDNS_KEY&a=$lan_ip&quiet"
+          "https://njal.la/update/?h=moon.hosts.moreirafernandes.com&k=$DDNS_KEY&a=$ts_ip&quiet"
       '';
     };
 
