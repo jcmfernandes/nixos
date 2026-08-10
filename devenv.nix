@@ -1,5 +1,6 @@
 {pkgs, ...}: {
   packages = with pkgs; [
+    age
     yubikey-manager # ykman
     sops
     age-plugin-yubikey
