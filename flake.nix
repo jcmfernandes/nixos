@@ -68,6 +68,14 @@
       flake = false;
     };
 
+    # niri built from our fork's main-axis branch: adds the `main-axis`
+    # layout option so DP-2's scrolling strip runs top-to-bottom. Deliberately
+    # does NOT follow our nixpkgs -- niri's flake pins nixpkgs-unstable and its
+    # build needs packages newer than our 26.05 pin.
+    niri = {
+      url = "github:jcmfernandes/niri/main-axis";
+    };
+
     # Personal oh-my-zsh fork: master is upstream master plus the patches
     # carried here (each also proposed upstream on its own branch). It is the
     # source for homeModules.shell's oh-my-zsh package, replacing nixpkgs'
