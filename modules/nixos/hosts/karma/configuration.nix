@@ -45,6 +45,24 @@
 
     nix.settings.experimental-features = ["nix-command" "flakes"];
 
+    # Replace nixpkgs' niri with our fork's main-axis build. An overlay rather
+    # than a `programs.niri.package` override so that *every* consumer picks it
+    # up -- in particular the build-time `niri validate` step in the home
+    # module, which would otherwise reject the `main-axis` option and fail the
+    # rebuild.
+    #
+    # Uses niri's own prebuilt package rather than `inputs.niri.overlays.default`:
+    # that overlay builds niri against *our* nixpkgs (26.05), but the fork's
+    # `main-axis` branch needs `libdisplay-info_0_3`, which our 26.05 pin
+    # doesn't have (only `libdisplay-info_0_2`). niri's own flake pins
+    # nixpkgs-unstable, which does, so pulling its prebuilt package sidesteps
+    # the mismatch entirely.
+    nixpkgs.overlays = [
+      (final: prev: {
+        niri = inputs.niri.packages.${prev.stdenv.hostPlatform.system}.niri;
+      })
+    ];
+
     boot = {
       kernelParams = ["video=Virtual-1:1920x1080"];
       kernelPackages = pkgs.linuxPackages_latest;
