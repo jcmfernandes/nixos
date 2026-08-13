@@ -1,17 +1,50 @@
 _: {
-  flake.nixosModules.desktop = {pkgs, ...}: {
+  flake.nixosModules.desktop = {
+    lib,
+    pkgs,
+    ...
+  }: let
+    # xdg-desktop-portal-gnome 50 probes for mutter's
+    # org.gnome.Mutter.ServiceChannel exactly once, at startup, through a
+    # proxy built with G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START. niri does claim
+    # that name, but only shortly *after* it signals readiness -- so any
+    # start of the portal that wins that race logs "Non-compatible display
+    # server, exposing settings only" and then serves *only* the Settings
+    # interface for the rest of the session, even though its gnome.portal
+    # file advertises FileChooser, ScreenCast and the rest. Screen sharing
+    # then fails with "No such interface
+    # org.freedesktop.impl.portal.ScreenCast" and file dialogs with the
+    # FileChooser equivalent. Hold the portal back until the name is owned.
+    wait-for-mutter-service-channel = pkgs.writeShellApplication {
+      name = "wait-for-mutter-service-channel";
+      runtimeInputs = [pkgs.systemd pkgs.coreutils];
+      text = ''
+        for _ in $(seq 100); do
+          if [ "$(busctl --user call org.freedesktop.DBus /org/freedesktop/DBus \
+                    org.freedesktop.DBus NameHasOwner s \
+                    org.gnome.Mutter.ServiceChannel)" = "b true" ]; then
+            exit 0
+          fi
+          sleep 0.1
+        done
+        echo "org.gnome.Mutter.ServiceChannel never appeared; starting anyway" >&2
+      '';
+    };
+  in {
     programs.niri = {
       enable = true;
       package = pkgs.niri;
-      # Route the FileChooser portal to xdg-desktop-portal-gtk instead of
-      # -gnome/Nautilus (the module's default). xdg-desktop-portal-gnome 50
-      # probes for mutter's org.gnome.Mutter.ServiceChannel at startup and,
-      # under niri, logs "Non-compatible display server, exposing settings
-      # only" -- it then serves *only* the Settings interface even though
-      # its gnome.portal file advertises FileChooser. Every file dialog
-      # (e.g. Firefox's upload/download picker) then dies with
-      # "No such interface org.freedesktop.impl.portal.FileChooser".
+      # Use xdg-desktop-portal-gtk rather than -gnome/Nautilus (the module's
+      # default) for the file picker.
       useNautilus = false;
+    };
+
+    # See wait-for-mutter-service-channel above. asDropin so this extends the
+    # unit shipped by the xdg-desktop-portal-gnome package instead of
+    # replacing it.
+    systemd.user.services.xdg-desktop-portal-gnome = {
+      overrideStrategy = "asDropin";
+      serviceConfig.ExecStartPre = lib.getExe wait-for-mutter-service-channel;
     };
 
     time.timeZone = "Europe/Lisbon";
