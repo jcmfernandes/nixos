@@ -18,6 +18,7 @@
       pkgs.pavucontrol
       pkgs.element-desktop
       pkgs.halloy
+      pkgs.gnome-calculator
     ];
   };
 }
