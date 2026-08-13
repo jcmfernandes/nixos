@@ -3,6 +3,15 @@ _: {
     programs.niri = {
       enable = true;
       package = pkgs.niri;
+      # Route the FileChooser portal to xdg-desktop-portal-gtk instead of
+      # -gnome/Nautilus (the module's default). xdg-desktop-portal-gnome 50
+      # probes for mutter's org.gnome.Mutter.ServiceChannel at startup and,
+      # under niri, logs "Non-compatible display server, exposing settings
+      # only" -- it then serves *only* the Settings interface even though
+      # its gnome.portal file advertises FileChooser. Every file dialog
+      # (e.g. Firefox's upload/download picker) then dies with
+      # "No such interface org.freedesktop.impl.portal.FileChooser".
+      useNautilus = false;
     };
 
     time.timeZone = "Europe/Lisbon";
