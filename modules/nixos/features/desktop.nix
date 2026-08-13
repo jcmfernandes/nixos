@@ -1,36 +1,5 @@
 _: {
-  flake.nixosModules.desktop = {
-    lib,
-    pkgs,
-    ...
-  }: let
-    # xdg-desktop-portal-gnome 50 probes for mutter's
-    # org.gnome.Mutter.ServiceChannel exactly once, at startup, through a
-    # proxy built with G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START. niri does claim
-    # that name, but only shortly *after* it signals readiness -- so any
-    # start of the portal that wins that race logs "Non-compatible display
-    # server, exposing settings only" and then serves *only* the Settings
-    # interface for the rest of the session, even though its gnome.portal
-    # file advertises FileChooser, ScreenCast and the rest. Screen sharing
-    # then fails with "No such interface
-    # org.freedesktop.impl.portal.ScreenCast" and file dialogs with the
-    # FileChooser equivalent. Hold the portal back until the name is owned.
-    wait-for-mutter-service-channel = pkgs.writeShellApplication {
-      name = "wait-for-mutter-service-channel";
-      runtimeInputs = [pkgs.systemd pkgs.coreutils];
-      text = ''
-        for _ in $(seq 100); do
-          if [ "$(busctl --user call org.freedesktop.DBus /org/freedesktop/DBus \
-                    org.freedesktop.DBus NameHasOwner s \
-                    org.gnome.Mutter.ServiceChannel)" = "b true" ]; then
-            exit 0
-          fi
-          sleep 0.1
-        done
-        echo "org.gnome.Mutter.ServiceChannel never appeared; starting anyway" >&2
-      '';
-    };
-  in {
+  flake.nixosModules.desktop = {pkgs, ...}: {
     programs.niri = {
       enable = true;
       package = pkgs.niri;
@@ -39,12 +8,37 @@ _: {
       useNautilus = false;
     };
 
-    # See wait-for-mutter-service-channel above. asDropin so this extends the
-    # unit shipped by the xdg-desktop-portal-gnome package instead of
-    # replacing it.
+    # xdg-desktop-portal-gnome 50 decides once, at startup, whether it is
+    # running under a compatible compositor, by probing for mutter's
+    # org.gnome.Mutter.ServiceChannel through a proxy built with
+    # G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START. If the name has no owner it logs
+    # "Non-compatible display server, exposing settings only" and then serves
+    # *only* org.freedesktop.impl.portal.Settings for the rest of its life --
+    # despite its gnome.portal file advertising ScreenCast, FileChooser and
+    # the rest. Calls against those then fail with "No such interface", which
+    # Firefox surfaces as an unactionable screen-sharing permissions message.
+    #
+    # The unit shipped by the package is ordered only After/Requisite/PartOf
+    # graphical-session.target, which does not stop the portal frontend from
+    # D-Bus-activating this backend while the compositor is torn down (it does
+    # exactly that when closing orphaned sessions on logout). The backend then
+    # starts with no compositor at all, latches "settings only", and -- having
+    # been activated rather than started by the target -- survives into the
+    # next session, where it is already poisoned.
+    #
+    # Bind it to niri instead. niri claims its D-Bus names in
+    # DBusServers::start (a blocking zbus name request) strictly before it
+    # signals READY to systemd, so "niri.service is active" implies the name
+    # is owned: After= is a real guarantee here, not a timing bet. BindsTo=
+    # covers the other half -- while niri is down the backend cannot be
+    # activated at all, and when niri exits the backend goes with it, so no
+    # poisoned instance can outlive the session that created it.
+    #
+    # asDropin extends the packaged unit instead of replacing it.
     systemd.user.services.xdg-desktop-portal-gnome = {
       overrideStrategy = "asDropin";
-      serviceConfig.ExecStartPre = lib.getExe wait-for-mutter-service-channel;
+      after = ["niri.service"];
+      bindsTo = ["niri.service"];
     };
 
     time.timeZone = "Europe/Lisbon";
