@@ -34,6 +34,7 @@
         self.homeModules.niri
         self.homeModules.gtk
         self.homeModules.desktop-apps
+        self.homeModules.insync
         self.homeModules.fonts
         self.homeModules.flatpak
         self.homeModules.firefox
