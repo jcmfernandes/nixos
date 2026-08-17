@@ -196,7 +196,7 @@
         # actions stay logical, so Mod+Left/Right still move along the strip
         # -- which on this output means up and down the screen.
         layout = {
-          main-axis = "vertical";
+          orientation = "vertical";
         };
       };
 
