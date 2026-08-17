@@ -222,16 +222,16 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1786545202,
-        "narHash": "sha256-nVgwYwK90PkPt9GznJZn0qcygzkIFgqv+1mMOv+t/d8=",
+        "lastModified": 1786979879,
+        "narHash": "sha256-aiD9kKN0pl0oEDWaREg3x+FvhaAo7Zt2RoEp+xKMQAE=",
         "owner": "jcmfernandes",
         "repo": "niri",
-        "rev": "f4c4d79443b947dd19874a886d9b5472c45aad05",
+        "rev": "335f5980dc9d60a69dbac7d8a8071e83b1e9a22c",
         "type": "github"
       },
       "original": {
         "owner": "jcmfernandes",
-        "ref": "main-axis",
+        "ref": "feat/orientation",
         "repo": "niri",
         "type": "github"
       }
@@ -429,11 +429,11 @@
     "ohmyzsh": {
       "flake": false,
       "locked": {
-        "lastModified": 1786365580,
-        "narHash": "sha256-PkZSt3w8Y3vDpUkHMrP1CQzkN9JQ2RL11xmcM97uuP4=",
+        "lastModified": 1786977320,
+        "narHash": "sha256-cNhgCVCBlrc0fHQuoYP7lkksMKnkCtUrhIsQkM9TF5M=",
         "owner": "jcmfernandes",
         "repo": "ohmyzsh",
-        "rev": "f96a33d281c4d8623646e3aa48a03c8fb90d46cd",
+        "rev": "920474b6d1418e5236015f252d37488cab114021",
         "type": "github"
       },
       "original": {
