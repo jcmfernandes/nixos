@@ -11,6 +11,10 @@
     programs.git = {
       enable = true;
 
+      # Installs git-lfs and wires its filter/smudge config, so cloning an
+      # LFS repo pulls the real blobs instead of the pointer files.
+      lfs.enable = true;
+
       # ~/.gitignore-global equivalent; hm wires core.excludesFile itself.
       ignores = [
         "**/.claude/.cc-writes/"
