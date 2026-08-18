@@ -15,8 +15,22 @@
         # homeModules.noctalia's ordering). noctalia owns the
         # StatusNotifierWatcher, so starting after it means the tray icon
         # registers on the first try rather than after a retry.
-        After = ["niri.service" "noctalia.service"];
-        Requires = ["niri.service"];
+        #
+        # Requisite, not Requires: Requires would let this unit's own
+        # Restart=on-failure *pull niri up* after a session teardown (insync
+        # coredumps when the Wayland socket vanishes), and a niri started
+        # outside a logind session never becomes active while still blocking
+        # every subsequent login. Requisite fails fast instead.
+        #
+        # After=graphical-session.target is what keeps this out of an ordering
+        # cycle: the target implicitly orders itself after the units it Wants,
+        # so ordering after noctalia -- which upstream orders after the target
+        # -- would otherwise close the loop target -> insync -> noctalia ->
+        # target. An explicit ordering to the target suppresses the implicit
+        # one, putting insync on noctalia's side of it.
+        After = ["graphical-session.target" "niri.service" "noctalia.service"];
+        Requisite = ["niri.service"];
+        PartOf = ["graphical-session.target"];
       };
       Service = {
         Type = "simple";

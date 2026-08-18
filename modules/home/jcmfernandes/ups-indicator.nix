@@ -75,8 +75,12 @@ _: {
         Unit = {
           Description = "Desktop notifications on UPS (NUT) power state changes";
           # Gate on a live session so the notification daemon is on the bus.
+          # Requisite, not Wants: Wants would let this unit's restarts pull
+          # niri up outside a logind session, where it never becomes active
+          # yet still blocks every later login.
           After = ["niri.service"];
-          Wants = ["niri.service"];
+          Requisite = ["niri.service"];
+          PartOf = ["graphical-session.target"];
         };
         Service = {
           ExecStart = lib.getExe ups-notify;

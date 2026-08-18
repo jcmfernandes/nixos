@@ -53,8 +53,14 @@
     # `systemctl --user restart noctalia` on switch) could still start the
     # bar before niri was up and burn through its restart limit.
     systemd.user.services.noctalia.Unit = {
+      #
+      # Requisite, not Requires: Requires would let a restart of the bar pull
+      # niri up, and niri started outside a logind session never becomes
+      # active while still blocking every later login. Requisite keeps the
+      # gate without the resurrection. (PartOf=graphical-session.target comes
+      # from the upstream unit, so teardown is already covered.)
       After = ["niri.service"];
-      Requires = ["niri.service"];
+      Requisite = ["niri.service"];
     };
 
     # Noctalia v5 (the native C++ rewrite) is configured via TOML in

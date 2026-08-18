@@ -26,19 +26,30 @@ _: {
     # been activated rather than started by the target -- survives into the
     # next session, where it is already poisoned.
     #
-    # Bind it to niri instead. niri claims its D-Bus names in
+    # Tie it to niri instead. niri claims its D-Bus names in
     # DBusServers::start (a blocking zbus name request) strictly before it
     # signals READY to systemd, so "niri.service is active" implies the name
-    # is owned: After= is a real guarantee here, not a timing bet. BindsTo=
-    # covers the other half -- while niri is down the backend cannot be
-    # activated at all, and when niri exits the backend goes with it, so no
-    # poisoned instance can outlive the session that created it.
+    # is owned: After= is a real guarantee here, not a timing bet.
+    #
+    # The other half needs two directives, deliberately *not* BindsTo=. BindsTo
+    # propagates stop, but it is also a start dependency: a D-Bus activation of
+    # this backend during teardown pulls niri.service back up, and a niri
+    # started outside a logind session never becomes active (no DRM master,
+    # black screen) while still blocking every later login, because
+    # niri-session refuses to run when niri.service is already active. That is
+    # the same resurrection the session units in homeModules avoid.
+    #
+    #   requisite = refuse activation outright while niri is down (the
+    #               "cannot be activated at all" guarantee), without starting it.
+    #   partOf    = stop/restart propagate from niri, so no poisoned instance
+    #               outlives the session that created it.
     #
     # asDropin extends the packaged unit instead of replacing it.
     systemd.user.services.xdg-desktop-portal-gnome = {
       overrideStrategy = "asDropin";
       after = ["niri.service"];
-      bindsTo = ["niri.service"];
+      requisite = ["niri.service"];
+      partOf = ["niri.service"];
     };
 
     time.timeZone = "Europe/Lisbon";
