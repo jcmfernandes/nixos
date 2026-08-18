@@ -55,8 +55,18 @@
         # Gate on a live Wayland socket so pgtk frames can be drawn. niri is a
         # Type=notify user service that signals readiness once its socket is
         # bound (same pattern as homeModules.noctalia's ordering).
+        #
+        # Requisite, not Requires: Requires would let a start of this unit
+        # *pull niri up*, and niri started outside a logind session never
+        # becomes active (no DRM master, black screen) while still blocking
+        # every subsequent login, because niri-session refuses to run when
+        # niri.service is already active. Requisite keeps the same "niri must
+        # be up" guarantee but fails fast instead of resurrecting it.
         After = ["niri.service"];
-        Requires = ["niri.service"];
+        Requisite = ["niri.service"];
+        # Stop with the session rather than relying on Requires' stop
+        # propagation, which we just gave up.
+        PartOf = ["graphical-session.target"];
         # Do NOT let home-manager activation stop or restart the daemon on a
         # nixos-rebuild switch: it -- and everything running inside it, incl.
         # the claude-code-ide session -- must survive every rebuild. A changed
