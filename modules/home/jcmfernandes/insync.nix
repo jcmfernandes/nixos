@@ -17,7 +17,7 @@
         # registers on the first try rather than after a retry.
         #
         # Requisite, not Requires: Requires would let this unit's own
-        # Restart=on-failure *pull niri up* after a session teardown (insync
+        # Restart=always *pull niri up* after a session teardown (insync
         # coredumps when the Wayland socket vanishes), and a niri started
         # outside a logind session never becomes active while still blocking
         # every subsequent login. Requisite fails fast instead.
@@ -38,7 +38,13 @@
         # read as the service exiting; --no-daemon keeps it in the foreground.
         ExecStart = "${pkgs.insync}/bin/insync start --no-daemon";
         ExecStop = "${pkgs.insync}/bin/insync quit";
-        Restart = "on-failure";
+        # always, not on-failure: `insync start` exits 0 when it decides an
+        # instance is already up, so a clean exit can otherwise leave the sync
+        # daemon dead with nothing to bring it back. Session teardown does not
+        # become a restart loop -- PartOf stops this unit with the target, and
+        # any restart raced in before that fails fast on the Requisite above.
+        Restart = "always";
+        RestartSec = 5;
       };
       Install.WantedBy = ["graphical-session.target"];
     };
