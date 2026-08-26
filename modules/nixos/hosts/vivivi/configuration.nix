@@ -61,6 +61,17 @@
       ];
       trusted-public-keys = lib.mkForce [];
       require-sigs = true;
+
+      # 4 vCPUs. The defaults (max-jobs = auto = 4, cores = 0 = all 4) let
+      # 16 build threads compete for 4 cores, which drove load averages of
+      # 15-20 and made timing-sensitive test suites lose their races --
+      # gnulib's test-lock hit its own alarm, paho-mqtt's fake-broker tests
+      # missed late callbacks. Since everything that lands here is built
+      # from source (see above), that contention is the normal state, not a
+      # rare spike. 2 jobs x 2 cores keeps the box fully busy without
+      # oversubscribing it.
+      max-jobs = 2;
+      cores = 2;
     };
 
     # Same workaround as moon: tikv-jemalloc-sys-bundling crates need their
