@@ -29,6 +29,7 @@
         self.homeModules.git
         self.homeModules.noctalia
         self.homeModules.shell
+        self.homeModules.mise
         self.homeModules.which-key
         self.homeModules.kitty
         self.homeModules.niri
