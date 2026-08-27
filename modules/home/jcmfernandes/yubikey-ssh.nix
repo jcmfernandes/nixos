@@ -146,7 +146,12 @@
         # socket below is keyless and refuses to authenticate, so let the
         # inherited SSH_AUTH_SOCK win. First-obtained-value-wins means this
         # block only has to override IdentityAgent -- IdentitiesOnly and
-        # IdentityFile still come from the block after it.
+        # IdentityFile still come from the block after it (karma is the
+        # exception: it has no pinned block, so it only ever uses a
+        # forwarded agent, which is the whole point of listing it).
+        #
+        # Note the comma-separated host list: `Match host` takes a
+        # pattern-list, unlike `Host`, which is space-separated.
         #
         # Both conditions are load-bearing. SSH_CONNECTION alone is not
         # enough: without a usable socket this block still wins and resolves
@@ -157,7 +162,7 @@
         # SSH_AUTH_SOCK (gnome-keyring's gcr/ssh) is a perfectly good socket
         # that holds none of the PIV keys.
         forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi"] {
-          header = ''Match host github.com exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
+          header = ''Match host github.com,moon,vivivi,karma exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
           IdentityAgent = "SSH_AUTH_SOCK";
         };
 
