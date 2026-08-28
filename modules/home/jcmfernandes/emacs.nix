@@ -1,10 +1,13 @@
-{
+{self, ...}: {
   flake.homeModules.emacs = {
+    config,
     pkgs,
     lib,
     ...
   }: let
-    # Plain Wayland-native emacs (emacs-pgtk), wrapped so straight.el's
+    # Wayland-native emacs (emacs-pgtk-headless: emacs-pgtk plus the
+    # compositor-survival patches, see emacs-pgtk-headless.nix), wrapped so
+    # straight.el's
     # runtime C compilation works on NixOS. Two packages in the config compile
     # native code on first use -- jinx (jinx-mod.c -> libenchant-2, found via
     # pkg-config) and tree-sitter grammars (treesit-install-language-grammar,
@@ -22,7 +25,7 @@
     # deliver those directly via home.packages + xdg.desktopEntries below.
     emacs = pkgs.symlinkJoin {
       name = "emacs-native-build";
-      paths = [pkgs.emacs-pgtk];
+      paths = [config.jmf.emacs.package];
       nativeBuildInputs = [pkgs.makeWrapper];
       postBuild = ''
         wrapProgram $out/bin/emacs \
@@ -32,7 +35,7 @@
     };
 
     # Launcher wired into the desktop entry below: ensure the daemon is up (a
-    # no-op if graphical-session.target already started it), then attach a
+    # no-op since it starts at boot with the user manager), then attach a
     # frame. It deliberately never uses `emacsclient -a ""` -- that is the only
     # form that spawns a fresh daemon, and it would land in the launcher's
     # cgroup (e.g. noctalia's), recreating the very bug this daemon fixes.
@@ -41,78 +44,96 @@
       exec ${emacs}/bin/emacsclient -c "$@"
     '';
   in {
-    home.packages = [emacs];
+    # Which emacs build the daemon, wrapper and desktop entries deliver.
+    # Defaults to the patched display-independent build; a host wanting
+    # stock emacs sets, in its configuration:
+    #   home-manager.users.jcmfernandes.jmf.emacs.package = pkgs.emacs-pgtk;
+    options.jmf.emacs.package = lib.mkOption {
+      type = lib.types.package;
+      default = self.packages.${pkgs.stdenv.hostPlatform.system}.emacs-pgtk-headless;
+      defaultText = lib.literalExpression "self.packages.<system>.emacs-pgtk-headless";
+      description = "The emacs package wrapped and run as the daemon.";
+    };
 
-    # Emacs as a pgtk daemon owned by systemd, decoupled from whatever launched
-    # a frame. Running the *wrapped* emacs so the daemon inherits the compiler
-    # and PKG_CONFIG_PATH that straight.el needs for runtime native builds
-    # (jinx, tree-sitter). We hand-roll the unit rather than use services.emacs
-    # for the same reason emacs.nix avoids programs.emacs: it rebuilds the
-    # package via emacsPackagesFor, which rejects the symlinkJoin wrapper.
-    systemd.user.services.emacs = {
-      Unit = {
-        Description = "Emacs daemon (pgtk), wrapped for straight.el native builds";
-        # Gate on a live Wayland socket so pgtk frames can be drawn. niri is a
-        # Type=notify user service that signals readiness once its socket is
-        # bound (same pattern as homeModules.noctalia's ordering).
-        #
-        # Requisite, not Requires: Requires would let a start of this unit
-        # *pull niri up*, and niri started outside a logind session never
-        # becomes active (no DRM master, black screen) while still blocking
-        # every subsequent login, because niri-session refuses to run when
-        # niri.service is already active. Requisite keeps the same "niri must
-        # be up" guarantee but fails fast instead of resurrecting it.
-        After = ["niri.service"];
-        Requisite = ["niri.service"];
-        # Stop with the session rather than relying on Requires' stop
-        # propagation, which we just gave up.
-        PartOf = ["graphical-session.target"];
-        # Do NOT let home-manager activation stop or restart the daemon on a
-        # nixos-rebuild switch: it -- and everything running inside it, incl.
-        # the claude-code-ide session -- must survive every rebuild. A changed
-        # emacs is adopted only on a manual `systemctl --user restart emacs` or
-        # a reboot. keep-old is honoured by home-manager's sd-switch.
-        X-SwitchMethod = "keep-old";
+    config = {
+      home.packages = [emacs];
+
+      # Emacs as a pgtk daemon owned by systemd, decoupled from whatever launched
+      # a frame. Running the *wrapped* emacs so the daemon inherits the compiler
+      # and PKG_CONFIG_PATH that straight.el needs for runtime native builds
+      # (jinx, tree-sitter). We hand-roll the unit rather than use services.emacs
+      # for the same reason emacs.nix avoids programs.emacs: it rebuilds the
+      # package via emacsPackagesFor, which rejects the symlinkJoin wrapper.
+      systemd.user.services.emacs = {
+        Unit = {
+          Description = "Emacs daemon (pgtk), wrapped for straight.el native builds";
+          # No display coupling, on purpose: emacs-pgtk-headless starts with
+          # no compositor running, outlives compositor exits, and attaches
+          # frames to whichever display an emacsclient brings along. Paired
+          # with users.jcmfernandes.linger, the daemon starts with the
+          # machine and depends on no login, graphical or otherwise.
+          #
+          # Do NOT let home-manager activation stop or restart the daemon on a
+          # nixos-rebuild switch: it -- and everything running inside it, incl.
+          # the claude-code-ide session -- must survive every rebuild. A changed
+          # emacs is adopted only on a manual `systemctl --user restart emacs` or
+          # a reboot. keep-old is honoured by home-manager's sd-switch.
+          X-SwitchMethod = "keep-old";
+        };
+        Service = {
+          Type = "simple";
+          ExecStart = "${emacs}/bin/emacs --fg-daemon";
+          Restart = "on-failure";
+          # Signal only emacs on stop, not the whole cgroup. Anything launched
+          # from inside emacs -- a podman-compose stack from vterm, say -- is
+          # adopted into this unit's cgroup, and the default control-group mode
+          # SIGTERMs all of it and then waits out TimeoutStopSec for the cgroup
+          # to drain. Containers do not exit on SIGTERM, so logout burned the
+          # full 90s in 'stop-sigterm'; meanwhile the queued stop job made every
+          # login attempt fail with "Transaction for niri.service/start is
+          # destructive (emacs.service has 'stop' job queued)", locking the
+          # session out until the timeout expired. process mode ends the unit as
+          # soon as emacs itself is gone. The stop duration is then just emacs'
+          # own kill-emacs-hook (lsp teardown, claude-code-ide cleanup, session
+          # saves), which is work worth waiting for -- so TimeoutStopSec is left
+          # alone, now that it only ever bounds emacs.
+          KillMode = "process";
+        };
+        Install.WantedBy = ["default.target"];
       };
-      Service = {
-        Type = "simple";
-        ExecStart = "${emacs}/bin/emacs --fg-daemon";
-        Restart = "on-failure";
+
+      # Replaces the .desktop that programs.emacs generated, pointing the GUI
+      # app-launcher entry at the daemon (via emacs-launch) instead of spawning a
+      # fresh emacs. The launched emacsclient frame lives in the launcher's cgroup
+      # and may close on a switch, but the daemon (and all buffers/subprocesses)
+      # survives; reopening the entry reattaches losslessly.
+      xdg.desktopEntries.emacs = {
+        name = "Emacs";
+        genericName = "Text Editor";
+        exec = "${lib.getExe emacs-launch} %F";
+        icon = "emacs";
+        categories = ["Development" "TextEditor"];
+        terminal = false;
       };
-      Install.WantedBy = ["graphical-session.target"];
-    };
 
-    # Replaces the .desktop that programs.emacs generated, pointing the GUI
-    # app-launcher entry at the daemon (via emacs-launch) instead of spawning a
-    # fresh emacs. The launched emacsclient frame lives in the launcher's cgroup
-    # and may close on a switch, but the daemon (and all buffers/subprocesses)
-    # survives; reopening the entry reattaches losslessly.
-    xdg.desktopEntries.emacs = {
-      name = "Emacs";
-      genericName = "Text Editor";
-      exec = "${lib.getExe emacs-launch} %F";
-      icon = "emacs";
-      categories = ["Development" "TextEditor"];
-      terminal = false;
-    };
+      # Hide the emacsclient.desktop that emacs-pgtk ships (via home.packages).
+      # It is a bare `emacsclient --alternate-editor=`, so if the systemd daemon
+      # is down its empty -a spawns a fresh emacs --daemon in the launcher's
+      # cgroup -- the exact rogue-daemon this setup avoids. Same id shadows it.
+      xdg.desktopEntries.emacsclient = {
+        name = "Emacs (Client)";
+        noDisplay = true;
+      };
 
-    # Hide the emacsclient.desktop that emacs-pgtk ships (via home.packages).
-    # It is a bare `emacsclient --alternate-editor=`, so if the systemd daemon
-    # is down its empty -a spawns a fresh emacs --daemon in the launcher's
-    # cgroup -- the exact rogue-daemon this setup avoids. Same id shadows it.
-    xdg.desktopEntries.emacsclient = {
-      name = "Emacs (Client)";
-      noDisplay = true;
-    };
-
-    # Same treatment for the two mail entries emacs-pgtk ships; unused here.
-    xdg.desktopEntries.emacs-mail = {
-      name = "Emacs (Mail)";
-      noDisplay = true;
-    };
-    xdg.desktopEntries.emacsclient-mail = {
-      name = "Emacs (Mail, Client)";
-      noDisplay = true;
+      # Same treatment for the two mail entries emacs-pgtk ships; unused here.
+      xdg.desktopEntries.emacs-mail = {
+        name = "Emacs (Mail)";
+        noDisplay = true;
+      };
+      xdg.desktopEntries.emacsclient-mail = {
+        name = "Emacs (Mail, Client)";
+        noDisplay = true;
+      };
     };
   };
 }

@@ -15,6 +15,10 @@
     users.users.jcmfernandes = {
       isNormalUser = true;
       shell = pkgs.zsh;
+      # Start this user's systemd manager at boot and keep it across
+      # logouts, so user services (the emacs daemon) run without any
+      # login, graphical or otherwise.
+      linger = true;
       extraGroups = ["wheel" "networkmanager" "input" "uinput" "video" "render" "libvirtd"];
       hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.

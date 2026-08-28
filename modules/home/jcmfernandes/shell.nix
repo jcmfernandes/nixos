@@ -89,10 +89,12 @@
     # Attach to the emacs daemon (homeModules.emacs). `-c` opens a blocking GUI
     # frame (git etc. wait until you finish the buffer); `-a <nano>` falls back
     # to nano if the daemon is somehow down. Never `-a ""` -- that would spawn a
-    # rogue daemon. emacsclient is unwrapped (needs no build env), so this stays
-    # decoupled from the emacs wrapper derivation.
-    home.sessionVariables.EDITOR = "${pkgs.emacs-pgtk}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
-    home.sessionVariables.VISUAL = "${pkgs.emacs-pgtk}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
+    # rogue daemon. emacsclient comes from the same package the daemon runs
+    # (jmf.emacs.package, declared in homeModules.emacs) -- referencing
+    # pkgs.emacs-pgtk here would drag a second, stock emacs into the closure
+    # just for this one binary.
+    home.sessionVariables.EDITOR = "${config.jmf.emacs.package}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
+    home.sessionVariables.VISUAL = "${config.jmf.emacs.package}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
 
     # Point Docker-API clients (testcontainers, Docker SDKs, act, IDE docker
     # plugins) at rootless podman's socket -- they'd otherwise probe
