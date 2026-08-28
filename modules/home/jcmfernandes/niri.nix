@@ -50,33 +50,42 @@
         "Mod+Space".switch-layout = "next";
 
         "Mod+Q".close-window = _: {};
-        "Mod+M".maximize-column = _: {};
+        "Mod+M".maximize-group = _: {};
         "Mod+F".fullscreen-window = _: {};
         "Mod+G".toggle-window-floating = _: {};
         "Mod+Shift+G".switch-focus-between-floating-and-tiling = _: {};
-        "Mod+S".toggle-column-tabbed-display = _: {};
-        "Mod+C".center-column = _: {};
+        "Mod+S".toggle-group-tabbed-display = _: {};
+        "Mod+C".center-group = _: {};
 
-        # Loose analog to Pop's "change orientation": pull a window into
-        # the current column (vertical stack) or expel it back out.
-        "Mod+O".consume-or-expel-window-right = _: {};
-        "Mod+Shift+O".consume-or-expel-window-left = _: {};
+        # Loose analog to Pop's "change orientation": pull the neighbouring
+        # window into the focused group, or push one back out. Neither
+        # action names a direction, so both work whatever the output's
+        # orientation -- unlike consume-or-expel-window-left/right, which
+        # are horizontal-only and dead on DP-2.
+        "Mod+O".consume-window-into-group = _: {};
+        "Mod+Shift+O".expel-window-from-group = _: {};
 
-        "Mod+H".focus-column-left = _: {};
-        "Mod+L".focus-column-right = _: {};
-        "Mod+K".focus-window-up = _: {};
-        "Mod+J".focus-window-down = _: {};
+        # The fused window-or-group actions name a physical direction and
+        # act on whatever lies that way: the window inside the group, or
+        # the adjacent group. Windows and groups run along perpendicular
+        # axes, so exactly one applies on any output -- which is what keeps
+        # hjkl and the arrows spatially correct on both the horizontal
+        # main screen and the vertical DP-2.
+        "Mod+H".focus-window-or-group-left = _: {};
+        "Mod+L".focus-window-or-group-right = _: {};
+        "Mod+K".focus-window-or-group-up = _: {};
+        "Mod+J".focus-window-or-group-down = _: {};
 
-        "Mod+Left".focus-column-left = _: {};
-        "Mod+Right".focus-column-right = _: {};
-        "Mod+Up".focus-window-up = _: {};
-        "Mod+Down".focus-window-down = _: {};
+        "Mod+Left".focus-window-or-group-left = _: {};
+        "Mod+Right".focus-window-or-group-right = _: {};
+        "Mod+Up".focus-window-or-group-up = _: {};
+        "Mod+Down".focus-window-or-group-down = _: {};
 
-        # hjkl = niri structural editing: reorder within the strip/column.
-        "Mod+Shift+H".move-column-left = _: {};
-        "Mod+Shift+L".move-column-right = _: {};
-        "Mod+Shift+K".move-window-up = _: {};
-        "Mod+Shift+J".move-window-down = _: {};
+        # hjkl = niri structural editing: reorder within the strip/group.
+        "Mod+Shift+H".move-window-or-group-left = _: {};
+        "Mod+Shift+L".move-window-or-group-right = _: {};
+        "Mod+Shift+K".move-window-or-group-up = _: {};
+        "Mod+Shift+J".move-window-or-group-down = _: {};
 
         # Arrows = Pop spatial navigation. Ctrl navigates (workspaces
         # vertically, monitors horizontally); Shift moves the window
@@ -86,13 +95,21 @@
         "Mod+Ctrl+Left".focus-monitor-left = _: {};
         "Mod+Ctrl+Right".focus-monitor-right = _: {};
 
-        "Mod+Shift+Up".move-column-to-workspace-up = _: {};
-        "Mod+Shift+Down".move-column-to-workspace-down = _: {};
-        "Mod+Shift+Left".move-column-to-monitor-left = _: {};
-        "Mod+Shift+Right".move-column-to-monitor-right = _: {};
+        # Workspaces run across the layout orientation, so the up/down
+        # spellings above are horizontal-output-only. These are their
+        # vertical twins, live on DP-2 and inert everywhere else.
+        "Mod+Ctrl+Shift+Left".focus-workspace-left = _: {};
+        "Mod+Ctrl+Shift+Right".focus-workspace-right = _: {};
 
-        "Mod+Ctrl+Shift+Up".move-column-to-monitor-up = _: {};
-        "Mod+Ctrl+Shift+Down".move-column-to-monitor-down = _: {};
+        # Likewise horizontal-only. On DP-2 use Mod+Shift+1..0, which
+        # names the workspace and so works on either orientation.
+        "Mod+Shift+Up".move-group-to-workspace-up = _: {};
+        "Mod+Shift+Down".move-group-to-workspace-down = _: {};
+        "Mod+Shift+Left".move-group-to-monitor-left = _: {};
+        "Mod+Shift+Right".move-group-to-monitor-right = _: {};
+
+        "Mod+Ctrl+Shift+Up".move-group-to-monitor-up = _: {};
+        "Mod+Ctrl+Shift+Down".move-group-to-monitor-down = _: {};
 
         "Mod+Tab".toggle-overview = _: {};
 
@@ -107,16 +124,16 @@
         "Mod+9".focus-workspace = "w8";
         "Mod+0".focus-workspace = "w9";
 
-        "Mod+Shift+1".move-column-to-workspace = "w0";
-        "Mod+Shift+2".move-column-to-workspace = "w1";
-        "Mod+Shift+3".move-column-to-workspace = "w2";
-        "Mod+Shift+4".move-column-to-workspace = "w3";
-        "Mod+Shift+5".move-column-to-workspace = "w4";
-        "Mod+Shift+6".move-column-to-workspace = "w5";
-        "Mod+Shift+7".move-column-to-workspace = "w6";
-        "Mod+Shift+8".move-column-to-workspace = "w7";
-        "Mod+Shift+9".move-column-to-workspace = "w8";
-        "Mod+Shift+0".move-column-to-workspace = "w9";
+        "Mod+Shift+1".move-group-to-workspace = "w0";
+        "Mod+Shift+2".move-group-to-workspace = "w1";
+        "Mod+Shift+3".move-group-to-workspace = "w2";
+        "Mod+Shift+4".move-group-to-workspace = "w3";
+        "Mod+Shift+5".move-group-to-workspace = "w4";
+        "Mod+Shift+6".move-group-to-workspace = "w5";
+        "Mod+Shift+7".move-group-to-workspace = "w6";
+        "Mod+Shift+8".move-group-to-workspace = "w7";
+        "Mod+Shift+9".move-group-to-workspace = "w8";
+        "Mod+Shift+0".move-group-to-workspace = "w9";
 
         "Mod+Slash".spawn-sh = "${noctaliaExe} msg panel-toggle launcher";
         "Mod+Shift+Slash".show-hotkey-overlay = _: {};
@@ -135,15 +152,36 @@
         "XF86AudioNext".spawn-sh = "${lib.getExe pkgs.playerctl} next";
         "XF86AudioPrev".spawn-sh = "${lib.getExe pkgs.playerctl} previous";
 
-        # Fine resize; Mod+R cycles the column through preset widths.
-        "Mod+Ctrl+H".set-column-width = "-5%";
-        "Mod+Ctrl+L".set-column-width = "+5%";
+        # Fine resize; Mod+R cycles the group through preset sizes.
+        #
+        # Sizing has no fused actions, so the group families need keys
+        # per orientation: the width family only acts on horizontal
+        # outputs and the height family only on vertical ones. The
+        # window family is different: set-window-height's name is
+        # logical, not spatial -- it always resizes the window's
+        # cross-axis share of its group, so it is live on BOTH
+        # orientations and its physical meaning flips. (set-window-width
+        # is deliberately not bound: on tiled windows it duplicates
+        # set-group-width on horizontal and set-group-height on
+        # vertical.)
+        #
+        #                        horizontal          vertical (DP-2)
+        #   Mod+Ctrl+H/L         group width         --
+        #   Mod+Ctrl+J/K         window height       window width
+        #   Mod+Ctrl+Shift+J/K   --                  group height
+        #   Mod+R / Mod+Shift+R  preset group width  preset group height
+        "Mod+Ctrl+H".set-group-width = "-5%";
+        "Mod+Ctrl+L".set-group-width = "+5%";
         "Mod+Ctrl+J".set-window-height = "-5%";
         "Mod+Ctrl+K".set-window-height = "+5%";
-        "Mod+R".switch-preset-column-width = _: {};
+        "Mod+R".switch-preset-group-width = _: {};
 
-        "Mod+WheelScrollDown".focus-column-left = _: {};
-        "Mod+WheelScrollUp".focus-column-right = _: {};
+        "Mod+Ctrl+Shift+J".set-group-height = "-5%";
+        "Mod+Ctrl+Shift+K".set-group-height = "+5%";
+        "Mod+Shift+R".switch-preset-group-height = _: {};
+
+        "Mod+WheelScrollDown".focus-window-or-group-left = _: {};
+        "Mod+WheelScrollUp".focus-window-or-group-right = _: {};
         "Mod+Ctrl+WheelScrollDown".focus-workspace-down = _: {};
         "Mod+Ctrl+WheelScrollUp".focus-workspace-up = _: {};
 
@@ -175,7 +213,7 @@
       };
 
       # Float the OpenSSH askpass dialog (the YubiKey PIN prompt) rather
-      # than tiling it into a column. lxqt-openssh-askpass sets no app-id,
+      # than tiling it into a group. lxqt-openssh-askpass sets no app-id,
       # so match on its fixed window title.
       window-rules = [
         {
@@ -192,9 +230,13 @@
         mode = "3840x2560@119.991";
 
         # Portrait, so the scrolling strip runs top-to-bottom here: new
-        # windows stack downwards and the view scrolls vertically. Layout
-        # actions stay logical, so Mod+Left/Right still move along the strip
-        # -- which on this output means up and down the screen.
+        # windows stack downwards and the view scrolls vertically.
+        # Directional actions are spatial, not logical: they follow the
+        # physical direction they name, so an action is live on exactly
+        # one orientation. The binds above use the fused
+        # window-or-group actions where they exist, which is what keeps
+        # hjkl and the arrows meaning the same thing on this output as on
+        # the main screen; the rest carry vertical twins on separate keys.
         layout = {
           orientation = "vertical";
         };
