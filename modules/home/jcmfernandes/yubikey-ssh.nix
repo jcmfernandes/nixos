@@ -40,8 +40,18 @@
         # --property prints each event as a block of KEY=VALUE lines
         # terminated by a blank line; we accumulate the fields we care
         # about and act at the blank line.
+        #
+        # Two ways to recognise the vendor, because they are not equally
+        # available. ID_VENDOR_ID is synthesised by udev's usb_id builtin,
+        # which runs while the device exists -- on `remove` it is often
+        # absent, so matching on it alone saw every insert and no removal,
+        # leaving the agent listing keys whose card was long gone. PRODUCT
+        # (idVendor/idProduct/bcdDevice, lowercase hex) comes straight from
+        # the kernel uevent and is present on both. DEVTYPE is kernel-side
+        # too, and keeps this to the device rather than its interfaces.
         action=""
         vid=""
+        product=""
         devtype=""
 
         udevadm monitor --udev --property --subsystem-match=usb |
@@ -49,9 +59,11 @@
             case "$line" in
               ACTION=*) action=''${line#ACTION=} ;;
               ID_VENDOR_ID=*) vid=''${line#ID_VENDOR_ID=} ;;
+              PRODUCT=*) product=''${line#PRODUCT=} ;;
               DEVTYPE=*) devtype=''${line#DEVTYPE=} ;;
               "") # end of one event block
-                if [ "$vid" = "1050" ] && [ "$devtype" = "usb_device" ]; then
+                if [ "$devtype" = "usb_device" ] &&
+                  { [ "$vid" = "1050" ] || [ "''${product%%/*}" = "1050" ]; }; then
                   case "$action" in
                     add) systemctl --user --no-block start yubikey-ssh-add.service ;;
                     remove) systemctl --user --no-block start yubikey-ssh-flush.service ;;
@@ -59,6 +71,7 @@
                 fi
                 action=""
                 vid=""
+                product=""
                 devtype=""
                 ;;
             esac
