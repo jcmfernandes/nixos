@@ -1,0 +1,122 @@
+diff --git a/gdk/wayland/gdkeventsource.c b/gdk/wayland/gdkeventsource.c
+index 7016af99c3..09f7d8e8c1 100644
+--- a/gdk/wayland/gdkeventsource.c
++++ b/gdk/wayland/gdkeventsource.c
+@@ -29,8 +29,48 @@ typedef struct _GdkWaylandEventSource {
+   uint32_t mask;
+   GdkDisplay *display;
+   gboolean reading;
++  gboolean dead;
+ } GdkWaylandEventSource;
+ 
++/* The connection to the compositor is broken.  Upstream GDK responds
++ * by calling _exit(1), on the theory that the display server going
++ * away means the session is over (mirroring the X11 backend's
++ * gdk_x_io_error).  But the X11 handler is installed with
++ * XSetIOErrorHandler, which applications can and do replace in order
++ * to survive a lost connection, while this code offers no hook at all.
++ *
++ * Instead of exiting, make the event source inert: stop polling the
++ * dead descriptor and refuse further Wayland I/O, while still letting
++ * already-queued GDK events drain.  The application can detect the
++ * situation on its own (e.g. by polling the display fd) and close the
++ * display in an orderly fashion.
++ */
++static void
++gdk_event_source_mark_dead (GdkWaylandEventSource *source)
++{
++  GdkWaylandDisplay *display = (GdkWaylandDisplay *) source->display;
++
++  if (source->dead)
++    return;
++  source->dead = TRUE;
++
++  g_message ("Continuing without the Wayland connection; this display "
++             "is no longer functional.");
++
++  /* Balance a wl_display_prepare_read() left open by a failed flush.
++   * (A failed wl_display_read_events() ends the read section itself;
++   * that path clears source->reading before calling here.)
++   */
++  if (source->reading)
++    {
++      wl_display_cancel_read (display->wl_display);
++      source->reading = FALSE;
++    }
++
++  g_source_remove_poll (&source->source, &source->pfd);
++  source->pfd.revents = 0;
++}
++
+ static gboolean
+ gdk_event_source_prepare (GSource *base,
+                           gint    *timeout)
+@@ -40,6 +80,9 @@ gdk_event_source_prepare (GSource *base,
+ 
+   *timeout = -1;
+ 
++  if (source->dead)
++    return _gdk_event_queue_find_first (source->display) != NULL;
++
+   if (source->display->event_pause_count > 0)
+     return _gdk_event_queue_find_first (source->display) != NULL;
+ 
+@@ -65,7 +108,7 @@ gdk_event_source_prepare (GSource *base,
+   if (wl_display_flush (display->wl_display) < 0)
+     {
+       g_message ("Error flushing display: %s", g_strerror (errno));
+-      _exit (1);
++      gdk_event_source_mark_dead (source);
+     }
+ 
+   return FALSE;
+@@ -77,6 +120,9 @@ gdk_event_source_check (GSource *base)
+   GdkWaylandEventSource *source = (GdkWaylandEventSource *) base;
+   GdkWaylandDisplay *display_wayland = (GdkWaylandDisplay *) source->display;
+ 
++  if (source->dead)
++    return _gdk_event_queue_find_first (source->display) != NULL;
++
+   if (source->display->event_pause_count > 0)
+     {
+       if (source->reading)
+@@ -94,7 +140,13 @@ gdk_event_source_check (GSource *base)
+           if (wl_display_read_events (display_wayland->wl_display) < 0)
+             {
+               g_message ("Error reading events from display: %s", g_strerror (errno));
+-              _exit (1);
++              /* The failed read already ended the read section; clear
++               * the flag so mark_dead does not cancel it a second time
++               * (an unbalanced cancel aborts inside libwayland).
++               */
++              source->reading = FALSE;
++              gdk_event_source_mark_dead (source);
++              return _gdk_event_queue_find_first (source->display) != NULL;
+             }
+         }
+       else
+@@ -198,17 +250,22 @@ _gdk_wayland_display_queue_events (GdkDisplay *display)
+   display_wayland = GDK_WAYLAND_DISPLAY (display);
+   source = (GdkWaylandEventSource *) display_wayland->event_source;
+ 
++  if (source->dead)
++    return;
++
+   if (wl_display_dispatch_pending (display_wayland->wl_display) < 0)
+     {
+       g_message ("Error %d (%s) dispatching to Wayland display.",
+                  errno, g_strerror (errno));
+-      _exit (1);
++      gdk_event_source_mark_dead (source);
++      return;
+     }
+ 
+   if (source->pfd.revents & (G_IO_ERR | G_IO_HUP))
+     {
+       g_message ("Lost connection to Wayland compositor.");
+-      _exit (1);
++      gdk_event_source_mark_dead (source);
++      return;
+     }
+   source->pfd.revents = 0;
+ }

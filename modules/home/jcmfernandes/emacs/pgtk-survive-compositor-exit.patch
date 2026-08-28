@@ -1,0 +1,209 @@
+diff --git i/src/pgtkterm.c w/src/pgtkterm.c
+index a41c11f..ceb7381 100644
+--- i/src/pgtkterm.c
++++ w/src/pgtkterm.c
+@@ -28,6 +28,7 @@ Copyright (C) 1989, 1993-1994, 2005-2006, 2008-2026 Free Software
+ #include <cairo.h>
+ #include <fcntl.h>
+ #include <math.h>
++#include <poll.h>
+ #include <pthread.h>
+ #include <sys/types.h>
+ #include <time.h>
+@@ -3911,6 +3912,122 @@ pgtk_ring_bell (struct frame *f)
+     }
+ }
+ 
++/* Return true if the connection to DPYINFO's display server has been
++   broken -- typically because the Wayland compositor exited.
++
++   This build pairs with a GTK whose Wayland event source goes inert
++   when the connection breaks; GDK delivers no notification of it, and
++   libwayland has no equivalent of Xlib's XSetIOErrorHandler for the
++   application to hook.  So Emacs must notice the death itself:
++   nothing else deletes the dead frames, evicts the display from
++   x_display_list, or lets a later make-frame-on-display open a fresh
++   connection.  A closed socket reports POLLHUP forever, so polling
++   can delay detection by at most one pass through the event loop,
++   never miss it.  */
++
++static bool
++pgtk_connection_dead_p (struct pgtk_display_info *dpyinfo)
++{
++  struct pollfd pfd;
++
++  if (!dpyinfo || dpyinfo->connection < 0)
++    return false;
++
++  pfd.fd = dpyinfo->connection;
++  pfd.events = 0;
++  pfd.revents = 0;
++
++  if (poll (&pfd, 1, 0) < 0)
++    return false;
++
++  return (pfd.revents & (POLLHUP | POLLERR | POLLNVAL)) != 0;
++}
++
++/* Return true if any pgtk display's connection has died.  Called by
++   xg_select, which dispatches the GLib context while Emacs is idle and
++   would otherwise reach GDK's event source directly.  */
++
++bool
++pgtk_any_connection_dead_p (void)
++{
++  struct pgtk_display_info *dpyinfo;
++
++  for (dpyinfo = x_display_list; dpyinfo; dpyinfo = dpyinfo->next)
++    if (pgtk_connection_dead_p (dpyinfo))
++      return true;
++
++  return false;
++}
++
++/* Delete every frame on DPYINFO after its display server connection has
++   died.  Modelled on x_connection_closed in xterm.c.  */
++
++static void
++pgtk_connection_closed (struct pgtk_display_info *dpyinfo)
++{
++  static struct pgtk_display_info *current_dpyinfo;
++  specpdl_ref idx = SPECPDL_INDEX ();
++  struct terminal *terminal;
++  Lisp_Object tail, frame;
++
++  /* Prevent recursive calls for the same display: deleting a frame can
++     itself notice that the connection is gone.  */
++  if (current_dpyinfo == dpyinfo)
++    return;
++  current_dpyinfo = dpyinfo;
++
++  terminal = dpyinfo->terminal;
++
++  /* Inhibit redisplay while frames are being deleted; there is nothing
++     left to draw on.  */
++  specbind (Qinhibit_redisplay, Qt);
++
++ delete_more_frames:
++  FOR_EACH_FRAME (tail, frame)
++    if (FRAME_PGTK_P (XFRAME (frame))
++	&& FRAME_DISPLAY_INFO (XFRAME (frame)) == dpyinfo)
++      {
++	/* Set this to t so that delete_frame won't get confused trying
++	   to find a replacement.  */
++	kset_default_minibuffer_frame (FRAME_KBOARD (XFRAME (frame)), Qt);
++	delete_frame (frame, Qnoelisp);
++	goto delete_more_frames;
++      }
++
++  /* Deleting the last frame does not cascade into terminal deletion
++     here, so without this the dead dpyinfo stays on x_display_list --
++     found again by name once a new compositor reuses the socket name
++     -- holding a name_list_element cons that nothing protects from GC
++     once the frames are gone.
++
++     Fdelete_terminal, not delete_terminal: only the former runs
++     delete_terminal_hook (x_connection_closed uses it for the same
++     reason).  The hook, pgtk_delete_terminal, closes the GdkDisplay
++     while dpyinfo->connection is still set, so pgtk_connection_dead_p
++     keeps xg_select on its plain-pselect path for the whole teardown;
++     it then unregisters the descriptor and evicts the dpyinfo via
++     pgtk_delete_display.  Deleting the frames first matters: closing
++     the display first would free the surfaces their teardown still
++     dereferences.  */
++  if (terminal && terminal->name)
++    {
++      Lisp_Object tmp;
++      XSETTERMINAL (tmp, terminal);
++      Fdelete_terminal (tmp, Qnoelisp);
++    }
++
++  current_dpyinfo = NULL;
++  totally_unblock_input ();
++  unbind_to (idx, Qnil);
++  clear_waiting_for_input ();
++
++  /* Like x_connection_closed, exit non-locally rather than returning.
++     The caller is pgtk_read_socket, reached from read_char, which would
++     otherwise go straight on to redisplay frames whose terminal we just
++     deleted -- dereferencing a dead FRAME_TERMINAL.  */
++  error ("Connection lost to display server");
++}
++
+ /* Read events coming from the X server.
+    Return as soon as there are no more events to be read.
+ 
+@@ -3932,6 +4049,16 @@ pgtk_read_socket (struct terminal *terminal, struct input_event *hold_quit)
+       return count;
+     }
+ 
++  /* Handle a dead display connection here, before entering GLib: this
++     is the one stack depth where the non-local exit at the end of
++     pgtk_connection_closed is known to be safe (read_char unwinds to
++     the command loop).  */
++  if (pgtk_connection_dead_p (terminal->display_info.pgtk))
++    {
++      pgtk_connection_closed (terminal->display_info.pgtk);
++      return 0;
++    }
++
+   context = g_main_context_default ();
+   context_acquired = g_main_context_acquire (context);
+ 
+@@ -4593,12 +4720,17 @@ pgtk_delete_terminal (struct terminal *terminal)
+     }
+ 
+   if (dpyinfo->connection >= 0)
+-    emacs_close (dpyinfo->connection);
++    {
++      /* Unregister the display connection, not descriptor 0.  xterm.c
++	 passes dpyinfo->connection here; passing a literal zero leaves
++	 the connection in Emacs's select mask, and once it is closed it
++	 is permanently ready, spinning the main loop.  */
++      delete_keyboard_wait_descriptor (dpyinfo->connection);
++      emacs_close (dpyinfo->connection);
++    }
+ 
+   dpyinfo->connection = -1;
+ 
+-  delete_keyboard_wait_descriptor (0);
+-
+   pgtk_delete_display (dpyinfo);
+   unblock_input ();
+ }
+diff --git i/src/xgselect.c w/src/xgselect.c
+index 0d2de12..67e9caa 100644
+--- i/src/xgselect.c
++++ w/src/xgselect.c
+@@ -123,6 +123,15 @@ xg_select (int fds_lim, fd_set *rfds, fd_set *wfds, fd_set *efds,
+   if (xg_select_suppress_count)
+     return pselect (fds_lim, rfds, wfds, efds, timeout, sigmask);
+ 
++#ifdef HAVE_PGTK
++  /* Once a display server connection has died there is nothing useful
++     for GDK's event source to do.  Skip GLib entirely and fall back to
++     plain pselect, so read_char reaches pgtk_read_socket -- which owns
++     the teardown of the dead display -- without detours.  */
++  if (pgtk_any_connection_dead_p ())
++    return pselect (fds_lim, rfds, wfds, efds, timeout, sigmask);
++#endif
++
+   context = g_main_context_default ();
+   acquire_select_lock (context);
+ 
+diff --git i/src/xgselect.h w/src/xgselect.h
+index aec907e..969ce41 100644
+--- i/src/xgselect.h
++++ w/src/xgselect.h
+@@ -32,4 +32,11 @@ #define XGSELECT_H
+ 
+ extern void release_select_lock (void);
+ 
++#ifdef HAVE_PGTK
++/* Defined in pgtkterm.c.  True once a display server connection has
++   died; xg_select then skips GLib and falls back to plain pselect,
++   leaving the teardown to pgtk_read_socket.  */
++extern bool pgtk_any_connection_dead_p (void);
++#endif
++
+ #endif /* XGSELECT_H */
