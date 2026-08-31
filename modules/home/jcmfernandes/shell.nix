@@ -204,12 +204,14 @@
 
       ###
       ### editing & clipboard
-      # $EDITOR (see home.sessionVariables above).
+      # nano for life.
       nano
       # wl-copy/wl-paste for the Wayland clipboard.
       wl-clipboard
       # Parser toolkit CLI; editors use it for grammars.
       tree-sitter
+      # Document converter.
+      pandoc
       # JSON processor.
       jq
 
