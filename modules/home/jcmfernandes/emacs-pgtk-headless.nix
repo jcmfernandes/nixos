@@ -10,7 +10,14 @@ _: {
   # deploy: check that `ldd .emacs-*-wrapped` resolves libgdk-3 to a store
   # path whose .so contains the patch's "Continuing without the Wayland
   # connection" marker string.
-  perSystem = {pkgs, ...}: {
+  perSystem = {inputs', ...}: let
+    # Built from nixpkgs-unstable, not the repo's 26.05 pin: stable still
+    # ships emacs 30.2 and will until 26.11, while the patches target the
+    # 31.x pgtk/xgselect code they were written against. Both emacs and
+    # gtk3 come from the same unstable set -- pulling gtk3 from 26.05
+    # instead would put two glib/gtk closures into one binary.
+    pkgs = inputs'.nixpkgs-unstable.legacyPackages;
+  in {
     # The patches are referenced as path literals on purpose: each is
     # copied to the store as a single file, so this package only rebuilds
     # when a patch changes -- "${self}/..." would make it depend on the
