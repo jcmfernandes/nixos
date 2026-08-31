@@ -1,23 +1,24 @@
 {
   flake.homeModules.desktop-apps = {pkgs, ...}: {
-    home.packages = [
-      pkgs.nautilus
-      pkgs.vlc
-      pkgs.unrar
-      pkgs.file-roller
-      pkgs.libreoffice
-      pkgs.gimp
-      pkgs.loupe
-      pkgs.zathura
-      pkgs.foliate
-      pkgs.qbittorrent
-      pkgs.gparted
-      pkgs.wdisplays
-      pkgs.celluloid
-      pkgs.pavucontrol
-      pkgs.element-desktop
-      pkgs.halloy
-      pkgs.gnome-calculator
+    home.packages = with pkgs; [
+      calibre
+      celluloid
+      element-desktop
+      file-roller
+      foliate
+      gimp
+      gnome-calculator
+      gparted
+      halloy
+      libreoffice
+      loupe
+      nautilus
+      pavucontrol
+      qbittorrent
+      unrar
+      vlc
+      wdisplays
+      zathura
     ];
   };
 }
