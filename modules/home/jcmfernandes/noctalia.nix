@@ -130,13 +130,25 @@
           # schedule comes from `location` above; the 6500K/4000K day-night
           # defaults are left alone.
           nightlight.enabled = true;
-          # Wallpaper is handled by awww (see homeModules.niri).
-          wallpaper.enabled = false;
-          # awww owns the live wallpaper and is invisible to noctalia, so the
-          # lock screen has nothing to fall back to (empty = noctalia's own
-          # wallpaper, which is disabled above). Point it at the same image awww
-          # paints.
-          lockscreen.wallpaper = "${./niri/gruvbox-mountain-village.png}";
+          # Noctalia paints the wallpaper itself, as a layer surface per
+          # monitor, so a screen that goes away and comes back (DP
+          # renegotiation, monitor sleep, unplug) is repainted. awww used to
+          # own this, but it only applied the image once at niri startup and
+          # never restored it on hotplug -- the screen came back black.
+          # The lock screen falls back to this same wallpaper, so it needs no
+          # separate setting.
+          #
+          # Caveat: ~/.local/state/noctalia/settings.toml is app-managed and
+          # loads *after* this config, so picking a wallpaper in the UI (or via
+          # `noctalia msg wallpaper-set`) writes wallpaper.default.path there
+          # and silently wins over the value below. If this stops taking
+          # effect, delete that file's [wallpaper.*] blocks and restart the
+          # service.
+          wallpaper = {
+            enabled = true;
+            fill_mode = "crop";
+            default.path = "${./noctalia/gruvbox-mountain-village.png}";
+          };
           # Lock after 5 minutes of inactivity, then power the displays off
           # after 10. screen_off drives niri's PowerOffMonitors IPC; noctalia
           # wakes them on activity (PowerOnMonitors). Desktop, so no suspend.

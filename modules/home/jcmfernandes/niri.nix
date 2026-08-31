@@ -260,17 +260,8 @@
       xwayland-satellite.path =
         lib.getExe pkgs.xwayland-satellite;
 
-      # noctalia itself is started by its systemd user service (see
-      # homeModules.noctalia), not spawned here.
-      spawn-at-startup = [
-        (lib.getExe (
-          pkgs.writeShellScriptBin "wallpaper" ''
-            ${pkgs.awww}/bin/awww-daemon &
-            until ${lib.getExe pkgs.awww} query >/dev/null 2>&1; do sleep 0.1; done
-            ${lib.getExe pkgs.awww} img ${./niri/gruvbox-mountain-village.png}
-          ''
-        ))
-      ];
+      # Nothing to spawn: noctalia (bar, wallpaper, lock screen) runs as its
+      # own systemd user service -- see homeModules.noctalia.
     };
 
     # Reuse the wrapper-modules niri module purely as a renderer: it turns
