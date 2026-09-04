@@ -78,13 +78,21 @@
       kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
 
       loader = {
-        # UEFI-only: systemd-boot installs the removable ESP fallback
-        # (EFI/BOOT/BOOTX64.EFI), so the disk boots after a VM->bare-metal
-        # move without a machine-local NVRAM entry.
+        # UEFI-only. Kept true so disarming lanzaboote (below) restores a
+        # working bootloader in one line; while armed, the secureboot module
+        # mkForce-disables this and lanzaboote takes over. Either way the
+        # removable ESP fallback (EFI/BOOT/BOOTX64.EFI) is installed --
+        # signed, under lanzaboote -- so the disk boots after a
+        # VM->bare-metal move without a machine-local NVRAM entry.
         systemd-boot.enable = true;
         systemd-boot.configurationLimit = 10;
         efi.canTouchEfiVariables = false;
       };
+
+      # Arm the secureboot module (see its runbook in this host's README):
+      # switches from systemd-boot to lanzaboote-signed boot + systemd
+      # initrd, and enables TPM2 LUKS auto-unlock.
+      lanzaboote.enable = true;
     };
 
     # 32 GiB swapfile. NixOS creates it with `btrfs filesystem mkswapfile`

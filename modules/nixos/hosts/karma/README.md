@@ -191,12 +191,14 @@ conflict. Keep at least the passphrase slot as recovery.
 
 ## Arming Secure Boot + TPM2 auto-unlock (real hardware)
 
-Secure Boot is **staged** by the `secureboot` module (imported in
-`configuration.nix`) but **off**: `boot.lanzaboote.enable` defaults to
-`false`, so systemd-boot stays the bootloader and `sbctl` is available for
-key generation. Arming is deliberate and must be done at the machine, because
-a bad cutover means physical recovery (live USB / firmware reset). Do the
-steps in order.
+karma is **armed**: `configuration.nix` sets `boot.lanzaboote.enable = true;`,
+so it boots a lanzaboote-signed chain and unlocks the LUKS root via TPM2.
+
+The steps below are the record of how it got there -- follow them when
+rebuilding karma from scratch, or on another host importing the `secureboot`
+module (which stages it **off** by default, systemd-boot still in charge).
+Arming is deliberate and must be done at the machine, because a bad cutover
+means physical recovery (live USB / firmware reset). Do the steps in order.
 
 1. **Deploy the staged config** and confirm karma boots normally (still
    systemd-boot). `sbctl` is now on the system.

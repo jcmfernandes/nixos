@@ -29,6 +29,12 @@
           # already the nixpkgs 26.05 default; set explicitly as a guard so
           # arming never silently loses TPM unlock if that default changes.
           initrd.systemd.enable = true;
+
+          # TPM2 auto-unlock for the LUKS root. Inert on its own: the TPM
+          # must be enrolled by hand, once, on the machine
+          # (systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+7), and
+          # only after Secure Boot is enabled so PCR 7 measures the final
+          # state. The passphrase keyslot stays as the fallback.
           initrd.luks.devices.cryptroot.crypttabExtraOpts = ["tpm2-device=auto"];
         };
       })
