@@ -43,20 +43,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # emacs-pgtk that starts without a compositor, survives one exiting, and
-    # reattaches to the next. Follows nixpkgs-unstable rather than using its
-    # own pin: stable ships emacs 30.2 until 26.11, and the patches target
-    # the 31.x pgtk code.
     emacs-pgtk-headless = {
       url = "github:jcmfernandes/emacs-pgtk-headless.nix";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     nixarr = {
-      # services.shelfmark landed in nixpkgs (and nixarr's shelfmark module
-      # now version-gates itself behind nixpkgs >= 26.05), so the original
-      # rationale for pinning behind that commit is gone. Pinned to a known-
-      # good revision; bump deliberately when a wanted feature lands.
       url = "github:nix-media-server/nixarr/3bde55fe657ee3ec1c2b2c05294ff381cb8f2d43";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
@@ -78,7 +70,7 @@
     };
 
     niri = {
-      url = "github:jcmfernandes/niri/feat/orientation";
+      url = "github:jcmfernandes/niri";
     };
 
     ohmyzsh = {
