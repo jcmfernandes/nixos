@@ -300,17 +300,17 @@
         "website-builder": "website-builder"
       },
       "locked": {
-        "lastModified": 1778908661,
-        "narHash": "sha256-eeRN0ew1VfutaVNxoaYvua7CHoqc7gI5vLPxUL5ko7k=",
+        "lastModified": 1784997863,
+        "narHash": "sha256-oTMag4I9MW3bstuOKqzc0F1OqxO49lLa9jkSkRe3EqA=",
         "owner": "nix-media-server",
         "repo": "nixarr",
-        "rev": "3bde55fe657ee3ec1c2b2c05294ff381cb8f2d43",
+        "rev": "282ce99b31d52d72cca281e3d26d3dd267946800",
         "type": "github"
       },
       "original": {
         "owner": "nix-media-server",
         "repo": "nixarr",
-        "rev": "3bde55fe657ee3ec1c2b2c05294ff381cb8f2d43",
+        "rev": "282ce99b31d52d72cca281e3d26d3dd267946800",
         "type": "github"
       }
     },

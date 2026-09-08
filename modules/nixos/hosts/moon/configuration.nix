@@ -208,8 +208,10 @@
 
     # Keep the journal in RAM, capped so it can't pressure the /run tmpfs.
     services.journald = {
-      storage = "volatile";
-      extraConfig = "RuntimeMaxUse=128M";
+      settings.Journal = {
+        Storage = "volatile";
+        RuntimeMaxUse = "128M";
+      };
     };
 
     users.users.jcmfernandes = {
