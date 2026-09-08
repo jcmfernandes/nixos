@@ -2,39 +2,16 @@ _: {
   # Headless emacs-pgtk: it starts with no Wayland compositor running,
   # keeps running when one exits, and opens frames on whichever comes
   # next -- the pgtk daemon can therefore start at boot, before niri,
-  # and outlive every session.  Two coordinated patches; the what and
-  # why live in the patch headers.
+  # and outlive every session.
   #
-  # Exposed as a flake package (not inlined into homeModules.emacs) so
-  # `nix build .#emacs-pgtk-headless` verifies a nixpkgs bump without a
-  # deploy: check that `ldd .emacs-*-wrapped` resolves libgdk-3 to a store
-  # path whose .so contains the patch's "Continuing without the Wayland
-  # connection" marker string.
-  perSystem = {inputs', ...}: let
-    # Built from nixpkgs-unstable, not the repo's 26.05 pin: stable still
-    # ships emacs 30.2 and will until 26.11, while the patches target the
-    # 31.x pgtk/xgselect code they were written against. Both emacs and
-    # gtk3 come from the same unstable set -- pulling gtk3 from 26.05
-    # instead would put two glib/gtk closures into one binary.
-    pkgs = inputs'.nixpkgs-unstable.legacyPackages;
-  in {
-    # The patches are referenced as path literals on purpose: each is
-    # copied to the store as a single file, so this package only rebuilds
-    # when a patch changes -- "${self}/..." would make it depend on the
-    # whole tree and rebuild emacs on every commit.
-    packages.emacs-pgtk-headless = let
-      gtk3' = pkgs.gtk3.overrideAttrs (old: {
-        patches = (old.patches or []) ++ [./emacs/gtk3-recoverable-wayland-disconnect.patch];
-      });
-    in
-      (pkgs.emacs-pgtk.override {
-        gtk3 = gtk3';
-        # Overriding gtk3 alone is not enough: wrapGAppsHook3 propagates
-        # its own stock gtk3, whose -L wins at link time, leaving the
-        # stock libgdk in the binary's RUNPATH.
-        wrapGAppsHook3 = pkgs.wrapGAppsHook3.override {gtk3 = gtk3';};
-      }).overrideAttrs (old: {
-        patches = (old.patches or []) ++ [./emacs/pgtk-survive-compositor-exit.patch];
-      });
+  # The package, its two patches and the reasoning behind them live in
+  # their own flake: https://github.com/jcmfernandes/emacs-pgtk-headless.nix
+  # That repo's CI builds it and asserts both patches survived into the
+  # binary, so a bump is verified before it ever reaches this flake.
+  #
+  # Re-exported here so `nix build .#emacs-pgtk-headless` still works and
+  # homeModules.emacs can keep reading it off `self.packages`.
+  perSystem = {inputs', ...}: {
+    packages.emacs-pgtk-headless = inputs'.emacs-pgtk-headless.packages.default;
   };
 }

@@ -43,6 +43,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # emacs-pgtk that starts without a compositor, survives one exiting, and
+    # reattaches to the next. Follows nixpkgs-unstable rather than using its
+    # own pin: stable ships emacs 30.2 until 26.11, and the patches target
+    # the 31.x pgtk code.
+    emacs-pgtk-headless = {
+      url = "github:jcmfernandes/emacs-pgtk-headless.nix";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     nixarr = {
       # services.shelfmark landed in nixpkgs (and nixarr's shelfmark module
       # now version-gates itself behind nixpkgs >= 26.05), so the original
