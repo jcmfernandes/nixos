@@ -11,6 +11,7 @@ derived from that host's SSH host key.
 .sops.yaml              # recipient list + per-file rules
 secrets/
   infra.yaml              # encrypted; infrastructure secrets
+  common.yaml             # encrypted to EVERY host; fleet-wide secrets
   <host>.yaml             # encrypted; one file per host
 modules/nixos/hosts/<host>/configuration.nix
                         # imports sops-nix module, declares sops.secrets.*
@@ -227,6 +228,35 @@ infra-identifying strings (e.g. restic repo URLs).
 What you should *not* put in sops: things you want to read or grep
 frequently as part of normal development.
 
+## Fleet-wide secrets (`secrets/common.yaml`)
+
+Most secrets belong in a per-host file. `secrets/common.yaml` is the
+exception: it is encrypted to **every** host recipient, so any host can
+decrypt it unattended at activation, and one file is the single place to
+rotate a value the whole fleet shares.
+
+Consumed from a shared module by naming the file explicitly, because
+`defaultSopsFile` is per host:
+
+```nix
+sops.secrets.some_shared_thing = {
+  sopsFile = "${self}/secrets/common.yaml";
+  owner = "jcmfernandes";        # default is root:root 0400
+};
+```
+
+**The rule for what goes in it:** only secrets whose disclosure you would
+accept if *any single host* were compromised. Every host key opens this
+file, so it has the weakest isolation of anything in the repo. The current
+inhabitant -- `nix_access_tokens`, a GitHub token with no scopes that can
+only read public repositories -- grants an attacker nothing they could not
+already fetch anonymously, which is what makes it a fair fit. A deploy key,
+a cloud credential or anything with write access is not.
+
+Adding a new host means adding its recipient to the `secrets/common\.yaml$`
+rule in `.sops.yaml` and running `sops updatekeys secrets/common.yaml`, or
+that host cannot decrypt it and activation fails.
+
 ## Threat model in one paragraph
 
 The encrypted secrets files in this repo are safe to publish. An attacker
@@ -234,8 +264,12 @@ with full read access to the repo learns nothing beyond which secret names
 exist per host. Compromise of any single age private key (YubiKey, paper
 backup, or one host's SSH host key) decrypts every secret that recipient was
 included on. Compromise of an admin identity (YubiKey or backup) decrypts
-**everything**. The host identities decrypt only that host's file. There is
-no central key server, no network call at decrypt time, no audit log.
+**everything**. A host identity decrypts that host's own file **and
+`secrets/common.yaml`**, which is encrypted to every host -- so a single
+compromised host yields every fleet-wide secret, not just its own. That is
+the price of `common.yaml` and the reason to keep it small (see below).
+There is no central key server, no network call at decrypt time, no audit
+log.
 
 ## Scanning git history for leaked secrets
 

@@ -7,6 +7,18 @@ keys:
   - &anuchka age1q9fwez7jjf7ys72j6vvqd7af99ecduwzw6e9epguj880uk3f34fqdhjguy
 
 creation_rules:
+  # Fleet-wide secrets: encrypted to every host, so any of them can decrypt
+  # at activation. Deliberately narrow -- a secret here is readable by every
+  # host key, so anything whose compromise would matter belongs in a
+  # per-host file instead. See docs/secrets.md.
+  - path_regex: secrets/common\.yaml$
+    age:
+      - *yubikey
+      - *backup
+      - *moon
+      - *vivivi
+      - *karma
+      - *anuchka
   - path_regex: secrets/moon\.yaml$
     age:
       - *yubikey

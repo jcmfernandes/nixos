@@ -1,5 +1,10 @@
-{inputs, ...}: {
+{
+  inputs,
+  self,
+  ...
+}: {
   flake.nixosModules.nix = {
+    config,
     pkgs,
     lib,
     ...
@@ -40,6 +45,31 @@
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       ];
     };
+
+    # Authenticate nix against the GitHub API. Resolving a `github:` input to
+    # a revision costs one api.github.com call, capped at 60/hour per IP when
+    # unauthenticated; with ~30 such inputs a `nix flake update` exhausts it
+    # partway through and then silently keeps the *cached* revision for
+    # everything it could not reach. A token raises the cap to 5000/hour.
+    #
+    # Fleet-wide because every host evaluates flakes at some point: karma and
+    # anuchka locally, moon and vivivi when deployed via scripts/scp-flake.sh
+    # + a rebuild run on the host itself.
+    #
+    # !include rather than nix.settings.access-tokens: the latter would write
+    # the token into the world-readable nix store.
+    nix.extraOptions = ''
+      !include ${config.sops.secrets.nix_access_tokens.path}
+    '';
+
+    # Owned by the user, not root: flake inputs are resolved by the nix CLI
+    # running as whoever typed the command. Root-run rebuilds still read it
+    # (root ignores the mode), so this covers both deploy styles.
+    sops.secrets.nix_access_tokens = {
+      sopsFile = "${self}/secrets/common.yaml";
+      owner = "jcmfernandes";
+    };
+
     programs.nix-ld.enable = true;
     nixpkgs.config.allowUnfree = true;
 

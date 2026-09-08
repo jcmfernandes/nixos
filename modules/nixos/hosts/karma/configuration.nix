@@ -35,12 +35,6 @@
       secrets = {
         tailscale_authkey = {};
         njalla_ddns_env = {restartUnits = ["njalla-ddns.service"];};
-        # A nix.conf fragment holding `access-tokens = github.com=...`,
-        # pulled into /etc/nix/nix.conf by the !include below. Owned by the
-        # user, not root: flake inputs are resolved by the nix CLI running
-        # as whoever typed the command, so a root-only secret would be
-        # unreadable exactly when it is needed.
-        nix_access_tokens = {owner = "jcmfernandes";};
       };
     };
 
@@ -50,19 +44,6 @@
     };
 
     nix.settings.experimental-features = ["nix-command" "flakes"];
-
-    # Authenticate nix against the GitHub API. Resolving a `github:` input to
-    # a revision costs one api.github.com call, and unauthenticated that is
-    # capped at 60/hour per IP -- `nix flake update` blows through it and then
-    # silently keeps the *cached* revision for the inputs it could not reach,
-    # so the update quietly half-succeeds. A token raises the cap to 5000/hour.
-    #
-    # !include (rather than nix.settings.access-tokens) keeps the token out of
-    # the world-readable nix store; the file itself comes from sops above.
-    # Host-local on purpose: moon and vivivi have no such secret.
-    nix.extraOptions = ''
-      !include ${config.sops.secrets.nix_access_tokens.path}
-    '';
 
     # Replace nixpkgs' niri with our fork's main-axis build. An overlay rather
     # than a `programs.niri.package` override so that *every* consumer picks it
