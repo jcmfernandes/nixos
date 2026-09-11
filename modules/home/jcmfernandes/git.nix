@@ -4,8 +4,9 @@
     # per-directory work/personal identities (the includeIf files). Signing
     # machinery (key, signer, allowed signers) lives in
     # homeModules.yubikey-ssh; hm merges both into one config file.
-    # Deliberately absent: the gh credential helpers (github https is
-    # rewritten to ssh below, so they would never fire) and the admin box's
+    # Deliberately absent: the gh credential helpers (our own orgs are
+    # rewritten to ssh below, and the third-party repos that are left on https
+    # are public, so the helpers would never fire) and the admin box's
     # stale top-level user.signingkey (id_sign_ist.pub, a dangling path that
     # the own_devel include overrides anyway).
     programs.git = {
@@ -99,8 +100,21 @@
           smtpServerPort = 465;
           smtpUser = "ist157885";
         };
-        # Route GitHub https remotes through the YubiKey ssh auth.
-        url."git@github.com:".insteadOf = "https://github.com/";
+        # Route GitHub https remotes through the YubiKey ssh auth, so that
+        # `go mod download` of a private module in one of these orgs
+        # authenticates without a token on disk.
+        #
+        # Scoped per org rather than a blanket "https://github.com/" rewrite.
+        # The blanket form also catches every *third party* repo, including the
+        # ones fetched by libgit2-based tools that have no ssh credentials to
+        # offer -- devenv resolving `github:cachix/devenv` dies on it with
+        # "authentication required but no callback set", which is a confusing
+        # way to learn that a public clone was silently turned into an ssh one.
+        # git matches the longest prefix, so anything not listed here stays on
+        # plain https and clones anonymously.
+        url."git@github.com:jcmfernandes/".insteadOf = "https://github.com/jcmfernandes/";
+        url."git@github.com:slashid/".insteadOf = "https://github.com/slashid/";
+        url."git@github.com:bckground/".insteadOf = "https://github.com/bckground/";
       };
     };
   };
