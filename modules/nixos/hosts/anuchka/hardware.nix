@@ -10,20 +10,21 @@
     modulesPath,
     ...
   }: {
-    # Real hardware (AMD laptop), not a qemu guest. This is a generic
-    # AMD/NVMe baseline; refine it from `nixos-generate-config` output on the
-    # actual machine (everything here is mkDefault-friendly).
+    # Real hardware (AMD laptop), not a qemu guest. The boot modules below
+    # match `nixos-generate-config --show-hardware-config` run on the machine
+    # itself: one NVMe disk, no SATA controller, so none of the ahci/SCSI/
+    # usb-storage baseline is reachable at initrd time.
     imports = [
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-    boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod"];
+    boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "usbhid"];
     # LVM, as karma.
     boot.initrd.kernelModules = ["dm-snapshot"];
     boot.kernelModules = ["kvm-amd"];
     boot.extraModulePackages = [];
 
-    hardware.cpu.amd.updateMicrocode = lib.mkDefault true;
+    hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     networking.useDHCP = lib.mkDefault true;
 
