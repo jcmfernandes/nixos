@@ -14,6 +14,22 @@
     ];
     programs.nix-index-database.comma.enable = true;
 
+    # Replace nixpkgs' devenv with upstream's (rationale in flake.nix). An
+    # overlay rather than a one-off reference, so both consumers pick it up:
+    # the direnvrc just below, and `home.packages` in the shell home module.
+    #
+    # x86_64 only. devenv's flake import-from-derivation-builds a patched
+    # nixpkgs, so pulling it in for aarch64 makes `nix flake check` and
+    # `nixos-rebuild build .#moon` fail on an x86_64 admin machine with
+    # "platform mismatch" -- and moon/vivivi are servers nobody opens a devenv
+    # shell on anyway. They keep nixpkgs' devenv.
+    nixpkgs.overlays = [
+      (final: prev:
+        lib.optionalAttrs prev.stdenv.hostPlatform.isx86_64 {
+          devenv = inputs.devenv.packages.${prev.stdenv.hostPlatform.system}.devenv;
+        })
+    ];
+
     programs.direnv = {
       enable = true;
       silent = false;
@@ -40,9 +56,11 @@
       download-buffer-size = 512 * 1024 * 1024;
       extra-substituters = [
         "https://nix-community.cachix.org"
+        "https://devenv.cachix.org"
       ];
       extra-trusted-public-keys = [
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+        "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       ];
     };
 
