@@ -6,6 +6,7 @@
   flake.homeModules.niri = {
     lib,
     pkgs,
+    osConfig,
     ...
   }: let
     noctaliaExe = lib.getExe inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -27,7 +28,10 @@
             layout = "us,pt";
             # Layout switching is a niri bind (Mod+Space, see binds), not an
             # xkb group toggle.
-            options = "caps:escape";
+            #
+            # Per host: karma keeps the default (Caps Lock as an extra Esc),
+            # anuchka swaps Caps Lock with Left Ctrl.
+            options = osConfig.preferences.xkbOptions;
           };
           repeat-rate = 40;
           repeat-delay = 250;

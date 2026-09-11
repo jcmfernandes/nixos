@@ -29,6 +29,11 @@
       inputs.home-manager.nixosModules.home-manager
     ];
 
+    # Swap Caps Lock and Left Ctrl on the builtin keyboard: Ctrl sits under
+    # the little finger, Caps Lock moves out of the way. karma keeps the
+    # default (Caps Lock as an extra Esc).
+    preferences.xkbOptions = "ctrl:swapcaps";
+
     sops = {
       defaultSopsFile = "${self}/secrets/anuchka.yaml";
       age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
