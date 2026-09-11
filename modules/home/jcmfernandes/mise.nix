@@ -14,7 +14,11 @@ _: {
       enableFishIntegration = false;
       enableNushellIntegration = false;
 
-      globalConfig.tools."go:github.com/git-town/git-town/v24" = "latest";
+      globalConfig.tools = {
+        go = "latest";
+        python = "latest";
+        "go:github.com/git-town/git-town/v24" = "latest";
+      };
     };
   };
 }
