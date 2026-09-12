@@ -158,6 +158,12 @@
         "XF86AudioLowerVolume".spawn-sh = "wpctl set-volume -l 1.4 @DEFAULT_AUDIO_SINK@ 5%-";
         "XF86AudioMute".spawn-sh = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
 
+        # Routed through noctalia rather than brightnessctl so the change
+        # goes through the same backend as its brightness widget and gets
+        # an OSD. No-op on hosts without a backlight device.
+        "XF86MonBrightnessUp".spawn-sh = "${noctaliaExe} msg brightness-up";
+        "XF86MonBrightnessDown".spawn-sh = "${noctaliaExe} msg brightness-down";
+
         # niri only acts on keys it binds; unbound media keys never reach
         # Spotify (a Wayland flatpak that doesn't grab raw keysyms globally).
         # Drive it over MPRIS with playerctl instead.
