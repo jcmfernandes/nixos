@@ -14,6 +14,16 @@
     settings = {
       prefer-no-csd = _: {};
 
+      # Named explicitly because the default ("default", size 24) resolves to
+      # nothing on this system and niri then draws its built-in pointer at a
+      # fixed size, ignoring the output scale. The theme itself is installed by
+      # homeModules.gtk's home.pointerCursor. niri also exports these as
+      # XCURSOR_THEME/XCURSOR_SIZE to everything it spawns.
+      cursor = {
+        xcursor-theme = "Adwaita";
+        xcursor-size = 24;
+      };
+
       # Don't pop the "Important Hotkeys" cheat-sheet on every login;
       # summon it on demand with Mod+Shift+Slash instead.
       hotkey-overlay.skip-at-startup = _: {};

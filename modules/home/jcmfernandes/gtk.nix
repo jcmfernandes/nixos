@@ -34,6 +34,19 @@
       gtk4.theme = config.gtk.theme;
     };
 
+    # Nothing installed a cursor theme before this, so no `cursors` directory
+    # existed anywhere on XCURSOR_PATH and clients fell back to niri's built-in
+    # pointer, which ignores the output scale -- tiny on a 2.5x display. This
+    # puts Adwaita's cursors in the user profile (and on XCURSOR_PATH) and
+    # points GTK at them; homeModules.niri names the same theme and size so the
+    # compositor-drawn pointer matches.
+    home.pointerCursor = {
+      name = "Adwaita";
+      package = pkgs.adwaita-icon-theme;
+      size = 24;
+      gtk.enable = true;
+    };
+
     # Carried over for parity with the old environment.variables.GTK_THEME;
     # lands in ~/.config/environment.d/ so the whole graphical session
     # (niri runs as a user service) sees it.
