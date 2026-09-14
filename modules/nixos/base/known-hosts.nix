@@ -20,6 +20,15 @@
         ];
         publicKey = "ssh-ed25519 ${key}";
       })
-      hosts;
+      hosts
+      // {
+        # GitHub serves its host keys over HTTPS at
+        # https://api.github.com/meta, so pinning them here replaces ssh's
+        # trust-on-first-use prompt with trust anchored in the web PKI.
+        # ed25519 only: ssh prefers a key type already present in
+        # known_hosts, so the rsa and ecdsa keys GitHub also offers are
+        # never negotiated and pinning them adds nothing.
+        "github.com".publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+      };
   };
 }
