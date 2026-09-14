@@ -382,7 +382,6 @@
             "MailNotification\\req_auth" = true;
             "WebUI\\Address" = "*";
             "WebUI\\AlternativeUIEnabled" = false;
-            "WebUI\\AuthSubnetWhitelist" = "192.168.15.0/24";
             "WebUI\\AuthSubnetWhitelistEnabled" = false;
             "WebUI\\CSRFProtection" = false;
             "WebUI\\HostHeaderValidation" = false;
