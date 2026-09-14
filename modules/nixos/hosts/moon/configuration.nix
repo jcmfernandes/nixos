@@ -89,7 +89,8 @@
     # Offload builds to vivivi (OCI aarch64, 16 KiB pages — matches moon's
     # ABI exactly). ssh-ng over the tailnet, authenticated with a dedicated
     # ed25519 key whose private half lives in sops; vivivi's host pubkey is
-    # pinned in programs.ssh.knownHosts so the daemon never prompts.
+    # pinned in programs.ssh.knownHosts (base module) so the daemon never
+    # prompts.
     nix.distributedBuilds = true;
     nix.settings.max-jobs = 0;
     nix.buildMachines = [
@@ -104,11 +105,6 @@
         supportedFeatures = ["kvm" "big-parallel" "nixos-test" "benchmark"];
       }
     ];
-
-    programs.ssh.knownHosts.vivivi = {
-      hostNames = ["vivivi" "vivivi.hosts.moreirafernandes.com"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOuy8a/EmZC+gegkKUOZBA3MQeAZwEzaUBjig/gVQhvC root@vivivi";
-    };
 
     # nixpkgs.overlays: see moonOverlays.
 
