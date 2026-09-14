@@ -172,8 +172,8 @@
         # socket alone is not enough either, because a local session's
         # SSH_AUTH_SOCK (gnome-keyring's gcr/ssh) is a perfectly good socket
         # that holds none of the PIV keys.
-        forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi karma"] {
-          header = ''Match host github.com,moon,vivivi,karma exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
+        forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi karma anuchka"] {
+          header = ''Match host github.com,moon,vivivi,karma,anuchka exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
           IdentityAgent = "SSH_AUTH_SOCK";
         };
 
@@ -181,7 +181,7 @@
         # the dedicated agent the monitor loads on insert. IdentitiesOnly +
         # the pinned public key ensure exactly that key is offered (the agent
         # holds all four retired-slot keys).
-        "github.com moon vivivi karma" = {
+        "github.com moon vivivi karma anuchka" = {
           IdentitiesOnly = true;
           IdentityFile = "~/.ssh/id_ist.pub";
           IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
