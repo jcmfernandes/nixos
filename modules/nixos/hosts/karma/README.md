@@ -4,9 +4,13 @@ This runbook installs karma onto a **physical NVMe SSD** by handing that disk
 to a throwaway installer VM (raw block passthrough via virt-manager), running
 `nixos-anywhere`, and then moving the SSD into the real machine to boot it.
 
-karma is already built to run as a VM — its hardware profile imports
-`qemu-guest.nix` and only loads virtio block modules — so this is its natural
-install path, not a workaround.
+> **Before running this runbook:** karma now runs on bare metal, and its
+> hardware profile (`hardware.nix`) was refreshed to match. It no longer
+> imports `qemu-guest.nix`, so the built initrd carries no virtio modules and
+> would not find `/dev/vda` in the installer VM. Temporarily add
+> `(modulesPath + "/profiles/qemu-guest.nix")` back to the `imports` list in
+> `modules/nixos/hosts/karma/hardware.nix` for the duration of the install,
+> then drop it again once the SSD is booting on the real machine.
 
 ## Why this works (the short version)
 
