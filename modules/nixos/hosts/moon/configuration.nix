@@ -580,7 +580,7 @@
       useRoutingFeatures = "server";
       authKeyFile = config.sops.secrets.tailscale_authkey.path;
       extraSetFlags = [
-        "--advertise-routes=192.168.1.0/24"
+        "--advertise-routes=192.168.44.0/24"
         "--advertise-exit-node"
       ];
     };
