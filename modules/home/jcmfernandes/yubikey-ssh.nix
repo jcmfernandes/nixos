@@ -159,9 +159,7 @@
         # socket below is keyless and refuses to authenticate, so let the
         # inherited SSH_AUTH_SOCK win. First-obtained-value-wins means this
         # block only has to override IdentityAgent -- IdentitiesOnly and
-        # IdentityFile still come from the block after it (karma is the
-        # exception: it has no pinned block, so it only ever uses a
-        # forwarded agent, which is the whole point of listing it).
+        # IdentityFile still come from the block after it.
         #
         # Note the comma-separated host list: `Match host` takes a
         # pattern-list, unlike `Host`, which is space-separated.
@@ -174,7 +172,7 @@
         # socket alone is not enough either, because a local session's
         # SSH_AUTH_SOCK (gnome-keyring's gcr/ssh) is a perfectly good socket
         # that holds none of the PIV keys.
-        forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi"] {
+        forwarded-agent = lib.hm.dag.entryBefore ["github.com moon vivivi karma"] {
           header = ''Match host github.com,moon,vivivi,karma exec "test -n \"$SSH_CONNECTION\" && test -S \"$SSH_AUTH_SOCK\""'';
           IdentityAgent = "SSH_AUTH_SOCK";
         };
@@ -183,7 +181,7 @@
         # the dedicated agent the monitor loads on insert. IdentitiesOnly +
         # the pinned public key ensure exactly that key is offered (the agent
         # holds all four retired-slot keys).
-        "github.com moon vivivi" = {
+        "github.com moon vivivi karma" = {
           IdentitiesOnly = true;
           IdentityFile = "~/.ssh/id_ist.pub";
           IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
