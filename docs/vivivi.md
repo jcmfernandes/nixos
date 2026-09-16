@@ -48,6 +48,14 @@ oci compute instance-console-connection create \
 `ssh-keygen -t rsa -b 2048 -f console-rsa -N ''`; OCI rejects ed25519
 for console connections.)
 
+**The serial console is not a login path.** Both `root` and
+`jcmfernandes` have `hashedPassword = "!"` — no account on vivivi has a
+password, so there is nothing to type at a console login prompt. The
+actual recovery path is the bootloader: `boot.loader.systemd-boot.editor`
+is `true`, so from the console you interrupt the boot, append
+`init=/bin/sh` to the kernel command line, and get a root shell with no
+password needed.
+
 ## Deploy order when changing the firewall
 
 Both layers can be changed at any time, but the **order matters** when

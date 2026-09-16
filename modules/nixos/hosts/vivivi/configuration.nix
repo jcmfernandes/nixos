@@ -23,8 +23,8 @@
       self.diskoConfigurations.vivivi
     ];
 
-    # vivivi rides nixos-unstable (see hosts/vivivi/default.nix) so
-    # linuxPackages_latest is already the channel's freshest kernel.
+    # vivivi rides stable nixpkgs (see hosts/vivivi/default.nix) so
+    # linuxPackages_latest is stable's freshest kernel.
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
     # 16 KiB pages so binaries built here run natively on moon.
@@ -42,6 +42,12 @@
 
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
+    # Keep the systemd-boot command-line editor available. It defaults to
+    # true, but it is vivivi's only recovery path and must not disappear
+    # silently: no account here has a password (both jcmfernandes and root
+    # are "!"), and ssh is tailnet-only, so if tailscale breaks, appending
+    # init=/bin/sh from the OCI serial console is the way back in.
+    boot.loader.systemd-boot.editor = true;
 
     # Every built output that ends up on vivivi must be compiled natively
     # here so the closure is consistent with the 16 KiB-page kernel — but
@@ -198,9 +204,13 @@
     users.users.jcmfernandes = {
       isNormalUser = true;
       extraGroups = ["wheel"];
-      # SHA-512 crypt of "password12345!" — set for serial-console
-      # diagnostics. Rotate or set back to "!" once vivivi is healthy.
-      hashedPassword = "$6$bl41SF7xj6VGxe7M$PA12whvo7YqLuZUFl9YZ39Hk78b/Vf6olmaDUprbyl3/RaBGJGZRkFA9FTxjHwPaSLOvnvsZ4J.2Bfd6CMYQ60";
+      # No password: root is also "!" (below), so serial-console login is
+      # not a recovery path on vivivi. ssh is tailnet-only
+      # (services.openssh.openFirewall = false, only tailscale0 is
+      # trusted), so the actual recovery path if tailscale ever breaks is
+      # the bootloader -- boot.loader.systemd-boot.editor is true, so the
+      # OCI serial console can append init=/bin/sh for a root shell.
+      hashedPassword = "!";
       openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
     };
 
