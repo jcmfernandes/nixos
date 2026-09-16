@@ -21,13 +21,17 @@
   # want them again, add `inputs.nixos-raspberrypi.nixosModules.trusted-nix-caches`
   # to this list).
   #
-  # Using nixos-unstable's nixosSystem so moon follows the same channel
-  # as vivivi for cache-hit alignment. cache.nixos.org's signed binaries
-  # are still trusted on moon, so this is not the "rebuild everything
-  # from source" mode used on vivivi — just a different upstream pin.
+  # Using stable's nixosSystem. moon still follows the same channel as
+  # vivivi for cache-hit alignment -- that part never changed, only which
+  # channel. Stable is also what nixos-raspberrypi pins its own nixpkgs
+  # to, so the Pi kernel package and the NixOS modules reading it are
+  # built from the same release; straddling them is what produced the
+  # 26.11 breakages. cache.nixos.org's signed binaries are still trusted
+  # on moon, so this is not the "rebuild everything from source" mode used
+  # on vivivi.
   # No `system =` arg: nixpkgs.hostPlatform is set by raspberry-pi-5.base
   # inside moonConfiguration, which is the modern convention.
-  flake.nixosConfigurations.moon = inputs.nixpkgs-unstable.lib.nixosSystem {
+  flake.nixosConfigurations.moon = inputs.nixpkgs.lib.nixosSystem {
     specialArgs = {inherit (inputs) nixos-raspberrypi;};
     modules = [
       inputs.nixos-raspberrypi.lib.inject-overlays
