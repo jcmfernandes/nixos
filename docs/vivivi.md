@@ -1,10 +1,10 @@
 # vivivi access model — tailscale-only
 
 vivivi has a public OCI IP but it is **firewalled to inbound UDP 41641
-only** (tailscale's WireGuard port). Everything else — SSH, the attic
-binary cache on 8080, future services — is reachable **only through
-the tailnet** (`tailscale0` is a trusted interface, so the NixOS firewall
-doesn't block traffic arriving on it). Two defenses are stacked:
+only** (tailscale's WireGuard port). Everything else — SSH and any future
+services — is reachable **only through the tailnet** (`tailscale0` is a
+trusted interface, so the NixOS firewall doesn't block traffic arriving on
+it). Two defenses are stacked:
 
 - **OCI security list** (`opentofu/infra/builder.tf`,
   `oci_core_security_list.vivivi`): the only `ingress_security_rule` is
