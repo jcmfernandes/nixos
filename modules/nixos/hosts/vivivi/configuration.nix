@@ -96,18 +96,27 @@
     networking = {
       hostName = "vivivi";
       # useDHCP is set in hardware.nix
-      # No ports open on the public NIC. Tailscale's UDP 41641 is opened
-      # automatically by `services.tailscale.openFirewall` (default true),
-      # and `tailscale0` is added to `firewall.trustedInterfaces` by the
-      # same module -- so sshd (22) remains reachable over the tailnet but
-      # not from the open internet.
+      # Nothing but tailscale's WireGuard port is reachable on the public
+      # NIC. None of this is automatic: services.tailscale.openFirewall
+      # defaults to FALSE in nixpkgs, and the tailscale module never writes
+      # to trustedInterfaces -- so both are set explicitly, here and below.
+      # sshd (22) is therefore reachable only over tailscale0, which is
+      # trusted; the OCI security list is the outer layer and permits only
+      # inbound UDP 41641.
       firewall.allowedTCPPorts = [];
+      firewall.trustedInterfaces = ["tailscale0"];
     };
 
     time.timeZone = "Europe/Lisbon";
 
     services.openssh = {
       enable = true;
+      # Don't punch port 22 in the public-facing firewall; SSH arrives only
+      # over the trusted tailscale0 interface (see networking above). Same
+      # posture as karma and anuchka. This is safe ONLY because
+      # trustedInterfaces lists tailscale0 -- without that, this line closes
+      # the sole inbound path to this host.
+      openFirewall = false;
       settings.PermitRootLogin = "prohibit-password";
       hostKeys = [
         {
@@ -128,6 +137,12 @@
 
     services.tailscale = {
       enable = true;
+      # Open UDP 41641 so peers reach this node directly over WireGuard.
+      # Without it tailscale still works but relays every packet through a
+      # DERP server, which matters here: moon offloads all of its builds to
+      # vivivi over the tailnet. The OCI security list already permits this
+      # port -- it is the one thing it does permit.
+      openFirewall = true;
       authKeyFile = config.sops.secrets.tailscale_authkey.path;
     };
 

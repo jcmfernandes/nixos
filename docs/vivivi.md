@@ -12,9 +12,14 @@ it). Two defenses are stacked:
   control-plane + DERP relay traffic to `*.tailscale.com` and DERP
   nodes needs that).
 - **NixOS firewall** (`modules/nixos/hosts/vivivi/configuration.nix`):
-  `firewall.allowedTCPPorts = []`. `services.tailscale.openFirewall`
-  (default `true`) adds the UDP 41641 hole and the trusted-interface
-  rule for `tailscale0`.
+  `firewall.allowedTCPPorts = []` plus `services.openssh.openFirewall =
+  false`, so port 22 is never opened on the public NIC. SSH arrives over
+  `tailscale0`, which is listed in `firewall.trustedInterfaces`, and
+  `services.tailscale.openFirewall = true` opens UDP 41641 so peers
+  connect directly over WireGuard rather than relaying via DERP. All
+  three are set explicitly: nixpkgs defaults
+  `services.tailscale.openFirewall` to `false`, and the tailscale module
+  never adds anything to `trustedInterfaces`.
 
 ## Reaching vivivi
 
