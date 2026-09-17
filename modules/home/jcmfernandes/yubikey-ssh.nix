@@ -187,6 +187,12 @@
           IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
         };
 
+        # Forward the agent to my own hosts -- not github.com, which has no
+        # use for it. Without this the PIV keys stop at the first hop: git
+        # signing and onward ssh there find a keyless local agent. This is
+        # also what makes the Match block above fire on the far side.
+        "moon vivivi karma anuchka".ForwardAgent = true;
+
         # This terminal's TERM (xterm-ghostty) has no terminfo entry on
         # vivivi, so anything curses-based there renders as garbage. Send a
         # TERM vivivi does know instead. ssh normally takes TERM from the
