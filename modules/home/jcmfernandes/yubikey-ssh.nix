@@ -194,10 +194,10 @@
         "moon vivivi karma anuchka".ForwardAgent = true;
 
         # This terminal's TERM (xterm-ghostty) has no terminfo entry on
-        # vivivi, so anything curses-based there renders as garbage. Send a
-        # TERM vivivi does know instead. ssh normally takes TERM from the
+        # either host, so anything curses-based there renders as garbage.
+        # Send a TERM they do know instead. ssh normally takes TERM from the
         # local environment for the pty request; SetEnv overrides that.
-        vivivi.SetEnv.TERM = "xterm-256color";
+        "moon vivivi".SetEnv.TERM = "xterm-256color";
       };
     };
 
