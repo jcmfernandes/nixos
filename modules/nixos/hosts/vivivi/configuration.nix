@@ -23,8 +23,8 @@
       self.diskoConfigurations.vivivi
     ];
 
-    # vivivi rides nixos-unstable (see hosts/vivivi/default.nix) so
-    # linuxPackages_latest is already the channel's freshest kernel.
+    # vivivi rides stable nixpkgs (see hosts/vivivi/default.nix) so
+    # linuxPackages_latest is stable's freshest kernel.
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
     # 16 KiB pages so binaries built here run natively on moon.
@@ -42,6 +42,12 @@
 
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
+    # Keep the systemd-boot command-line editor available. It defaults to
+    # true, but it is vivivi's only recovery path and must not disappear
+    # silently: no account here has a password (both jcmfernandes and root
+    # are "!"), and ssh is tailnet-only, so if tailscale breaks, appending
+    # init=/bin/sh from the OCI serial console is the way back in.
+    boot.loader.systemd-boot.editor = true;
 
     # Every built output that ends up on vivivi must be compiled natively
     # here so the closure is consistent with the 16 KiB-page kernel — but
@@ -51,8 +57,6 @@
     # signing keys: FODs are content-addressable so the hash check
     # suffices, while built derivations require a trusted signature
     # (which they no longer have) and therefore rebuild locally.
-    # Flip this to point at the local attic once attic has been
-    # bootstrapped and contains 16 KiB-built artifacts.
     nix.settings = {
       substitute = true;
       substituters = lib.mkForce [
@@ -93,120 +97,39 @@
 
     environment.systemPackages = with pkgs; [
       fastfetch
-      attic-client
     ];
-
-    # Idempotently provision the local attic cache. First boot: generates
-    # an admin JWT (signed with the HS256 secret already in atticd_env),
-    # writes /root/.config/attic/config.toml, and creates the
-    # `aarch64-16kb` cache. Subsequent boots: token-refresh + cache-exists
-    # check both no-op. After the first run, capture the cache's public
-    # signing key with `attic cache info aarch64-16kb` and add it to
-    # consumers' (moon's) `trusted-public-keys`. The pubkey is stable
-    # across reboots as long as vivivi's disk isn't wiped — a fresh
-    # install regenerates it server-side.
-    systemd.services.attic-bootstrap = {
-      description = "Idempotently provision the attic 'aarch64-16kb' cache";
-      after = ["atticd.service"];
-      wants = ["atticd.service"];
-      wantedBy = ["multi-user.target"];
-      path = [pkgs.attic-server pkgs.attic-client pkgs.curl];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        User = "root";
-        EnvironmentFile = config.sops.secrets.atticd_env.path;
-      };
-      script = ''
-        set -euf
-        SERVER=http://localhost:8080
-        CACHE=aarch64-16kb
-        CONFIG=/root/.config/attic/config.toml
-
-        # Wait up to 60 s for atticd to answer.
-        for _ in $(seq 1 60); do
-          curl -sf --max-time 2 "$SERVER/_api/v1/health" >/dev/null && break
-          sleep 1
-        done
-
-        if [ ! -f "$CONFIG" ]; then
-          mkdir -p "$(dirname "$CONFIG")"
-          token=$(atticadm make-token \
-            --sub jcmfernandes --validity 5y \
-            --pull '*' --push '*' --create-cache '*' \
-            --configure-cache '*' --configure-cache-retention '*' \
-            --destroy-cache '*')
-          attic login local "$SERVER" "$token"
-        fi
-
-        if ! attic cache info "$CACHE" >/dev/null 2>&1; then
-          attic cache create "$CACHE"
-        fi
-
-        attic use "local:$CACHE"
-      '';
-    };
-
-    # Asynchronously push every new /nix/store path to the cache as
-    # nix-daemon finalizes it. Depends on attic-bootstrap so it doesn't
-    # try to push before the cache exists.
-    systemd.services.attic-watch-store = {
-      description = "Push new /nix/store paths to attic 'aarch64-16kb'";
-      after = ["attic-bootstrap.service"];
-      wants = ["attic-bootstrap.service"];
-      wantedBy = ["multi-user.target"];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.attic-client}/bin/attic watch-store aarch64-16kb";
-        Restart = "always";
-        RestartSec = 10;
-        User = "root";
-      };
-    };
-
-    # Safety net for watch-store: re-push the current system closure
-    # daily. Attic dedupes by chunk hash, so anything already uploaded
-    # costs only the metadata round-trip. Catches paths watch-store
-    # missed (service restart mid-build, paths nix-copy'd in from
-    # outside, or the closure that existed before watch-store first ran).
-    systemd.services.attic-seed-current-system = {
-      description = "Push current system closure to attic 'aarch64-16kb'";
-      after = ["attic-bootstrap.service"];
-      wants = ["attic-bootstrap.service"];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.attic-client}/bin/attic push aarch64-16kb /run/current-system";
-        User = "root";
-      };
-    };
-
-    systemd.timers.attic-seed-current-system = {
-      description = "Daily push of current system closure to attic";
-      wantedBy = ["timers.target"];
-      timerConfig = {
-        OnBootSec = "10min";
-        OnUnitActiveSec = "24h";
-        Unit = "attic-seed-current-system.service";
-        Persistent = true; # run on next boot if missed while powered off
-      };
-    };
 
     networking = {
       hostName = "vivivi";
       # useDHCP is set in hardware.nix
-      # No ports open on the public NIC. Tailscale's UDP 41641 is opened
-      # automatically by `services.tailscale.openFirewall` (default true),
-      # and `tailscale0` is added to `firewall.trustedInterfaces` by the
-      # same module — so sshd (22) and atticd (8080) remain reachable over
-      # the tailnet but not from the open internet.
+      # Nothing but tailscale's WireGuard port is reachable on the public
+      # NIC. None of this is automatic: services.tailscale.openFirewall
+      # defaults to FALSE in nixpkgs, and the tailscale module never writes
+      # to trustedInterfaces -- so both are set explicitly, here and below.
+      # sshd (22) is therefore reachable only over tailscale0, which is
+      # trusted; the OCI security list is the outer layer and permits only
+      # inbound UDP 41641.
       firewall.allowedTCPPorts = [];
+      firewall.trustedInterfaces = ["tailscale0"];
     };
 
     time.timeZone = "Europe/Lisbon";
 
     services.openssh = {
       enable = true;
+      # Don't punch port 22 in the public-facing firewall; SSH arrives only
+      # over the trusted tailscale0 interface (see networking above). Same
+      # posture as karma and anuchka. This is safe ONLY because
+      # trustedInterfaces lists tailscale0 -- without that, this line closes
+      # the sole inbound path to this host.
+      openFirewall = false;
       settings.PermitRootLogin = "prohibit-password";
+      # Keys only over the network. Both of these default to true in
+      # nixpkgs, so the password below was reachable over ssh until now --
+      # it is meant for the OCI serial console alone. sshd's settings do
+      # not affect the serial getty, which authenticates through PAM.
+      settings.PasswordAuthentication = false;
+      settings.KbdInteractiveAuthentication = false;
       hostKeys = [
         {
           type = "ed25519";
@@ -219,7 +142,6 @@
       defaultSopsFile = "${self}/secrets/vivivi.yaml";
       age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
       secrets = {
-        atticd_env = {restartUnits = ["atticd.service"];};
         tailscale_authkey = {};
         njalla_ddns_env = {};
       };
@@ -227,6 +149,12 @@
 
     services.tailscale = {
       enable = true;
+      # Open UDP 41641 so peers reach this node directly over WireGuard.
+      # Without it tailscale still works but relays every packet through a
+      # DERP server, which matters here: moon offloads all of its builds to
+      # vivivi over the tailnet. The OCI security list already permits this
+      # port -- it is the one thing it does permit.
+      openFirewall = true;
       authKeyFile = config.sops.secrets.tailscale_authkey.path;
     };
 
@@ -266,31 +194,6 @@
       };
     };
 
-    # Attic binary cache server. Storage backend is IONOS S3; credentials and
-    # JWT signing key live in the sops-encrypted atticd_env file (loaded as
-    # systemd EnvironmentFile so settings can reference $-vars at runtime).
-    services.atticd = {
-      enable = true;
-      environmentFile = config.sops.secrets.atticd_env.path;
-      settings = {
-        listen = "[::]:8080";
-
-        chunking = {
-          nar-size-threshold = 65536;
-          min-size = 16384;
-          avg-size = 65536;
-          max-size = 262144;
-        };
-
-        storage = {
-          type = "s3";
-          bucket = "moreirafernandesdotcom-nix-cache";
-          region = "eu-central-3";
-          endpoint = "https://s3.eu-central-3.ionoscloud.com";
-        };
-      };
-    };
-
     # Remote-build SSH user used by moon's nix-daemon. Trusted so it can
     # import paths and trigger builds without sudo. Authorized key is
     # paired with moon's sops-encrypted nix_remote_builder_key.
@@ -304,12 +207,27 @@
 
     nix.settings.trusted-users = ["nix-ssh"];
 
+    # The config owns the passwords. With the nixpkgs default of true,
+    # hashedPassword is applied only when a user is first created, so
+    # changing it here would silently do nothing on an existing host --
+    # which is exactly what happened when this was set to "!" and the live
+    # /etc/shadow kept the old hash through a full activation.
+    users.mutableUsers = false;
+
     users.users.jcmfernandes = {
       isNormalUser = true;
       extraGroups = ["wheel"];
-      # SHA-512 crypt of "password12345!" — set for serial-console
-      # diagnostics. Rotate or set back to "!" once vivivi is healthy.
-      hashedPassword = "$6$bl41SF7xj6VGxe7M$PA12whvo7YqLuZUFl9YZ39Hk78b/Vf6olmaDUprbyl3/RaBGJGZRkFA9FTxjHwPaSLOvnvsZ4J.2Bfd6CMYQ60";
+      # Same password as karma, for the OCI serial console. It is NOT
+      # reachable over ssh: services.openssh.settings.PasswordAuthentication
+      # is false above, so the network path is keys only.
+      #
+      # This is the recovery credential. If tailscale ever breaks, ssh is
+      # gone (openFirewall = false, only tailscale0 is trusted) and the
+      # console is the way back in. Do not set it to "!" without leaving
+      # another door: root is "!", so the only remaining fallback would be
+      # boot.loader.systemd-boot.editor (true below), appending
+      # init=/bin/sh from the console.
+      hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
     };
 

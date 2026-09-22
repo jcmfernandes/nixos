@@ -5,6 +5,10 @@
     ...
   }: {
     nixpkgs.overlays = let
+      # ffmpeg built from plain nixpkgs, without moon's Pi overlays applied
+      # below (they patch things like arrow-cpp and gnutls that ffmpeg's
+      # build closure doesn't touch, but importing nixpkgs fresh here keeps
+      # this binding decoupled from whatever else this file overlays).
       upstreamPkgs = import inputs.nixpkgs {inherit (pkgs.stdenv.hostPlatform) system;};
       unstablePkgs = import inputs.nixpkgs-unstable {inherit (pkgs.stdenv.hostPlatform) system;};
     in
@@ -23,6 +27,10 @@
             ffmpeg_8-full
             servarr-ffmpeg
             ;
+          # mergerfs deliberately pulled from unstable (2.42.0 vs stable's
+          # 2.41.1). This is a deliberate cross-channel pull and costs moon
+          # a second stdenv/glibc chain in its closure -- keep it unless a
+          # stable bump catches up.
           inherit (unstablePkgs) mergerfs;
         })
         # Workarounds for 16 KiB-page rpi5 builds.

@@ -203,12 +203,24 @@
     time.timeZone = "Europe/Lisbon";
 
     # Keep the journal in RAM, capped so it can't pressure the /run tmpfs.
+    # `settings.Journal.*` is the 26.11 spelling; 26.05 uses these two.
     services.journald = {
-      settings.Journal = {
-        Storage = "volatile";
-        RuntimeMaxUse = "128M";
-      };
+      storage = "volatile";
+      extraConfig = "RuntimeMaxUse=128M";
     };
+
+    # stable 26.05 pins immich 2.7.5 and marks it insecure
+    # (CVE-2026-59258, CVE-2026-82272). moon already runs 2.7.5, so this
+    # allowance does not change its actual exposure, and Immich here is
+    # reachable only over the tailnet -- its subdomain CNAMEs to moon's
+    # tailscale IP, so there is no public path to it. Accepted pending a
+    # stable backport.
+    #
+    # This pin is version-exact on purpose: when stable bumps immich to
+    # anything else, evaluation fails naming the new version, which forces
+    # a fresh decision instead of carrying the allowance forward silently.
+    # Delete this the moment 26.05 ships a fixed immich.
+    nixpkgs.config.permittedInsecurePackages = ["immich-2.7.5"];
 
     users.users.jcmfernandes = {
       isNormalUser = true;

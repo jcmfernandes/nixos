@@ -50,7 +50,10 @@
 
     nixarr = {
       url = "github:nix-media-server/nixarr/7e1dab87509bee3092a812012a5efa72aaf3963e";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      # Follows stable with the rest of the fleet. It followed unstable
+      # from 2026-05 only because services.shelfmark was not in stable
+      # yet; stable ships shelfmark 1.3.0 now.
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     sops-nix = {

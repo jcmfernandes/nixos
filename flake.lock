@@ -489,7 +489,7 @@
     "nixarr": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs-unstable"
+          "nixpkgs"
         ],
         "treefmt-nix": "treefmt-nix_2",
         "vpnconfinement": "vpnconfinement",
