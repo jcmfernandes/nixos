@@ -555,7 +555,12 @@
       enable = true;
       package = pkgs.caddy.withPlugins {
         plugins = ["github.com/caddy-dns/njalla@v0.0.0-20250823094507-f709141f1fe6"];
-        hash = "sha256-kWYIptO4AAsSlvyC2GGnBw/2DBBoYQ0SfPo6dbrC5DQ=";
+        # Vendor hash of caddy + the plugin above. It is tied to caddy's own
+        # version, not just the plugin pin, so a nixpkgs caddy bump changes
+        # it: this one is for 2.11.4. A stale value fails the build with
+        # "hash mismatch in fixed-output derivation" and the correct hash in
+        # the "got:" line.
+        hash = "sha256-wMgxmwjw39MfzHXHFJxbW5+QHyUyIE6k2Ytd3BzJ5PU=";
       };
       environmentFile = config.sops.secrets.caddy_env.path;
       virtualHosts."*.${apex}" = {
