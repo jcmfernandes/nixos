@@ -48,13 +48,23 @@ oci compute instance-console-connection create \
 `ssh-keygen -t rsa -b 2048 -f console-rsa -N ''`; OCI rejects ed25519
 for console connections.)
 
-**The serial console is not a login path.** Both `root` and
-`jcmfernandes` have `hashedPassword = "!"` — no account on vivivi has a
-password, so there is nothing to type at a console login prompt. The
-actual recovery path is the bootloader: `boot.loader.systemd-boot.editor`
-is `true`, so from the console you interrupt the boot, append
-`init=/bin/sh` to the kernel command line, and get a root shell with no
-password needed.
+**Log in at the console as `jcmfernandes`, with the same password as
+karma.** That password exists for this purpose only — it is not usable
+over the network, because `services.openssh.settings.PasswordAuthentication`
+and `KbdInteractiveAuthentication` are both `false`, so ssh is keys-only.
+sshd's settings don't apply to the serial getty, which goes through PAM.
+`root` stays `hashedPassword = "!"`; use `sudo` (passwordless, via
+`wheel`) once you're in.
+
+Note this only works because `users.mutableUsers = false`. With the
+nixpkgs default of `true`, NixOS applies `hashedPassword` only when it
+first creates a user, so edits to it on an existing host are silently
+ignored.
+
+If the console login itself fails, the fallback is the bootloader:
+`boot.loader.systemd-boot.editor` is `true`, so you can interrupt the
+boot, append `init=/bin/sh` to the kernel command line, and get a root
+shell with no password at all.
 
 ## Deploy order when changing the firewall
 

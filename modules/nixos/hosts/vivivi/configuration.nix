@@ -124,6 +124,12 @@
       # the sole inbound path to this host.
       openFirewall = false;
       settings.PermitRootLogin = "prohibit-password";
+      # Keys only over the network. Both of these default to true in
+      # nixpkgs, so the password below was reachable over ssh until now --
+      # it is meant for the OCI serial console alone. sshd's settings do
+      # not affect the serial getty, which authenticates through PAM.
+      settings.PasswordAuthentication = false;
+      settings.KbdInteractiveAuthentication = false;
       hostKeys = [
         {
           type = "ed25519";
@@ -201,16 +207,27 @@
 
     nix.settings.trusted-users = ["nix-ssh"];
 
+    # The config owns the passwords. With the nixpkgs default of true,
+    # hashedPassword is applied only when a user is first created, so
+    # changing it here would silently do nothing on an existing host --
+    # which is exactly what happened when this was set to "!" and the live
+    # /etc/shadow kept the old hash through a full activation.
+    users.mutableUsers = false;
+
     users.users.jcmfernandes = {
       isNormalUser = true;
       extraGroups = ["wheel"];
-      # No password: root is also "!" (below), so serial-console login is
-      # not a recovery path on vivivi. ssh is tailnet-only
-      # (services.openssh.openFirewall = false, only tailscale0 is
-      # trusted), so the actual recovery path if tailscale ever breaks is
-      # the bootloader -- boot.loader.systemd-boot.editor is true, so the
-      # OCI serial console can append init=/bin/sh for a root shell.
-      hashedPassword = "!";
+      # Same password as karma, for the OCI serial console. It is NOT
+      # reachable over ssh: services.openssh.settings.PasswordAuthentication
+      # is false above, so the network path is keys only.
+      #
+      # This is the recovery credential. If tailscale ever breaks, ssh is
+      # gone (openFirewall = false, only tailscale0 is trusted) and the
+      # console is the way back in. Do not set it to "!" without leaving
+      # another door: root is "!", so the only remaining fallback would be
+      # boot.loader.systemd-boot.editor (true below), appending
+      # init=/bin/sh from the console.
+      hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
     };
 
