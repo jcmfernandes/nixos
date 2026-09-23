@@ -6,9 +6,8 @@
   }: {
     nixpkgs.overlays = let
       # ffmpeg built from plain nixpkgs, without moon's Pi overlays applied
-      # below (they patch things like arrow-cpp and gnutls that ffmpeg's
-      # build closure doesn't touch, but importing nixpkgs fresh here keeps
-      # this binding decoupled from whatever else this file overlays).
+      # (nixos-raspberrypi's own, and the ones below), so it stays the exact
+      # derivation cache.nixos.org has.
       upstreamPkgs = import inputs.nixpkgs {inherit (pkgs.stdenv.hostPlatform) system;};
       unstablePkgs = import inputs.nixpkgs-unstable {inherit (pkgs.stdenv.hostPlatform) system;};
     in
@@ -33,30 +32,25 @@
           # stable bump catches up.
           inherit (unstablePkgs) mergerfs;
         })
-        # Workarounds for 16 KiB-page rpi5 builds.
+        # Runtime fixes for 16 KiB pages.
         # See https://github.com/nvmd/nixos-raspberrypi/issues/64
+        #
+        # Keep this list to packages that are broken at RUNTIME when taken
+        # from cache.nixos.org. Every override here changes a hash, and
+        # everything depending on it then misses the cache and gets built on
+        # vivivi, with moon holding the whole build closure. Overrides that
+        # only skipped flaky build-time tests (gnutls, arrow-cpp, astropy,
+        # websockets) were removed for that reason: gnutls alone sits under
+        # glib and forced hundreds of rebuilds. Unmodified, those packages
+        # come from the cache and their tests never run. If one ever has to
+        # be built again and flakes, override just that one.
+        #
+        # Checked when this was pruned: of the 41 Rust packages in moon's
+        # closure, only polars and uv-build vendor tikv-jemalloc-sys, and
+        # uv-build is only a build input of a package that is itself
+        # fetched, so it never runs. vectorchord (immich's pg extension)
+        # uses mimalloc, which reads the page size at runtime.
         (final: prev: {
-          # arrow-cpp: arrow-azurefs-test flakes against the Azurite Node.js
-          # storage emulator on resource-constrained aarch64 builders. The
-          # ctest run lives in installCheckPhase, not checkPhase, so both
-          # doInstallCheck and dontInstallCheck have to be flipped.
-          arrow-cpp = prev.arrow-cpp.overrideAttrs (_: {
-            doCheck = false;
-            doInstallCheck = false;
-            dontCheck = true;
-            dontInstallCheck = true;
-          });
-          # gnutls: gnulib's `test-lock` hangs in test_recursive_lock and is
-          # killed by its own alarm (exit 142) on the aarch64 builder. Stub
-          # the test out rather than dropping doCheck, so the rest of gnutls'
-          # suite (the crypto/TLS tests that actually matter) still runs.
-          gnutls = prev.gnutls.overrideAttrs (old: {
-            postPatch =
-              (old.postPatch or "")
-              + ''
-                echo 'int main (void) { return 0; }' > src/gl/tests/test-lock.c
-              '';
-          });
           pythonPackagesExtensions =
             prev.pythonPackagesExtensions
             ++ [
@@ -70,24 +64,6 @@
                 # detects 16 KiB pages and works at runtime).
                 polars = pyPrev.polars.overridePythonAttrs (old: {
                   env = (old.env or {}) // {JEMALLOC_SYS_WITH_LG_PAGE = "14";};
-                });
-                # astropy: a handful of large-memory tests (test_read_big_table*,
-                # test_heapsize_[PQ]_limit) are flaky on aarch64 / resource-
-                # constrained builders.
-                astropy = pyPrev.astropy.overridePythonAttrs (_: {
-                  doCheck = false;
-                  dontCheck = true;
-                });
-                # websockets: tests.sync.test_connection's
-                # test_writing_in_recv_events_fails races on a loaded builder
-                # and dies with "no close frame received or sent". 2 errors out
-                # of 1959 tests, both the same timing assumption. Pulled in by
-                # immich-machine-learning via fastapi-cli, so a flake here
-                # fails the whole moon closure. Its unittest runner has no
-                # clean way to deselect two cases, hence the whole suite.
-                websockets = pyPrev.websockets.overridePythonAttrs (_: {
-                  doCheck = false;
-                  dontCheck = true;
                 });
               })
             ];

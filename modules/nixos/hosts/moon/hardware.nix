@@ -24,7 +24,12 @@
   in {
     imports = with inputs.nixos-raspberrypi.nixosModules; [
       raspberry-pi-5.base
-      raspberry-pi-5.page-size-16k
+      # Not raspberry-pi-5.page-size-16k: it only rebuilds the shared
+      # jemalloc for 16 KiB pages, a memory optimization (its README calls
+      # it optional and warns it "may cause lots of rebuilds"). jemalloc
+      # needs its page setting to be at least the system's, and nixpkgs'
+      # default is 64 KiB, so the stock one already works on this kernel.
+      # With it, jemalloc -> rustc -> every Rust package missed the cache.
       raspberry-pi-5.display-vc4
     ];
 
