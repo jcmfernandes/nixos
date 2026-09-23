@@ -78,6 +78,17 @@
                   doCheck = false;
                   dontCheck = true;
                 });
+                # websockets: tests.sync.test_connection's
+                # test_writing_in_recv_events_fails races on a loaded builder
+                # and dies with "no close frame received or sent". 2 errors out
+                # of 1959 tests, both the same timing assumption. Pulled in by
+                # immich-machine-learning via fastapi-cli, so a flake here
+                # fails the whole moon closure. Its unittest runner has no
+                # clean way to deselect two cases, hence the whole suite.
+                websockets = pyPrev.websockets.overridePythonAttrs (_: {
+                  doCheck = false;
+                  dontCheck = true;
+                });
               })
             ];
         })
