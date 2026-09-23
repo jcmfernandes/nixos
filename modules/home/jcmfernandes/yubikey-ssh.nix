@@ -97,9 +97,23 @@
         ln -sfn "$SSH_AUTH_SOCK" "$HOME/.ssh/agent.sock"
       fi
     '';
+    #
+    # The link tracks the newest login, so it dies with it even while older
+    # connections live on -- including a seconds-long git/rsync one. Before
+    # each command, repoint a dead link at any forwarded socket still alive.
     programs.zsh.initContent = ''
       if { [ -n "$TMUX" ] || [ -n "$ZELLIJ" ]; } && [ -n "$SSH_CONNECTION" ]; then
         export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+        _repair_agent_link() {
+          [ -S "$SSH_AUTH_SOCK" ] && return
+          local s
+          for s in /tmp/ssh-*/agent.*(NU=); do
+            ln -sfn "$s" "$SSH_AUTH_SOCK"
+            return
+          done
+        }
+        autoload -Uz add-zsh-hook
+        add-zsh-hook preexec _repair_agent_link
       fi
     '';
 
