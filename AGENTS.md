@@ -81,12 +81,13 @@ Each host lives in `modules/nixos/hosts/<host>/`:
   disko, and `inputs.sops-nix.nixosModules.sops`, then declares
   `sops.secrets.*`.
 
-The three hosts differ significantly:
+The four hosts differ significantly:
 
 - **karma** — x86_64 desktop (niri/Wayland). Plain `nixpkgs.lib.nixosSystem`.
 - **moon** — Raspberry Pi 5 media server (aarch64). Built via
   `nixos-raspberrypi` (needs `inject-overlays` for the Pi kernel/firmware)
-  and pinned to **`nixpkgs-unstable`** to share a cache channel with vivivi.
+  and pinned to stable nixpkgs (`nixos-26.05`) -- `nixos-raspberrypi` itself
+  pins its nixpkgs to 26.05, which makes stable the aligned channel choice.
   Runs `nixarr` (Sonarr/Radarr/etc.), Immich, and nightly restic backups to
   IONOS S3 — see `modules/nixos/hosts/moon/README.md` for the backup/restore
   runbook. Requires an explicit `fileSystems."/boot/firmware"` mount or
@@ -95,6 +96,9 @@ The three hosts differ significantly:
   firewalled to UDP 41641); built remotely (`--build-host`). Provisioned by
   OpenTofu. See `docs/vivivi.md` before changing any firewall — deploy
   ordering matters or you lock yourself out.
+- **anuchka** — x86_64 AMD laptop (niri/Wayland), same desktop stack as
+  karma minus multi-monitor plumbing and the UPS module. Single-screen,
+  disko-installed like karma, Secure Boot staged (off by default), no UPS.
 
 ### Shell & GUI configuration (home-manager)
 

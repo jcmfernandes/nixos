@@ -1,10 +1,10 @@
 # vivivi access model — tailscale-only
 
 vivivi has a public OCI IP but it is **firewalled to inbound UDP 41641
-only** (tailscale's WireGuard port). Everything else — SSH, the attic
-binary cache on 8080, future services — is reachable **only through
-the tailnet** (`tailscale0` is a trusted interface, so the NixOS firewall
-doesn't block traffic arriving on it). Two defenses are stacked:
+only** (tailscale's WireGuard port). Everything else — SSH and any future
+services — is reachable **only through the tailnet** (`tailscale0` is a
+trusted interface, so the NixOS firewall doesn't block traffic arriving on
+it). Two defenses are stacked:
 
 - **OCI security list** (`opentofu/infra/builder.tf`,
   `oci_core_security_list.vivivi`): the only `ingress_security_rule` is
@@ -12,9 +12,14 @@ doesn't block traffic arriving on it). Two defenses are stacked:
   control-plane + DERP relay traffic to `*.tailscale.com` and DERP
   nodes needs that).
 - **NixOS firewall** (`modules/nixos/hosts/vivivi/configuration.nix`):
-  `firewall.allowedTCPPorts = []`. `services.tailscale.openFirewall`
-  (default `true`) adds the UDP 41641 hole and the trusted-interface
-  rule for `tailscale0`.
+  `firewall.allowedTCPPorts = []` plus `services.openssh.openFirewall =
+  false`, so port 22 is never opened on the public NIC. SSH arrives over
+  `tailscale0`, which is listed in `firewall.trustedInterfaces`, and
+  `services.tailscale.openFirewall = true` opens UDP 41641 so peers
+  connect directly over WireGuard rather than relaying via DERP. All
+  three are set explicitly: nixpkgs defaults
+  `services.tailscale.openFirewall` to `false`, and the tailscale module
+  never adds anything to `trustedInterfaces`.
 
 ## Reaching vivivi
 
@@ -42,6 +47,24 @@ oci compute instance-console-connection create \
 (generate `console-rsa.pub` once via
 `ssh-keygen -t rsa -b 2048 -f console-rsa -N ''`; OCI rejects ed25519
 for console connections.)
+
+**Log in at the console as `jcmfernandes`, with the same password as
+karma.** That password exists for this purpose only — it is not usable
+over the network, because `services.openssh.settings.PasswordAuthentication`
+and `KbdInteractiveAuthentication` are both `false`, so ssh is keys-only.
+sshd's settings don't apply to the serial getty, which goes through PAM.
+`root` stays `hashedPassword = "!"`; use `sudo` (passwordless, via
+`wheel`) once you're in.
+
+Note this only works because `users.mutableUsers = false`. With the
+nixpkgs default of `true`, NixOS applies `hashedPassword` only when it
+first creates a user, so edits to it on an existing host are silently
+ignored.
+
+If the console login itself fails, the fallback is the bootloader:
+`boot.loader.systemd-boot.editor` is `true`, so you can interrupt the
+boot, append `init=/bin/sh` to the kernel command line, and get a root
+shell with no password at all.
 
 ## Deploy order when changing the firewall
 
