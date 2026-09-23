@@ -84,6 +84,14 @@
           Type = "simple";
           ExecStart = "${emacs}/bin/emacs --fg-daemon";
           Restart = "on-failure";
+          # Terminal frames (emacsclient -t) get their color depth from the
+          # *daemon's* environment, captured once at startup -- not from the
+          # client's. A systemd-started daemon has no COLORTERM, so every tty
+          # frame fell back to 256 colors and approximated the modus palette
+          # (modus-vivendi-tinted's #0d0e1c background came out wrong). tmux
+          # and the outer terminal already negotiate RGB fine; this was the
+          # only missing link.
+          Environment = "COLORTERM=truecolor";
           # Signal only emacs on stop, not the whole cgroup. Anything launched
           # from inside emacs -- a podman-compose stack from vterm, say -- is
           # adopted into this unit's cgroup, and the default control-group mode
