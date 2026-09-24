@@ -124,12 +124,8 @@
       # the sole inbound path to this host.
       openFirewall = false;
       settings.PermitRootLogin = "prohibit-password";
-      # Keys only over the network. Both of these default to true in
-      # nixpkgs, so the password below was reachable over ssh until now --
-      # it is meant for the OCI serial console alone. sshd's settings do
-      # not affect the serial getty, which authenticates through PAM.
-      settings.PasswordAuthentication = false;
-      settings.KbdInteractiveAuthentication = false;
+      # Password and keyboard-interactive auth are off fleet-wide in
+      # nixosModules.base (base/ssh.nix).
       hostKeys = [
         {
           type = "ed25519";
