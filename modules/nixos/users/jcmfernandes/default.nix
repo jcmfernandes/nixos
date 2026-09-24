@@ -13,6 +13,11 @@
     pkgs,
     ...
   }: {
+    # A zsh login shell needs zsh enabled system-wide too (its /etc/zshenv
+    # puts the nix profile dirs on PATH); NixOS asserts on it. Set here, next
+    # to the shell choice, so every host importing this module gets it.
+    programs.zsh.enable = true;
+
     users.users.jcmfernandes = {
       isNormalUser = true;
       shell = pkgs.zsh;

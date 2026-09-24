@@ -103,16 +103,24 @@ The four hosts differ significantly:
 ### Shell & GUI configuration (home-manager)
 
 The interactive shell is plain zsh: `homeModules.shell` sets
-`programs.zsh` (mise activation, EDITOR) and puts the CLI toolchain on
-the user's PATH via `home.packages`. It is karma's login shell and,
-by default, the terminal's.
+`programs.zsh` (mise activation, EDITOR -- nano by default, emacsclient
+where `homeModules.emacs` is present) and puts the CLI toolchain on the
+user's PATH via `home.packages`. It is the login shell on every host.
+
+The user is split in two NixOS modules under
+`modules/nixos/users/jcmfernandes/`:
+
+- `nixosModules.jcmfernandes` (`default.nix`) -- the account and
+  `homeModules.cli`, a bundle of the display-free home modules (shell,
+  git, tmux, zellij, mise, ssh-agent-forwarding). **All four hosts**
+  import it; nothing in it may need a display.
+- `nixosModules.jcmfernandesDesktop` (`desktop.nix`) -- device groups and
+  the GUI home modules. karma and anuchka import it on top.
 
 GUI configuration (niri, kitty, wlr-which-key, GTK theming, fonts,
-desktop apps, flatpaks, emacs, firefox) lives in Home Manager modules
-under `modules/home/jcmfernandes/` (`flake.homeModules.*`), consumed via
-`home-manager.users.<user>.imports` in `nixosModules.jcmfernandes`
-(`modules/nixos/users/jcmfernandes/`, the account + hm payload,
-imported by karma). The niri
+desktop apps, flatpaks, emacs, firefox, the YubiKey agent) lives in Home
+Manager modules under `modules/home/jcmfernandes/`
+(`flake.homeModules.*`), consumed via the desktop module. The niri
 home module renders its settings with `BirdeeHub/nix-wrapper-modules`'
 `evalModule`/`toKdl` (validated with `niri validate` at build time)
 and delivers the result as `~/.config/niri/config.kdl` for plain

@@ -62,7 +62,18 @@
       self.nixosModules.persistenceDefaults
       inputs.nixarr.nixosModules.default
       inputs.sops-nix.nixosModules.sops
+
+      # The shell (zsh/oh-my-zsh/CLI tools) via the shared account; mise's
+      # binary and nix-ld come from the system side.
+      self.nixosModules.jcmfernandes
+      self.nixosModules.mise
+      inputs.home-manager.nixosModules.home-manager
     ];
+
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+    };
 
     sops = {
       defaultSopsFile = "${self}/secrets/moon.yaml";
@@ -222,12 +233,15 @@
     # Delete this the moment 26.05 ships a fixed immich.
     nixpkgs.config.permittedInsecurePackages = ["immich-2.7.5"];
 
-    users.users.jcmfernandes = {
-      isNormalUser = true;
-      extraGroups = ["wheel" "video"];
-      hashedPassword = "!";
-      openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
-    };
+    # The jcmfernandes account (shell, password, keys) comes from
+    # nixosModules.jcmfernandes; moon only adds the group it needs on top.
+    users.users.jcmfernandes.extraGroups = ["video"];
+
+    # The config owns the passwords. With the nixpkgs default of true,
+    # hashedPassword is applied only when a user is first created, so the
+    # shared password would be silently ignored here: this account already
+    # exists, created with "!". The same thing happened on vivivi.
+    users.mutableUsers = false;
 
     users.users.root = {
       hashedPassword = "!";
