@@ -73,10 +73,6 @@
       };
     };
 
-    # Terminal commands drive the running Emacs when inside a ghostel
-    # terminal; sourced by oh-my-zsh from the custom dir above.
-    xdg.configFile."omz/emacs.zsh".source = ./shell/emacs.zsh;
-
     # Prompt (gruvbox powerline config carried over from dotfiles2).
     programs.starship.enable = true;
     xdg.configFile."starship.toml".source = ./shell/starship.toml;
@@ -86,15 +82,11 @@
 
     home.sessionPath = ["$HOME/bin"];
 
-    # Attach to the emacs daemon (homeModules.emacs). `-c` opens a blocking GUI
-    # frame (git etc. wait until you finish the buffer); `-a <nano>` falls back
-    # to nano if the daemon is somehow down. Never `-a ""` -- that would spawn a
-    # rogue daemon. emacsclient comes from the same package the daemon runs
-    # (jmf.emacs.package, declared in homeModules.emacs) -- referencing
-    # pkgs.emacs-pgtk here would drag a second, stock emacs into the closure
-    # just for this one binary.
-    home.sessionVariables.EDITOR = "${config.jmf.emacs.package}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
-    home.sessionVariables.VISUAL = "${config.jmf.emacs.package}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
+    # nano, as a default: homeModules.emacs overrides both with emacsclient on
+    # hosts that run the emacs daemon. Headless hosts keep this --
+    # nix-check-bin above shells out to $EDITOR.
+    home.sessionVariables.EDITOR = lib.mkDefault (lib.getExe pkgs.nano);
+    home.sessionVariables.VISUAL = lib.mkDefault (lib.getExe pkgs.nano);
 
     # Point Docker-API clients (testcontainers, Docker SDKs, act, IDE docker
     # plugins) at rootless podman's socket -- they'd otherwise probe
@@ -182,8 +174,6 @@
       wget
       # Mount remote directories over ssh.
       sshfs
-      # Run remote Wayland GUI apps over ssh.
-      waypipe
       # Doesn't need an explanation.
       openssl
       # OpenPGP encryption/signing (gpg, gpg-agent).
@@ -193,21 +183,15 @@
       ### media & images
       # Convert/resize/manipulate images from the CLI.
       imagemagick
-      # Minimal Wayland image viewer.
-      imv
-      # Video player.
-      mpv
       # Audio/video transcoding swiss army knife (also provides ffplay).
       ffmpeg-full
       # Download video/audio from the web.
       yt-dlp
 
       ###
-      ### editing & clipboard
+      ### editing
       # nano for life.
       nano
-      # wl-copy/wl-paste for the Wayland clipboard.
-      wl-clipboard
       # Parser toolkit CLI; editors use it for grammars.
       tree-sitter
       # Document converter.

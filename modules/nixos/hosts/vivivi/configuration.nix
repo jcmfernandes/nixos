@@ -21,7 +21,18 @@
       inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
       self.diskoConfigurations.vivivi
+
+      # The shell (zsh/oh-my-zsh/CLI tools) via the shared account; mise's
+      # binary and nix-ld come from the system side.
+      self.nixosModules.jcmfernandes
+      self.nixosModules.mise
+      inputs.home-manager.nixosModules.home-manager
     ];
+
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+    };
 
     # vivivi rides stable nixpkgs (see hosts/vivivi/default.nix) so
     # linuxPackages_latest is stable's freshest kernel.
@@ -124,12 +135,8 @@
       # the sole inbound path to this host.
       openFirewall = false;
       settings.PermitRootLogin = "prohibit-password";
-      # Keys only over the network. Both of these default to true in
-      # nixpkgs, so the password below was reachable over ssh until now --
-      # it is meant for the OCI serial console alone. sshd's settings do
-      # not affect the serial getty, which authenticates through PAM.
-      settings.PasswordAuthentication = false;
-      settings.KbdInteractiveAuthentication = false;
+      # Password and keyboard-interactive auth are off fleet-wide in
+      # nixosModules.base (base/ssh.nix).
       hostKeys = [
         {
           type = "ed25519";
@@ -212,24 +219,16 @@
     # changing it here would silently do nothing on an existing host --
     # which is exactly what happened when this was set to "!" and the live
     # /etc/shadow kept the old hash through a full activation.
+    #
+    # The jcmfernandes account comes from nixosModules.jcmfernandes, with
+    # the same password as karma. Here that password is the recovery
+    # credential for the OCI serial console: if tailscale ever breaks, ssh
+    # is gone (openFirewall = false, only tailscale0 is trusted) and the
+    # console is the way back in. It is not usable over ssh -- base/ssh.nix
+    # makes ssh keys-only. Root is "!", so if the console login ever fails,
+    # the last fallback is boot.loader.systemd-boot.editor (set above):
+    # append init=/bin/sh from the console. See docs/vivivi.md.
     users.mutableUsers = false;
-
-    users.users.jcmfernandes = {
-      isNormalUser = true;
-      extraGroups = ["wheel"];
-      # Same password as karma, for the OCI serial console. It is NOT
-      # reachable over ssh: services.openssh.settings.PasswordAuthentication
-      # is false above, so the network path is keys only.
-      #
-      # This is the recovery credential. If tailscale ever breaks, ssh is
-      # gone (openFirewall = false, only tailscale0 is trusted) and the
-      # console is the way back in. Do not set it to "!" without leaving
-      # another door: root is "!", so the only remaining fallback would be
-      # boot.loader.systemd-boot.editor (true below), appending
-      # init=/bin/sh from the console.
-      hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
-      openssh.authorizedKeys.keys = jcmfernandesAuthorizedKeys;
-    };
 
     users.users.root = {
       hashedPassword = "!";

@@ -20,6 +20,7 @@
       self.nixosModules.yubikey
       self.nixosModules.mise
       self.nixosModules.jcmfernandes
+      self.nixosModules.jcmfernandesDesktop
 
       # disko
       inputs.disko.nixosModules.disko
