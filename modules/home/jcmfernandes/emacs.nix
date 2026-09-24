@@ -58,6 +58,21 @@
     config = {
       home.packages = [emacs];
 
+      # Attach to the emacs daemon below. `-c` opens a blocking GUI frame (git
+      # etc. wait until you finish the buffer); `-a <nano>` falls back to nano
+      # if the daemon is somehow down. Never `-a ""` -- that would spawn a
+      # rogue daemon. emacsclient comes from the same package the daemon runs
+      # -- referencing pkgs.emacs-pgtk would drag a second, stock emacs into
+      # the closure just for this one binary. Overrides homeModules.shell's
+      # nano default.
+      home.sessionVariables.EDITOR = "${config.jmf.emacs.package}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
+      home.sessionVariables.VISUAL = "${config.jmf.emacs.package}/bin/emacsclient -c -a ${lib.getExe pkgs.nano}";
+
+      # Terminal commands drive the running Emacs when inside a ghostel
+      # terminal; oh-my-zsh sources it from its custom dir, which
+      # homeModules.shell sets to $XDG_CONFIG_HOME/omz.
+      xdg.configFile."omz/emacs.zsh".source = ./shell/emacs.zsh;
+
       # Emacs as a pgtk daemon owned by systemd, decoupled from whatever launched
       # a frame. Running the *wrapped* emacs so the daemon inherits the compiler
       # and PKG_CONFIG_PATH that straight.el needs for runtime native builds
