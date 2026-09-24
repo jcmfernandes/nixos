@@ -30,6 +30,7 @@
     home-manager.users.jcmfernandes = {
       imports = [
         self.homeModules.yubikey-ssh
+        self.homeModules.ssh-agent-forwarding
         self.homeModules.git
         self.homeModules.noctalia
         self.homeModules.shell

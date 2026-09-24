@@ -86,36 +86,8 @@
     home.file.".ssh/id_slashid.pub".source = ./yubikey-ssh/id_slashid.pub;
     home.file.".ssh/allowed_signers".source = ./yubikey-ssh/allowed_signers;
 
-    # A tmux/zellij pane's shell keeps the SSH_AUTH_SOCK of the connection that
-    # spawned it; once that connection drops, the path is dead and a
-    # reattach can't fix it. sshd runs ~/.ssh/rc on every login, so repoint
-    # a stable link at the current forwarded socket there, and have shells
-    # inside a multiplexer use the link instead. Not elsewhere: a direct login
-    # shell's own socket outlives the link whenever a newer session closes.
-    home.file.".ssh/rc".text = ''
-      if [ -S "$SSH_AUTH_SOCK" ]; then
-        ln -sfn "$SSH_AUTH_SOCK" "$HOME/.ssh/agent.sock"
-      fi
-    '';
-    #
-    # The link tracks the newest login, so it dies with it even while older
-    # connections live on -- including a seconds-long git/rsync one. Before
-    # each command, repoint a dead link at any forwarded socket still alive.
-    programs.zsh.initContent = ''
-      if { [ -n "$TMUX" ] || [ -n "$ZELLIJ" ]; } && [ -n "$SSH_CONNECTION" ]; then
-        export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
-        _repair_agent_link() {
-          [ -S "$SSH_AUTH_SOCK" ] && return
-          local s
-          for s in /tmp/ssh-*/agent.*(NU=); do
-            ln -sfn "$s" "$SSH_AUTH_SOCK"
-            return
-          done
-        }
-        autoload -Uz add-zsh-hook
-        add-zsh-hook preexec _repair_agent_link
-      fi
-    '';
+    # The receiving end of forwarding (~/.ssh/rc, multiplexer panes) lives in
+    # homeModules.ssh-agent-forwarding, which every host gets.
 
     systemd.user.services.yubikey-ssh-agent = {
       Unit.Description = "Dedicated ssh-agent holding YubiKey PKCS#11 keys";
