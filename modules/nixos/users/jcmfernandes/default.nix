@@ -9,6 +9,7 @@
   # this next to the hm NixOS module; host-level hm policy
   # (useGlobalPkgs/useUserPackages) stays in the host configuration.
   flake.nixosModules.jcmfernandes = {
+    config,
     lib,
     pkgs,
     ...
@@ -25,7 +26,13 @@
       # logouts, so user services (the emacs daemon) run without any
       # login, graphical or otherwise.
       linger = true;
-      extraGroups = ["wheel"];
+      # Groups that follow a service, not a screen: added wherever the host
+      # runs it, so a headless host that enables e.g. libvirtd gets it too.
+      # Device groups (input, video, ...) are in ./desktop.nix.
+      extraGroups =
+        ["wheel"]
+        ++ lib.optional config.networking.networkmanager.enable "networkmanager"
+        ++ lib.optional config.virtualisation.libvirtd.enable "libvirtd";
       hashedPassword = "$6$mTNpK1zBZ9ksDGWA$vtotYvcTAeu3J8ZJAB6LSlVxPu9L.FCNI16eTfrvVv7wjc7FuBqvccE4hYzW9hr/pf1oHyhQxs7UEV.wRww4L1";
       # Shared key list (includes the YubiKey PIV key), matching moon/vivivi.
       openssh.authorizedKeys.keys =

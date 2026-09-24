@@ -1,17 +1,17 @@
 {self, ...}: {
   # What only a graphical host adds on top of nixosModules.jcmfernandes:
-  # the device/virtualisation groups and the GUI home modules. Both lists
-  # merge with the base module's -- extraGroups concatenates, and each
-  # definition of home-manager.users.jcmfernandes is another module whose
-  # imports are all honoured.
+  # the device groups (input, display, GPU) and the GUI home modules.
+  # Service groups (networkmanager, libvirtd) follow the service in
+  # ./default.nix instead. Both lists merge with the base module's --
+  # extraGroups concatenates, and each definition of
+  # home-manager.users.jcmfernandes is another module whose imports are all
+  # honoured.
   flake.nixosModules.jcmfernandesDesktop = {
     users.users.jcmfernandes.extraGroups = [
-      "networkmanager"
       "input"
       "uinput"
       "video"
       "render"
-      "libvirtd"
     ];
 
     home-manager.users.jcmfernandes.imports = [
