@@ -1,6 +1,7 @@
 {self, ...}: {
   flake.homeModules.emacs = {
     config,
+    osConfig,
     pkgs,
     lib,
     ...
@@ -43,6 +44,26 @@
       ${pkgs.systemd}/bin/systemctl --user start emacs.service
       exec ${emacs}/bin/emacsclient -c "$@"
     '';
+
+    # Open a frame of <host>'s emacs daemon here, over waypipe. Closing the
+    # frame ends emacsclient but not waypipe: emacs keeps a display's
+    # connection open after its last frame goes (frame.c pins the terminal
+    # to dodge a GTK bug), so waypipe would wait forever. Instead the remote
+    # side kills waypipe's server process group -- the server and its
+    # per-connection children -- and the daemon, being emacs-pgtk-headless,
+    # survives the hangup. Killed, waypipe can't unlink its sockets, so we
+    # do. Only hosts that run the daemon (import homeModules.emacs) qualify.
+    emacs-remote = pkgs.writeShellScriptBin "emacs-remote" ''
+      remote='emacsclient -c; rm -f "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "/tmp/waypipe-server-''${WAYLAND_DISPLAY#wayland-}.sock"; kill -- -$PPID'
+      exec ${lib.getExe pkgs.waypipe} ssh "$1" sh -c "'$remote'"
+    '';
+    remoteEntry = host: {
+      name = "Emacs on ${host}";
+      exec = "${lib.getExe emacs-remote} ${host}";
+      icon = "emacs";
+      categories = ["Development" "TextEditor"];
+      terminal = false;
+    };
   in {
     # Which emacs build the daemon, wrapper and desktop entries deliver.
     # Defaults to the patched display-independent build; a host wanting
@@ -138,6 +159,10 @@
         categories = ["Development" "TextEditor"];
         terminal = false;
       };
+
+      # One entry per *other* host running the daemon.
+      xdg.desktopEntries.emacs-karma = lib.mkIf (osConfig.networking.hostName != "karma") (remoteEntry "karma");
+      xdg.desktopEntries.emacs-anuchka = lib.mkIf (osConfig.networking.hostName != "anuchka") (remoteEntry "anuchka");
 
       # Hide the emacsclient.desktop that emacs-pgtk ships (via home.packages).
       # It is a bare `emacsclient --alternate-editor=`, so if the systemd daemon
