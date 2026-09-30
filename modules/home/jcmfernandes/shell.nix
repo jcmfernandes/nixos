@@ -11,6 +11,7 @@
         $EDITOR "$(nix build "$1" --no-link --print-out-paths)/bin"
       '';
     };
+    claude-code = inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
   in {
     # Plain zsh as the login shell; hm owns ~/.zshrc and ~/.zshenv directly
     # (the ZDOTDIR-redirect wrapper from modules/wrappedPrograms/ is gone).
@@ -202,7 +203,35 @@
       ###
       ### agentic coding harnesses
       # Auto-updated via the claude-code-nix flake.
-      inputs.claude-code-nix.packages.${stdenv.hostPlatform.system}.claude-code
+      claude-code
     ];
+
+    # Claude Code's background-session supervisor, run as the service
+    # `claude daemon install` would write (install is gated off upstream).
+    # Otherwise the first `claude` spawns it on demand into its own cgroup --
+    # usually emacs.service -- and it and its sessions die with that unit.
+    # Unit name and `--origin service` match upstream's, so the CLI treats it
+    # as the installed service: on-demand daemons yield to it, and it never
+    # idles out. A new claude-code store path changes ExecStart, so a rebuild
+    # restarts it on the new version; a service daemon is never replaced by a
+    # newer client.
+    systemd.user.services."com.anthropic.claude-daemon" = {
+      Unit = {
+        Description = "Claude Daemon";
+        After = ["network-online.target"];
+        StartLimitIntervalSec = 60;
+        StartLimitBurst = 10;
+      };
+      Service = {
+        ExecStart = "${claude-code}/bin/claude daemon run --origin service";
+        Restart = "always";
+        RestartSec = 1;
+        # Upstream's unit keeps the default control-group mode. Background
+        # sessions live in this cgroup; process mode lets them outlive a
+        # daemon restart, and the successor re-adopts them.
+        KillMode = "process";
+      };
+      Install.WantedBy = ["default.target"];
+    };
   };
 }
