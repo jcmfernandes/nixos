@@ -170,7 +170,7 @@
             type = "custom_button";
             glyph = "battery";
             tooltip = "UPS -- click for charge & status";
-            command = pkgs.lib.getExe ups-status-notify;
+            actions.left = "exec ${pkgs.lib.getExe ups-status-notify}";
           };
         };
     };
