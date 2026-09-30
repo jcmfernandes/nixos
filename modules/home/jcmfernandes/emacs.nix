@@ -128,20 +128,16 @@
           # and the outer terminal already negotiate RGB fine; this was the
           # only missing link.
           Environment = "COLORTERM=truecolor";
-          # Signal only emacs on stop, not the whole cgroup. Anything launched
-          # from inside emacs -- a podman-compose stack from vterm, say -- is
-          # adopted into this unit's cgroup, and the default control-group mode
-          # SIGTERMs all of it and then waits out TimeoutStopSec for the cgroup
-          # to drain. Containers do not exit on SIGTERM, so logout burned the
-          # full 90s in 'stop-sigterm'; meanwhile the queued stop job made every
-          # login attempt fail with "Transaction for niri.service/start is
-          # destructive (emacs.service has 'stop' job queued)", locking the
-          # session out until the timeout expired. process mode ends the unit as
-          # soon as emacs itself is gone. The stop duration is then just emacs'
-          # own kill-emacs-hook (lsp teardown, claude-code-ide cleanup, session
-          # saves), which is work worth waiting for -- so TimeoutStopSec is left
-          # alone, now that it only ever bounds emacs.
-          KillMode = "process";
+          # SIGTERM only emacs on stop, then SIGKILL whatever is left in the
+          # cgroup once it exits. The default control-group mode SIGTERMs
+          # everything and waits out TimeoutStopSec; containers launched from
+          # vterm ignore SIGTERM, so stops burned the full 90s. process mode
+          # avoided that but leaked processes that detach from emacs (claude
+          # daemons, adb) into the cgroup across restarts. mixed does neither:
+          # the stop still lasts only as long as emacs' own kill-emacs-hook, and
+          # leftovers die with it -- hard, so vterm-launched containers get no
+          # clean shutdown.
+          KillMode = "mixed";
         };
         Install.WantedBy = ["default.target"];
       };
