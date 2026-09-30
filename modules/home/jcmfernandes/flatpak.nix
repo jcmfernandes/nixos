@@ -21,6 +21,8 @@
         "com.discordapp.Discord"
         "org.signal.Signal"
       ];
+      # Lets sandboxed GTK load the host theme linked by homeModules.gtk.
+      overrides.settings.global.Context.filesystems = ["xdg-data/themes:ro" "/nix/store:ro"];
     };
   };
 }

@@ -52,6 +52,11 @@
     # (niri runs as a user service) sees it.
     systemd.user.sessionVariables.GTK_THEME = theme-name;
 
+    # Flatpak sandboxes can't see the profile's share/themes, so GTK in them
+    # falls back to light Adwaita. Sandboxes read ~/.local/share/themes;
+    # homeModules.flatpak grants them access to it and to the store it links into.
+    xdg.dataFile."themes/${theme-name}".source = "${theme-package}/share/themes/${theme-name}";
+
     # Parity with the old module, which installed these system-wide.
     home.packages = [pkgs.gtk3 pkgs.gtk4];
   };
