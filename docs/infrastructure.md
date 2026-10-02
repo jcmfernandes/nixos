@@ -18,10 +18,12 @@ deploy ordering, bootstrapping) has its own runbook:
   provisions `tofu`, `sops`, `age-plugin-yubikey`, etc.
 
 That's it. `opentofu/.envrc` decrypts `secrets/infra.yaml` on direnv load
-and exports the three env vars tofu needs: `TF_ENCRYPTION` (state
-encryption passphrase), and `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
+and exports the env vars tofu needs: `TF_ENCRYPTION` (state
+encryption passphrase), `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
 holding the IONOS S3 keys for the remote state backend (the s3 backend
-uses AWS-style env var names regardless of provider).
+uses AWS-style env var names regardless of provider), and `TF_VAR_*` for
+the required input variables (OCI identity, region, IONOS user). No
+`terraform.tfvars` needed.
 
 ## Plan / apply
 

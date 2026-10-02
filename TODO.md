@@ -2,8 +2,8 @@
 
 Rollout of Calibre-Web and the `*.internal` LAN names on moon.
 
-1. Put `opentofu/infra/terraform.tfvars` on karma: copy it from the machine
-   that has it, or fill in `terraform.tfvars.example`.
+1. On karma, `direnv reload` in `opentofu/` so it exports the `TF_VAR_*`
+   inputs from `secrets/infra.yaml`.
 2. In the Njalla web UI, create a **Dynamic** record `moon.internal.hosts`
    and copy its key.
 3. `sops secrets/moon.yaml`: in `njalla_ddns_env`, add
