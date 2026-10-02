@@ -27,3 +27,14 @@ resource "njalla_record_cname" "moon_service" {
   content = "moon.hosts.moreirafernandes.com"
   ttl     = var.dns_ttl
 }
+
+# Same services under <name>.internal, CNAMEd to the DDNS record holding
+# moon's LAN IP, for LAN devices that can't join the tailnet.
+resource "njalla_record_cname" "moon_service_internal" {
+  for_each = local.moon_subdomains
+
+  domain  = var.apex_domain
+  name    = "${each.value}.internal"
+  content = "moon.internal.hosts.moreirafernandes.com"
+  ttl     = var.dns_ttl
+}

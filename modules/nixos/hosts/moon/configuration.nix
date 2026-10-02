@@ -600,15 +600,20 @@
         hash = "sha256-wMgxmwjw39MfzHXHFJxbW5+QHyUyIE6k2Ytd3BzJ5PU=";
       };
       environmentFile = config.sops.secrets.caddy_env.path;
-      virtualHosts."*.${apex}" = {
+      # Each service answers on two names: <name>.<apex> resolves to moon's
+      # tailscale IP, <name>.internal.<apex> to its LAN IP (for LAN devices
+      # that can't run tailscale). A wildcard covers one label only, hence
+      # one site, and one certificate, per zone.
+      virtualHosts = lib.genAttrs ["*.${apex}" "*.internal.${apex}"] (site: {
         # Default per-vhost logFormat writes an access-*.log file to the SD card
         # on every request. Send access logs to stderr -> journald (RAM-backed)
         # instead, keeping them queryable via `journalctl -u caddy` at no SD cost.
         logFormat = "output stderr";
         extraConfig = let
+          zone = lib.removePrefix "*." site;
           matchers =
             lib.concatStringsSep "\n        "
-            (lib.mapAttrsToList (name: _: "@${name} host ${name}.${apex}") domains);
+            (lib.mapAttrsToList (name: _: "@${name} host ${name}.${zone}") domains);
           handlers =
             lib.concatStringsSep "\n        "
             (lib.mapAttrsToList
@@ -625,7 +630,7 @@
 
           handle { abort }
         '';
-      };
+      });
     };
 
     services.tailscale = {
@@ -644,11 +649,15 @@
     # from anywhere and, on the LAN, tailscale still finds the direct path
     # over the local link. Note every service subdomain CNAMEs here
     # (opentofu/infra/dns.tf), so they become tailnet-only.
+    #
+    # The LAN IP goes to moon.internal.hosts.moreirafernandes.com, which the
+    # <name>.internal service subdomains CNAME to, for LAN devices that
+    # can't join the tailnet.
     systemd.services.njalla-ddns = {
-      description = "Update Njalla DDNS record for moon";
+      description = "Update Njalla DDNS records for moon";
       after = ["network-online.target" "tailscaled.service"];
       wants = ["network-online.target" "tailscaled.service"];
-      path = [config.services.tailscale.package pkgs.curl];
+      path = [config.services.tailscale.package pkgs.curl pkgs.iproute2 pkgs.gawk];
       serviceConfig = {
         Type = "oneshot";
         EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
@@ -661,6 +670,14 @@
         fi
         curl -fsS --max-time 15 --retry 3 --retry-delay 5 \
           "https://njal.la/update/?h=moon.hosts.moreirafernandes.com&k=$DDNS_KEY&a=$ts_ip&quiet"
+
+        lan_ip=$(ip -4 -o addr show dev end0 scope global | awk '{split($4, a, "/"); print a[1]; exit}')
+        if [ -z "$lan_ip" ]; then
+          echo "Could not determine LAN IP" >&2
+          exit 1
+        fi
+        curl -fsS --max-time 15 --retry 3 --retry-delay 5 \
+          "https://njal.la/update/?h=moon.internal.hosts.moreirafernandes.com&k=$DDNS_KEY_INTERNAL&a=$lan_ip&quiet"
       '';
     };
 
