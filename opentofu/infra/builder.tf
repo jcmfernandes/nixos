@@ -118,6 +118,12 @@ resource "oci_core_instance" "vivivi" {
   metadata = {
     ssh_authorized_keys = data.http.ssh_keys.response_body
   }
+
+  # The image only seeds the install; nixos-anywhere replaces it. Changing it
+  # on a live instance swaps the boot volume and wipes NixOS.
+  lifecycle {
+    ignore_changes = [source_details[0].source_id]
+  }
 }
 
 data "http" "ssh_keys" {
