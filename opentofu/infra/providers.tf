@@ -6,11 +6,11 @@ data "sops_file" "secrets" {
 }
 
 provider "oci" {
-  tenancy_ocid     = var.tenancy_ocid
-  user_ocid        = var.user_ocid
-  fingerprint  = var.fingerprint
+  tenancy_ocid     = var.oci_tenancy_ocid
+  user_ocid        = var.oci_user_ocid
+  fingerprint  = var.oci_api_key_fingerprint
   private_key  = data.sops_file.secrets.data["oci_api_key"]
-  region       = var.region
+  region       = var.oci_region
 }
 
 # IONOS provider. `token` is the Cloud API JWT (used for non-S3 resources

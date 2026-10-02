@@ -1,24 +1,24 @@
-variable "tenancy_ocid" {
+variable "oci_tenancy_ocid" {
   type        = string
   description = "OCI tenancy OCID."
 }
 
-variable "user_ocid" {
+variable "oci_user_ocid" {
   type        = string
   description = "OCI user OCID."
 }
 
-variable "compartment_ocid" {
+variable "oci_compartment_ocid" {
   type        = string
   description = "Compartment to create resources in. Use the tenancy OCID for the root compartment."
 }
 
-variable "region" {
+variable "oci_region" {
   type        = string
   description = "OCI region (e.g. eu-madrid-1)."
 }
 
-variable "fingerprint" {
+variable "oci_api_key_fingerprint" {
   type        = string
   description = "API key fingerprint shown by OCI Console after uploading the public key."
 }
