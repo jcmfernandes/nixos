@@ -9,5 +9,6 @@
   "audiobookshelf": { "port": 9292  },
   "shelfmark":      { "port": 8084  },
   "seerr":          { "port": 5055  },
-  "qbittorrent":    { "port": 5252  }
+  "qbittorrent":    { "port": 5252  },
+  "calibre":        { "port": 8083  }
 }

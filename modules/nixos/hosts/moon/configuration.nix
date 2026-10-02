@@ -458,6 +458,21 @@
       mediaLocation = "/data/photos";
     };
 
+    # Listens on all interfaces, not just behind Caddy: the Kindle (KOReader,
+    # OPDS) can't run tailscale, so it reaches this over the LAN at
+    # http://<moon LAN IP>:8083/opds. calibreLibrary must already hold a
+    # metadata.db; Calibre-Web can't create one.
+    services.calibre-web = {
+      enable = true;
+      group = "media";
+      listen.ip = "0.0.0.0";
+      openFirewall = true;
+      options = {
+        calibreLibrary = "${config.nixarr.mediaDir}/library/books";
+        enableBookUploading = true;
+      };
+    };
+
     # Do at most one RDB snapshot every 15 minutes, and only if there
     # are more changes.
     services.redis.servers.immich.save = [[900 1]];
@@ -509,6 +524,9 @@
         "/var/backup/profilarr.db"
         "/var/backup/shelfmark.db"
         "/var/backup/seerr.db"
+        "/var/backup/calibre-web.db"
+        "/var/backup/calibre-library.db"
+        "/data/media/library/books"
         "/var/lib/tailscale/tailscaled.state"
       ];
       exclude = [
@@ -536,6 +554,9 @@
         "/state/profilarr/data/profilarr.db"
         "/state/profilarr/data/profilarr.db-shm"
         "/state/profilarr/data/profilarr.db-wal"
+        "/data/media/library/books/metadata.db"
+        "/data/media/library/books/metadata.db-shm"
+        "/data/media/library/books/metadata.db-wal"
       ];
       backupPrepareCommand = ''
         set -eu
@@ -547,7 +568,9 @@
           bazarr:/state/nixarr/bazarr/db/bazarr.db \
           shelfmark:/state/nixarr/shelfmark/users.db \
           seerr:/state/nixarr/seerr/db/db.sqlite3 \
-          profilarr:/state/profilarr/data/profilarr.db; do
+          profilarr:/state/profilarr/data/profilarr.db \
+          calibre-web:/var/lib/calibre-web/app.db \
+          calibre-library:/data/media/library/books/metadata.db; do
           name=''${pair%%:*}
           src=''${pair#*:}
           [ -f "$src" ] || continue
