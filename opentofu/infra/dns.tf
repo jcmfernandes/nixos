@@ -1,11 +1,21 @@
-# NOTE: *.hosts.<apex> entries are Njalla "Dynamic" records, not plain A —
-# Njalla stores the per-record DDNS update key in the `content` field
-# instead of an IP, and the unauthenticated njal.la/update endpoint each
-# host's njalla-ddns systemd unit uses only works with that record type.
-# Sighery's terraform-provider-njalla doesn't model the Dynamic type, so
-# these records are created + rotated in Njalla's web UI and live outside
-# tofu state. If a future provider adds Dynamic support we can fold them
-# in here.
+# Each host's njalla-ddns systemd unit publishes its address through
+# njal.la/update, which only works with Njalla "Dynamic" records: Njalla
+# generates the record's DDNS update key, kept in sops on the host.
+# Replacing a record generates a new key and breaks that host's updates.
+locals {
+  ddns_hosts = toset(["anuchka", "karma", "moon", "moon.internal", "vivivi"])
+}
+
+resource "njalla_record_dynamic" "host" {
+  for_each = local.ddns_hosts
+
+  domain = var.apex_domain
+  name   = "${each.value}.hosts"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
 # CNAME each Caddy-fronted service subdomain on moon to the DDNS-managed
 # host. Resolution chases the CNAME → DDNS A record, so an address change is

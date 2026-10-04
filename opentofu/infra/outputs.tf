@@ -23,3 +23,9 @@ output "attic_s3_secret_key" {
   value       = ionoscloud_s3_key.attic.secret_key
   sensitive   = true
 }
+
+output "ddns_keys" {
+  description = "DDNS update key per host. Paste into each host's njalla_ddns_env sops secret (moon.internal's is moon's DDNS_KEY_INTERNAL)."
+  value       = { for host, record in njalla_record_dynamic.host : host => record.key }
+  sensitive   = true
+}
