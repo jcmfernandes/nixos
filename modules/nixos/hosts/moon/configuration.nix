@@ -458,15 +458,14 @@
       mediaLocation = "/data/photos";
     };
 
-    # Listens on all interfaces, not just behind Caddy: the Kindle (KOReader,
-    # OPDS) can't run tailscale, so it reaches this over the LAN at
-    # http://<moon LAN IP>:8083/opds. calibreLibrary must already hold a
-    # metadata.db; Calibre-Web can't create one.
+    # Only reachable through Caddy. The Kindle (KOReader, OPDS) can't run
+    # tailscale, so it uses https://calibre.internal.<apex>/opds over the
+    # LAN. calibreLibrary must already hold a metadata.db; Calibre-Web can't
+    # create one.
     services.calibre-web = {
       enable = true;
       group = "media";
-      listen.ip = "0.0.0.0";
-      openFirewall = true;
+      listen.ip = "127.0.0.1";
       options = {
         calibreLibrary = "${config.nixarr.mediaDir}/library/books";
         enableBookUploading = true;

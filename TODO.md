@@ -20,5 +20,3 @@ Rollout of Calibre-Web and the `*.internal` LAN names on moon.
 7. Open Calibre-Web, log in as `admin` / `admin123`, change the password.
 8. In KOReader, add the OPDS catalog
    `https://calibre.internal.moreirafernandes.com/opds`.
-9. Once step 8 works, close port 8083 on moon (drop
-   `services.calibre-web.openFirewall`).
