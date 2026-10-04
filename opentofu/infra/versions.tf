@@ -59,8 +59,7 @@ terraform {
       version = "~> 1.0"
     }
     njalla = {
-      source  = "Sighery/njalla"
-      version = "~> 0.5"
+      source = "jcmfernandes/njalla"
     }
   }
 }
