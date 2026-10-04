@@ -622,6 +622,9 @@
         in ''
           tls {
             dns njalla {env.NJALLA_TOKEN}
+            # Njalla's three nameservers sync slowly; asking for validation
+            # straight away gets NXDOMAIN, which resolvers then cache.
+            propagation_delay 2m
           }
 
           ${matchers}
