@@ -657,12 +657,17 @@
     # can't join the tailnet.
     systemd.services.njalla-ddns = {
       description = "Update Njalla DDNS records for moon";
-      after = ["network-online.target" "tailscaled.service"];
-      wants = ["network-online.target" "tailscaled.service"];
+      after = ["network-online.target" "tailscaled-autoconnect.service"];
+      wants = ["network-online.target" "tailscaled-autoconnect.service"];
+      # Retry a few times, then give up until the next timer tick.
+      startLimitBurst = 4;
+      startLimitIntervalSec = 120;
       path = [config.services.tailscale.package pkgs.curl pkgs.iproute2 pkgs.gawk];
       serviceConfig = {
         Type = "oneshot";
         EnvironmentFile = config.sops.secrets.njalla_ddns_env.path;
+        Restart = "on-failure";
+        RestartSec = "20s";
       };
       script = ''
         ts_ip=$(tailscale ip -4 | head -n1)
