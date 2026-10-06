@@ -1,6 +1,6 @@
 inputs:
   git-hooks:
-    url: tarball+https://github.com/cachix/git-hooks.nix/archive/refs/heads/master.tar.gz
+    url: tarball+https://github.com/cachix/git-hooks.nix/archive/a0e4241b51206fbcbf52fd322eb5f0cd80f153c4.tar.gz
     inputs:
       nixpkgs:
         follows: nixpkgs
