@@ -706,11 +706,11 @@
     "ohmyzsh": {
       "flake": false,
       "locked": {
-        "lastModified": 1790683569,
-        "narHash": "sha256-R8QsFNtcCAcBv7QiEFjb/QlsRGlT6VdINsSvoZSsa8U=",
+        "lastModified": 1791291386,
+        "narHash": "sha256-+Vwv7JeHAGKv6WZRS6BJpAXNEum2vRKOv1hIPRw2aRo=",
         "owner": "jcmfernandes",
         "repo": "ohmyzsh",
-        "rev": "0f6ab80054e7fdc37a848b7e9df68211f1832444",
+        "rev": "1c2ef61c726cdfb611f0c9b81a191588528b7c8d",
         "type": "github"
       },
       "original": {
