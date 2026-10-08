@@ -12,6 +12,8 @@
       halloy
       libreoffice
       loupe
+      # Provides mutool, which Emacs' doc-view uses to render PDFs.
+      mupdf
       nautilus
       pavucontrol
       qbittorrent
