@@ -19,6 +19,13 @@ _: {
         python = "latest";
         "go:github.com/git-town/git-town/v24" = "latest";
       };
+
+      # Covers repos cloned there later, too.
+      globalConfig.settings.trusted_config_paths = [
+        "/home/jcmfernandes/own_devel"
+        "/home/jcmfernandes/bckground"
+        "/home/jcmfernandes/slashid"
+      ];
     };
   };
 }
