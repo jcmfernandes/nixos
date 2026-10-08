@@ -179,6 +179,8 @@
       openssl
       # OpenPGP encryption/signing (gpg, gpg-agent).
       gnupg
+      # DNS lookups (dig, nslookup).
+      dnsutils
 
       ###
       ### media & images
