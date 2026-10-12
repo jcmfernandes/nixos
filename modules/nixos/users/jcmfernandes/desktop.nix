@@ -31,5 +31,12 @@
       self.homeModules.easyeffects
       self.homeModules.upsIndicator
     ];
+
+    # Secrets shared by the desktop hosts, in one file encrypted to just
+    # them (see .sops.yaml). Read by claude-or (homeModules.shell).
+    sops.secrets.openrouter_api_key = {
+      sopsFile = "${self}/secrets/desktop.yaml";
+      owner = "jcmfernandes";
+    };
   };
 }

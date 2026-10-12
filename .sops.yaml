@@ -39,6 +39,13 @@ creation_rules:
       - *yubikey
       - *backup
       - *anuchka
+  # Shared by the desktop hosts only.
+  - path_regex: secrets/desktop\.yaml$
+    age:
+      - *yubikey
+      - *backup
+      - *karma
+      - *anuchka
   - path_regex: secrets/infra\.yaml$
     age:
       - *yubikey

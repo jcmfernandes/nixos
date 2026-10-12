@@ -12,6 +12,7 @@ derived from that host's SSH host key.
 secrets/
   infra.yaml              # encrypted; infrastructure secrets
   common.yaml             # encrypted to EVERY host; fleet-wide secrets
+  desktop.yaml            # encrypted to the desktop hosts (karma, anuchka)
   <host>.yaml             # encrypted; one file per host
 modules/nixos/hosts/<host>/configuration.nix
                         # imports sops-nix module, declares sops.secrets.*
