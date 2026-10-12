@@ -15,9 +15,9 @@ _: {
       enableNushellIntegration = false;
 
       globalConfig.tools = {
-        go = "latest";
-        python = "latest";
-        "go:github.com/git-town/git-town/v24" = "latest";
+        go = "1.27.1";
+        python = "3.14.8";
+        "go:github.com/git-town/git-town/v24" = "24.1.0";
       };
 
       # Covers repos cloned there later, too.
