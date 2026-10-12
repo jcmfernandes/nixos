@@ -1,6 +1,7 @@
 {inputs, ...}: {
   flake.homeModules.shell = {
     config,
+    osConfig,
     lib,
     pkgs,
     ...
@@ -72,6 +73,27 @@
           HIST_STAMPS="yyyy-mm-dd"
         '';
       };
+      # Claude Code through OpenRouter. --settings layers on top of the user
+      # settings; the picker lists only these models. The key is read from the
+      # sops secret at call time, so it never sits in the shell environment.
+      # Only defined on hosts that declare the secret.
+      initContent = lib.mkIf (osConfig.sops.secrets ? openrouter_api_key) ''
+        claude-or() {
+          ANTHROPIC_BASE_URL="https://openrouter.ai/api" \
+          ANTHROPIC_AUTH_TOKEN="$(< ${osConfig.sops.secrets.openrouter_api_key.path})" \
+          ANTHROPIC_API_KEY="" \
+          claude --settings '{
+            "modelPicker": {
+              "replaceBuiltInOptions": true,
+              "options": [
+                { "model": "qwen/qwen3.8-flash", "label": "qwen/qwen3.8-flash" },
+                { "model": "z-ai/glm-5.3", "label": "z-ai/glm-5.3" },
+                { "model": "deepseek/deepseek-v4.1-flash", "label": "deepseek/deepseek-v4.1-flash" }
+              ]
+            }
+          }' "$@"
+        }
+      '';
     };
 
     # Prompt (gruvbox powerline config carried over from dotfiles2).
