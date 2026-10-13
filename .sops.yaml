@@ -1,5 +1,6 @@
 keys:
-  - &yubikey age1yubikey1qw3y59t3sdzjgfpkh0pxyjxvk7vxuch09qlaec392gzegj7xcmf6kdd05uz
+  - &yubikey  age1yubikey1qw3y59t3sdzjgfpkh0pxyjxvk7vxuch09qlaec392gzegj7xcmf6kdd05uz
+  - &yubikey2 age1yubikey1q026jzz2h4ssphzs9fq7h3w7rmz9cdzcpnh70fsrja9u5t7wlun4s7dylsu
   - &backup  age1xf3tv4dn9c8xwafyppx9vlq86xrqe0rfw8tw7v59kd5sa9e6sg0qhn75jr
   - &moon    age1scpvuw3kgvsq3x0j7a4f62w6hzna6jewwc2fwuagl7z0pc4r2e9qwugy5g
   - &vivivi  age1y7p20wm4t3dujtwslhafwd95f8kclp4w434aeyh37h9dzccw7alswfdetv
@@ -14,6 +15,7 @@ creation_rules:
   - path_regex: secrets/common\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
       - *moon
       - *vivivi
@@ -22,31 +24,37 @@ creation_rules:
   - path_regex: secrets/moon\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
       - *moon
   - path_regex: secrets/vivivi\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
       - *vivivi
   - path_regex: secrets/karma\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
       - *karma
   - path_regex: secrets/anuchka\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
       - *anuchka
   # Shared by the desktop hosts only.
   - path_regex: secrets/desktop\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
       - *karma
       - *anuchka
   - path_regex: secrets/infra\.yaml$
     age:
       - *yubikey
+      - *yubikey2
       - *backup
