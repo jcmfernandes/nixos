@@ -20,16 +20,17 @@ modules/nixos/hosts/<host>/configuration.nix
 
 ## Recipients (who can decrypt)
 
-Three age identities are listed in `.sops.yaml`. Every secret file is
+Four kinds of age identity are listed in `.sops.yaml`. Every secret file is
 encrypted to all of them — any single one can decrypt independently.
 
-| Recipient  | Lives on                                   | Used for                       |
-|------------|--------------------------------------------|--------------------------------|
-| `&yubikey` | YubiKey (PIV slot)                         | Day-to-day editing             |
-| `&backup`  | Paper, in physical safekeeping             | Recovery if YubiKey is lost    |
-| `&<host>`  | The host's `/etc/ssh/ssh_host_ed25519_key` | Decrypting at NixOS activation |
+| Recipient   | Lives on                                   | Used for                           |
+|-------------|--------------------------------------------|------------------------------------|
+| `&yubikey1` | YubiKey (PIV slot)                         | Day-to-day editing                 |
+| `&yubikey2` | Backup YubiKey (PIV slot)                  | Editing if `&yubikey1` is lost     |
+| `&backup`   | Paper, in physical safekeeping             | Recovery if both YubiKeys are lost |
+| `&<host>`   | The host's `/etc/ssh/ssh_host_ed25519_key` | Decrypting at NixOS activation     |
 
-The YubiKey and the offline backup are the **admin** identities — they let
+The YubiKeys and the offline backup are the **admin** identities — they let
 you (the operator) edit. The host identities are how each machine reads its
 own secrets unattended at boot.
 
@@ -55,7 +56,7 @@ Verify:
 
 ```sh
 nix shell nixpkgs#age-plugin-yubikey -c age-plugin-yubikey --list
-# the listed recipient should match the &yubikey line in .sops.yaml
+# the listed recipient should match a &yubikeyN line in .sops.yaml
 ```
 
 Repeat on every laptop you want to edit secrets from (each laptop's
@@ -99,20 +100,23 @@ Say the new host is named `pluto`.
 
    ```yaml
    keys:
-     - &yubikey age1yubikey1...
-     - &backup  age1...
-     - &moon    age1scpvuw3...
-     - &pluto   age1...        # new
+     - &yubikey1 age1yubikey1...
+     - &yubikey2 age1yubikey1...
+     - &backup   age1...
+     - &moon     age1scpvuw3...
+     - &pluto    age1...        # new
 
    creation_rules:
      - path_regex: secrets/moon\.yaml$
        age:
-         - *yubikey
+         - *yubikey1
+         - *yubikey2
          - *backup
          - *moon
      - path_regex: secrets/pluto\.yaml$    # new
        age:
-         - *yubikey
+         - *yubikey1
+         - *yubikey2
          - *backup
          - *pluto
    ```
@@ -171,7 +175,21 @@ git commit -am 'sops: add new admin recipient'
 ```
 
 `updatekeys` re-encrypts the data key to the new recipient list without
-touching the secrets themselves.
+touching the secrets themselves. It decrypts first, so it needs an existing
+recipient (e.g. the other YubiKey), not the new one.
+
+age-plugin-yubikey (0.5.1) quirks met adding `&yubikey2` (firmware 5.7):
+
+- P-256 only: PIV Ed25519 keys sign but can't decrypt, and the plugin
+  doesn't support X25519.
+- It needs a TDES, PIN-protected management key; 5.7 defaults to AES192:
+  `ykman piv access change-management-key -a TDES --generate --protect`.
+- An Ed25519 certificate in any slot (the SSH keys) makes `--generate`,
+  `--list` and `--identity` fail with `invalid object`. Decryption still
+  works. Delete those certificates while running them, then re-import.
+
+With only one YubiKey plugged in, sops asks for the other first; press
+`2` ("Skip this YubiKey").
 
 ### Rotating a host key (host reinstalled)
 
@@ -186,7 +204,7 @@ nixos-rebuild switch --flake .#<host> --target-host root@<host>
 
 ### Recovering with the offline backup
 
-If the YubiKey is lost: type the paper-stored `AGE-SECRET-KEY-1...` into a
+If both YubiKeys are lost: type the paper-stored `AGE-SECRET-KEY-1...` into a
 temporary file, then point sops at it for one editing session:
 
 ```sh

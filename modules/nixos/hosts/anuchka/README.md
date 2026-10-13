@@ -40,7 +40,8 @@ anuchka is a **new** host, so it needs its own sops file and recipient. Until
      # ...
      - path_regex: secrets/anuchka\.yaml$
        age:
-         - *yubikey
+         - *yubikey1
+         - *yubikey2
          - *backup
    ```
 
