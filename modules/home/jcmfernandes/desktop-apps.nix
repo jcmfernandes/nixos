@@ -20,6 +20,7 @@
       unrar
       vlc
       wdisplays
+      yubioath-flutter
       zathura
 
       # Display-bound CLI tools, kept out of homeModules.shell so headless
