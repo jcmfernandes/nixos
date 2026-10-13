@@ -22,32 +22,33 @@
       ];
 
       # Per-directory identities, mirroring the admin machine's includeIf
-      # blocks. The matching pubkeys ship via homeModules.yubikey-ssh;
-      # gitdirs absent on karma simply never match.
+      # blocks. Each signs with whichever YubiKey's key is plugged in, picked
+      # by yk-signing-key (homeModules.yubikey-ssh); gitdirs absent on karma
+      # simply never match.
       includes = [
         {
           condition = "gitdir:~/slashid/";
           contents.user = {
             name = "João Moreira Fernandes";
             email = "joao@slashid.dev";
-            signingkey = "~/.ssh/id_slashid.pub";
           };
+          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_slashid.pub} ${./yubikey-ssh/id_slashid_yubikey2.pub}";
         }
         {
           condition = "gitdir:~/bckground/";
           contents.user = {
             name = "João Moreira Fernandes";
             email = "joao@bckground.com";
-            signingkey = "~/.ssh/id_bckground.pub";
           };
+          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_bckground.pub} ${./yubikey-ssh/id_bckground_yubikey2.pub}";
         }
         {
           condition = "gitdir:~/own_devel/";
           contents.user = {
             name = "João Moreira Fernandes";
             email = "joao.fernandes@ist.utl.pt";
-            signingkey = "~/.ssh/id_ist.pub";
           };
+          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_ist.pub} ${./yubikey-ssh/id_ist_yubikey2.pub}";
         }
       ];
 

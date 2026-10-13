@@ -28,6 +28,26 @@
       exec env SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/yubikey-agent.sock" ${pkgs.openssh}/bin/ssh-keygen "$@"
     '';
 
+    # git's gpg.ssh.defaultKeyCommand: print the first of the given public
+    # keys that the agent holds, so whichever YubiKey is plugged in signs.
+    # Same agent choice as yk-ssh-keygen.
+    yk-signing-key = pkgs.writeShellScriptBin "yk-signing-key" ''
+      if [ -n "$SSH_CONNECTION" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+        sock=$SSH_AUTH_SOCK
+      else
+        sock=$XDG_RUNTIME_DIR/yubikey-agent.sock
+      fi
+      held=$(SSH_AUTH_SOCK=$sock ${sshAdd} -L) || exit 1
+      for f in "$@"; do
+        read -r type blob _ < "$f"
+        case $held in
+          *"$blob"*) echo "key::$type $blob"; exit 0 ;;
+        esac
+      done
+      echo "yk-signing-key: no key in the agent matches $*" >&2
+      exit 1
+    '';
+
     yubikey-usb-monitor = pkgs.writeShellApplication {
       name = "yubikey-usb-monitor";
       runtimeInputs = [pkgs.systemd];
@@ -79,11 +99,14 @@
       '';
     };
   in {
-    home.packages = [yk-ssh-keygen];
+    home.packages = [yk-ssh-keygen yk-signing-key];
 
     home.file.".ssh/id_ist.pub".source = ./yubikey-ssh/id_ist.pub;
     home.file.".ssh/id_bckground.pub".source = ./yubikey-ssh/id_bckground.pub;
     home.file.".ssh/id_slashid.pub".source = ./yubikey-ssh/id_slashid.pub;
+    home.file.".ssh/id_ist_yubikey2.pub".source = ./yubikey-ssh/id_ist_yubikey2.pub;
+    home.file.".ssh/id_bckground_yubikey2.pub".source = ./yubikey-ssh/id_bckground_yubikey2.pub;
+    home.file.".ssh/id_slashid_yubikey2.pub".source = ./yubikey-ssh/id_slashid_yubikey2.pub;
     home.file.".ssh/allowed_signers".source = ./yubikey-ssh/allowed_signers;
 
     # The receiving end of forwarding (~/.ssh/rc, multiplexer panes) lives in
@@ -180,13 +203,14 @@
           IdentityAgent = "SSH_AUTH_SOCK";
         };
 
-        # Authenticate with the YubiKey PIV slot-83 key (ECDSA), served by
-        # the dedicated agent the monitor loads on insert. IdentitiesOnly +
-        # the pinned public key ensure exactly that key is offered (the agent
-        # holds all four retired-slot keys).
+        # Authenticate with the PIV slot-83 key of either YubiKey (ECDSA on
+        # the first, Ed25519 on the second), served by the dedicated agent the
+        # monitor loads on insert. IdentitiesOnly + the pinned public keys
+        # ensure only those keys are offered (the agent holds every
+        # retired-slot key); ssh skips whichever isn't plugged in.
         "github.com moon vivivi karma anuchka" = {
           IdentitiesOnly = true;
-          IdentityFile = "~/.ssh/id_ist.pub";
+          IdentityFile = ["~/.ssh/id_ist.pub" "~/.ssh/id_ist_yubikey2.pub"];
           IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
         };
 
@@ -207,12 +231,16 @@
     # Signing machinery only; identity/ergonomics live in homeModules.git.
     programs.git = {
       signing = {
-        key = "~/.ssh/id_ist.pub";
         signByDefault = true;
         format = "ssh";
         signer = lib.getExe yk-ssh-keygen;
       };
-      settings.gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
+      settings.gpg.ssh = {
+        allowedSignersFile = "~/.ssh/allowed_signers";
+        # No signing.key: git asks this for the key instead. homeModules.git's
+        # per-directory identities override it.
+        defaultKeyCommand = "${lib.getExe yk-signing-key} ${./yubikey-ssh/id_ist.pub} ${./yubikey-ssh/id_ist_yubikey2.pub}";
+      };
     };
   };
 }
