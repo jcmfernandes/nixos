@@ -101,9 +101,9 @@
   in {
     home.packages = [yk-ssh-keygen yk-signing-key];
 
-    home.file.".ssh/id_ist.pub".source = ./yubikey-ssh/id_ist.pub;
-    home.file.".ssh/id_bckground.pub".source = ./yubikey-ssh/id_bckground.pub;
-    home.file.".ssh/id_slashid.pub".source = ./yubikey-ssh/id_slashid.pub;
+    home.file.".ssh/id_ist_yubikey1.pub".source = ./yubikey-ssh/id_ist_yubikey1.pub;
+    home.file.".ssh/id_bckground_yubikey1.pub".source = ./yubikey-ssh/id_bckground_yubikey1.pub;
+    home.file.".ssh/id_slashid_yubikey1.pub".source = ./yubikey-ssh/id_slashid_yubikey1.pub;
     home.file.".ssh/id_ist_yubikey2.pub".source = ./yubikey-ssh/id_ist_yubikey2.pub;
     home.file.".ssh/id_bckground_yubikey2.pub".source = ./yubikey-ssh/id_bckground_yubikey2.pub;
     home.file.".ssh/id_slashid_yubikey2.pub".source = ./yubikey-ssh/id_slashid_yubikey2.pub;
@@ -210,7 +210,7 @@
         # retired-slot key); ssh skips whichever isn't plugged in.
         "github.com moon vivivi karma anuchka" = {
           IdentitiesOnly = true;
-          IdentityFile = ["~/.ssh/id_ist.pub" "~/.ssh/id_ist_yubikey2.pub"];
+          IdentityFile = ["~/.ssh/id_ist_yubikey1.pub" "~/.ssh/id_ist_yubikey2.pub"];
           IdentityAgent = "\${XDG_RUNTIME_DIR}/yubikey-agent.sock";
         };
 
@@ -239,7 +239,7 @@
         allowedSignersFile = "~/.ssh/allowed_signers";
         # No signing.key: git asks this for the key instead. homeModules.git's
         # per-directory identities override it.
-        defaultKeyCommand = "${lib.getExe yk-signing-key} ${./yubikey-ssh/id_ist.pub} ${./yubikey-ssh/id_ist_yubikey2.pub}";
+        defaultKeyCommand = "${lib.getExe yk-signing-key} ${./yubikey-ssh/id_ist_yubikey1.pub} ${./yubikey-ssh/id_ist_yubikey2.pub}";
       };
     };
   };

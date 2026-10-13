@@ -32,7 +32,7 @@
             name = "João Moreira Fernandes";
             email = "joao@slashid.dev";
           };
-          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_slashid.pub} ${./yubikey-ssh/id_slashid_yubikey2.pub}";
+          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_slashid_yubikey1.pub} ${./yubikey-ssh/id_slashid_yubikey2.pub}";
         }
         {
           condition = "gitdir:~/bckground/";
@@ -40,7 +40,7 @@
             name = "João Moreira Fernandes";
             email = "joao@bckground.com";
           };
-          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_bckground.pub} ${./yubikey-ssh/id_bckground_yubikey2.pub}";
+          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_bckground_yubikey1.pub} ${./yubikey-ssh/id_bckground_yubikey2.pub}";
         }
         {
           condition = "gitdir:~/own_devel/";
@@ -48,7 +48,7 @@
             name = "João Moreira Fernandes";
             email = "joao.fernandes@ist.utl.pt";
           };
-          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_ist.pub} ${./yubikey-ssh/id_ist_yubikey2.pub}";
+          contents.gpg.ssh.defaultKeyCommand = "yk-signing-key ${./yubikey-ssh/id_ist_yubikey1.pub} ${./yubikey-ssh/id_ist_yubikey2.pub}";
         }
       ];
 
