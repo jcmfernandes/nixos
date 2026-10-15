@@ -28,6 +28,8 @@
       # summon it on demand with Mod+Shift+Slash instead.
       hotkey-overlay.skip-at-startup = _: {};
 
+      gestures.hot-corners.off = _: {};
+
       input = {
         # focus-follows-mouse is deliberately NOT set: merely moving the
         # pointer over a window (a fullscreen one especially) should never
