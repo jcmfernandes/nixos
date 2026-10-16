@@ -1,6 +1,7 @@
 {
   "immich":         { "port": 2283  },
   "plex":           { "port": 32400 },
+  "jellyfin":       { "port": 8096  },
   "sonarr":         { "port": 8989  },
   "radarr":         { "port": 7878  },
   "bazarr":         { "port": 6767  },

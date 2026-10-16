@@ -321,6 +321,7 @@
       stateDir = "/state/nixarr";
       mediaUsers = ["nixos"];
       plex.enable = true;
+      jellyfin.enable = true;
       sonarr.enable = true;
       radarr.enable = true;
       bazarr.enable = true;
@@ -532,6 +533,8 @@
         "/state/nixarr/plex/Plex Media Server/Cache"
         "/state/nixarr/plex/Plex Media Server/Logs"
         "/state/nixarr/plex/Plex Media Server/Crash Reports"
+        "/state/nixarr/jellyfin/cache"
+        "/state/nixarr/jellyfin/log"
         "/state/nixarr/sonarr/sonarr.db"
         "/state/nixarr/sonarr/sonarr.db-shm"
         "/state/nixarr/sonarr/sonarr.db-wal"
