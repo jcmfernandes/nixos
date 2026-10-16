@@ -321,7 +321,10 @@
       stateDir = "/state/nixarr";
       mediaUsers = ["nixos"];
       plex.enable = true;
-      jellyfin.enable = true;
+      jellyfin = {
+        enable = true;
+        openFirewall = true;
+      };
       sonarr.enable = true;
       radarr.enable = true;
       bazarr.enable = true;
