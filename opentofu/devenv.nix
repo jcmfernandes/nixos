@@ -3,6 +3,7 @@
     opentofu
     terraform-ls
     oci-cli # Oracle Cloud CLI (`oci ...`)
+    jq # .envrc: pick values out of the decrypted infra.yaml
   ];
 
   enterShell = ''
