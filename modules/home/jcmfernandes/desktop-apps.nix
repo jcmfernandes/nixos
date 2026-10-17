@@ -4,6 +4,7 @@
       calibre
       celluloid
       element-desktop
+      filezilla
       file-roller
       foliate
       gimp
