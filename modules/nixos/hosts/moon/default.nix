@@ -26,9 +26,7 @@
   # channel. Stable is also what nixos-raspberrypi pins its own nixpkgs
   # to, so the Pi kernel package and the NixOS modules reading it are
   # built from the same release; straddling them is what produced the
-  # 26.11 breakages. cache.nixos.org's signed binaries are still trusted
-  # on moon, so this is not the "rebuild everything from source" mode used
-  # on vivivi.
+  # 26.11 breakages.
   # No `system =` arg: nixpkgs.hostPlatform is set by raspberry-pi-5.base
   # inside moonConfiguration, which is the modern convention.
   flake.nixosConfigurations.moon = inputs.nixpkgs.lib.nixosSystem {
