@@ -26,6 +26,7 @@ _: {
         "/home/jcmfernandes/bckground"
         "/home/jcmfernandes/slashid"
       ];
+      globalConfig.settings.npm.package_manager = "npm";
     };
   };
 }
