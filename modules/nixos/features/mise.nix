@@ -1,12 +1,16 @@
-_: {
-  flake.nixosModules.mise = {pkgs, ...}: {
+{inputs, ...}: {
+  flake.nixosModules.mise = {pkgs, ...}: let
+    # Stable lags mise by months; unstable tracks it closely. `usage` comes
+    # along so the completion helper matches the mise calling it.
+    unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  in {
     # mise: polyglot per-project tool/runtime version manager. The interactive
     # shell activates it via `mise activate zsh` (homeModules.shell).
     #
     # `usage` is a hard runtime dependency of mise's shell completions --
     # mise shells out to it to render them, and without it every completion
     # attempt errors with "usage CLI not found".
-    environment.systemPackages = [pkgs.mise pkgs.usage];
+    environment.systemPackages = [unstable.mise unstable.usage];
 
     # Force mise to fetch precompiled binaries instead of building from source.
     # Source builds of node/python shell out to a bootstrap `python`, which
