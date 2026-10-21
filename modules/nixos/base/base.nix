@@ -18,6 +18,17 @@
       # rendering). The terminfo output alone lands in the closure, not
       # the ghostty runtime.
       environment.systemPackages = [pkgs.ghostty.terminfo];
+
+      # Eight eMudhra intermediates have recoverable private keys:
+      # https://emudhra.we-have-a-problem.com/
+      # The site names the first two roots; the emSign C1/C3 roots are
+      # eMudhra's too. Drop once a patched cacert lands.
+      security.pki.caCertificateBlacklist = [
+        "Comodo AAA Services root"
+        "emSign ECC Root CA - G3"
+        "emSign Root CA - C1"
+        "emSign ECC Root CA - C3"
+      ];
     };
   };
 }
