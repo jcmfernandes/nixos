@@ -228,6 +228,14 @@
 
     programs = {
       appimage.enable = true;
+      steam = {
+        enable = true;
+        # xwayland-satellite makes the last-focused X window's output RandR
+        # primary; fullscreen games size to it at startup, so a DP-2 focus
+        # boots them portrait. Launch options pin it back:
+        # `xrandr --output DP-1 --primary; %command%`.
+        extraPackages = [pkgs.xrandr];
+      };
       zsh.enable = true;
     };
 
