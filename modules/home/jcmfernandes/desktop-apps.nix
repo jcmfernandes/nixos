@@ -3,6 +3,7 @@
     home.packages = with pkgs; [
       calibre
       celluloid
+      chromium
       element-desktop
       filezilla
       file-roller
