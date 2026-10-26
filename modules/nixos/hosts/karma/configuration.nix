@@ -94,6 +94,9 @@
       # switches from systemd-boot to lanzaboote-signed boot + systemd
       # initrd, and enables TPM2 LUKS auto-unlock.
       lanzaboote.enable = true;
+
+      # Run aarch64 binaries and containers through qemu.
+      binfmt.emulatedSystems = ["aarch64-linux"];
     };
 
     # 32 GiB swapfile. NixOS creates it with `btrfs filesystem mkswapfile`
