@@ -32,6 +32,15 @@
       self.homeModules.upsIndicator
     ];
 
+    # Pin Firefox as the default browser; with Chromium also installed,
+    # the unpinned fallback could pick either. System-wide, so the
+    # user's mutable ~/.config/mimeapps.list stays untouched.
+    xdg.mime.defaultApplications = {
+      "text/html" = "firefox.desktop";
+      "x-scheme-handler/http" = "firefox.desktop";
+      "x-scheme-handler/https" = "firefox.desktop";
+    };
+
     # Secrets shared by the desktop hosts, in one file encrypted to just
     # them (see .sops.yaml). Read by claude-or (homeModules.shell).
     sops.secrets.openrouter_api_key = {
