@@ -95,8 +95,10 @@
       # initrd, and enables TPM2 LUKS auto-unlock.
       lanzaboote.enable = true;
 
-      # Run aarch64 binaries and containers through qemu.
+      # Run aarch64 binaries and containers through qemu. Static emulators
+      # are preloaded by the kernel, so they also work inside containers.
       binfmt.emulatedSystems = ["aarch64-linux"];
+      binfmt.preferStaticEmulators = true;
     };
 
     # 32 GiB swapfile. NixOS creates it with `btrfs filesystem mkswapfile`
