@@ -205,10 +205,6 @@
     networking = {
       hostName = "moon";
       # hostId is set in hardware.nix
-      # DNS:
-      # - https://dns.sb
-      # - https://joindns4.eu/for-public
-      nameservers = ["185.222.222.222" "2a09::" "86.54.11.100" "2a13:1001::86:54:11:100"];
     };
 
     time.timeZone = "Europe/Lisbon";
