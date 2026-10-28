@@ -27,6 +27,7 @@ _: {
         "/home/jcmfernandes/slashid"
       ];
       globalConfig.settings.npm.package_manager = "npm";
+      globalConfig.settings.github.credential_command = "gh auth token";
     };
   };
 }
