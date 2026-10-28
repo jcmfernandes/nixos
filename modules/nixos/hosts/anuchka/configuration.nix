@@ -53,6 +53,14 @@
 
     boot = {
       kernelPackages = pkgs.linuxPackages_latest;
+
+      # Let unprivileged users bind from port 80 up (kernel default is 1024).
+      # The work dev stack's front proxy binds 127.0.0.1:80/443 under rootless
+      # podman; without this it crash-loops on "bind: permission denied". Ports
+      # 1-79 stay privileged, and nothing here is LAN-reachable anyway: the
+      # firewall trusts tailscale0 only.
+      kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
+
       loader = {
         # UEFI-only: systemd-boot installs the removable ESP fallback
         # (EFI/BOOT/BOOTX64.EFI), so the disk boots without a machine-local
