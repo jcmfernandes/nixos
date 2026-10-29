@@ -14,6 +14,13 @@ _: {
       users.upsmon = {
         passwordFile = config.sops.secrets.ups_upsmon_password.path;
         upsmon = "primary"; # grants the upsmon role in upsd.users
+        # The upsmon role grants no instant commands; allow the outlet toggles.
+        instcmds = [
+          "outlet.1.load.on"
+          "outlet.1.load.off"
+          "outlet.2.load.on"
+          "outlet.2.load.off"
+        ];
       };
 
       upsmon.monitor.evo = {
