@@ -33,12 +33,13 @@
     ];
 
     # Pin Firefox as the default browser; with Chromium also installed,
-    # the unpinned fallback could pick either. System-wide, so the
-    # user's mutable ~/.config/mimeapps.list stays untouched.
+    # the unpinned fallback could pick either. Sioyek for PDFs. System-wide,
+    # so the user's mutable ~/.config/mimeapps.list stays untouched.
     xdg.mime.defaultApplications = {
       "text/html" = "firefox.desktop";
       "x-scheme-handler/http" = "firefox.desktop";
       "x-scheme-handler/https" = "firefox.desktop";
+      "application/pdf" = "sioyek.desktop";
     };
 
     # Secrets shared by the desktop hosts, in one file encrypted to just

@@ -23,7 +23,6 @@
       vlc
       wdisplays
       yubioath-flutter
-      zathura
 
       # Display-bound CLI tools, kept out of homeModules.shell so headless
       # hosts don't carry them.
@@ -36,5 +35,9 @@
       # wl-copy/wl-paste for the Wayland clipboard.
       wl-clipboard
     ];
+
+    programs.sioyek = {
+      enable = true;
+    };
   };
 }
