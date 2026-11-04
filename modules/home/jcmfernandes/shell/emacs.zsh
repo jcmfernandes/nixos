@@ -15,3 +15,15 @@ if [[ "$INSIDE_EMACS" = 'ghostel' ]]; then
     function dow { ghostel_cmd dired-other-window "$@"; }            # dired in another window
     function gst { ghostel_cmd magit-status-setup-buffer "$(pwd)"; } # magit for the current dir
 fi
+
+# The Emacs daemon starts before the compositor (see emacs.nix), so shells it
+# spawns lack DISPLAY/WAYLAND_DISPLAY and xdg-open can't reach a browser. Take
+# them from the systemd user environment, which the compositor populates.
+if [[ -n "$INSIDE_EMACS" && -z "$WAYLAND_DISPLAY$DISPLAY" ]]; then
+    () {
+        local line
+        for line in ${(f)"$(systemctl --user show-environment 2>/dev/null)"}; do
+            [[ "$line" == (WAYLAND_DISPLAY|DISPLAY)=* ]] && export "$line"
+        done
+    }
+fi
