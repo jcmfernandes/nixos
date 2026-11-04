@@ -183,9 +183,6 @@
     };
 
     environment.systemPackages = with pkgs; [
-      gcc
-      git
-      glib
       usbutils
     ];
 

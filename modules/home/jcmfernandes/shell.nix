@@ -145,7 +145,6 @@
 
       ###
       ### version control
-      git
       # TUI frontend for git.
       lazygit
       # GitHub CLI.
@@ -172,8 +171,6 @@
       # Symlink-farm manager; deploys hand-managed dotfiles (e.g. ~/.emacs.d
       # from a dotfiles checkout) without hm involvement.
       stow
-      # Interactive process viewer.
-      htop
       # Fancier resource monitor.
       btop
       # Kill processes by name.

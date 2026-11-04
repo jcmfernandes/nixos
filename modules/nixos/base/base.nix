@@ -17,7 +17,14 @@
       # terminfo entry (zsh warns on login, TUIs fall back to dumb
       # rendering). The terminfo output alone lands in the closure, not
       # the ghostty runtime.
-      environment.systemPackages = [pkgs.ghostty.terminfo];
+      environment.systemPackages = with pkgs; [
+        ghostty.terminfo
+        lsof
+        gcc
+        git
+        glib
+        htop
+      ];
 
       # Eight eMudhra intermediates have recoverable private keys:
       # https://emudhra.we-have-a-problem.com/

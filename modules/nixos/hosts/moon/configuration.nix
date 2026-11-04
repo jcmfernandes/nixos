@@ -248,8 +248,6 @@
     security.sudo.wheelNeedsPassword = false;
 
     environment.systemPackages = with pkgs; [
-      htop
-      fastfetch
       mergerfs
       smartmontools
     ];

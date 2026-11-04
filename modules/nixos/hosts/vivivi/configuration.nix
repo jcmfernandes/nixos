@@ -88,10 +88,6 @@
       })
     ];
 
-    environment.systemPackages = with pkgs; [
-      fastfetch
-    ];
-
     networking = {
       hostName = "vivivi";
       # useDHCP is set in hardware.nix
