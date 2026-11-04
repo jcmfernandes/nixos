@@ -13,6 +13,7 @@
       '';
     };
     claude-code = inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.claude-code;
+    blacksmith-cli = inputs.blacksmith-cli.packages.${pkgs.stdenv.hostPlatform.system}.blacksmith-cli;
   in {
     # Plain zsh as the login shell; hm owns ~/.zshrc and ~/.zshenv directly
     # (the ZDOTDIR-redirect wrapper from modules/wrappedPrograms/ is gone).
@@ -149,6 +150,9 @@
       lazygit
       # GitHub CLI.
       gh
+      # Blacksmith CLI: CI logs, job metrics, caches, testboxes. Auto-updated
+      # via the blacksmith-cli flake.
+      blacksmith-cli
 
       ###
       ### build systems

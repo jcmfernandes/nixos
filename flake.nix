@@ -66,6 +66,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    blacksmith-cli = {
+      url = "github:jcmfernandes/blacksmith-cli.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Upstream rather than nixpkgs' devenv: the CLI nags on every shell load
     # when it is behind, and both our channels lag it (at the time of writing
     # 26.05 had 2.1.2 and unstable 2.2.2, against upstream's 2.3.2).

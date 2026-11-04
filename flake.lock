@@ -16,6 +16,26 @@
         "type": "github"
       }
     },
+    "blacksmith-cli": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793789686,
+        "narHash": "sha256-2EyTOk2xlJo/RsMtzPBYC5azdFIb4Vu9Tm+P5Aroju0=",
+        "owner": "jcmfernandes",
+        "repo": "blacksmith-cli.nix",
+        "rev": "fd9a5dc6d2ce24b6854713a914e65698872cd329",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jcmfernandes",
+        "repo": "blacksmith-cli.nix",
+        "type": "github"
+      }
+    },
     "claude-code-nix": {
       "inputs": {
         "nixpkgs": [
@@ -710,6 +730,7 @@
     },
     "root": {
       "inputs": {
+        "blacksmith-cli": "blacksmith-cli",
         "claude-code-nix": "claude-code-nix",
         "devenv": "devenv",
         "disko": "disko",
