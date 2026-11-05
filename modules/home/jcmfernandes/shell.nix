@@ -224,6 +224,8 @@
       pandoc
       # JSON processor.
       jq
+      # jq wrapper for YAML/XML/TOML.
+      yq
 
       ###
       ### agentic coding harnesses
