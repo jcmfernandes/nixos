@@ -65,7 +65,6 @@
     ];
 
     boot = {
-      kernelParams = ["video=Virtual-1:1920x1080"];
       kernelPackages = pkgs.linuxPackages_latest;
 
       # Let unprivileged users bind from port 80 up (kernel default is 1024).
