@@ -150,10 +150,17 @@
       Unit = {
         Description = "Load YubiKey PKCS#11 keys into the dedicated agent (prompts for PIN)";
         Requires = ["yubikey-ssh-agent.service"];
-        After = ["yubikey-ssh-agent.service"];
+        # After the target: the askpass needs the compositor's display, and
+        # an explicit ordering suppresses the target's implicit After= on
+        # the units it Wants, which would otherwise invert this.
+        After = ["yubikey-ssh-agent.service" "graphical-session.target"];
       };
       Service = {
         Type = "oneshot";
+        # The monitor only sees udev add events, and a key plugged in at boot
+        # never produces one -- so this also runs at login (WantedBy below),
+        # skipping itself unless a Yubico device is already attached.
+        ExecCondition = "${pkgs.bash}/bin/sh -c '${pkgs.gnugrep}/bin/grep -qsx 1050 /sys/bus/usb/devices/*/idVendor'";
         Environment = [
           "SSH_AUTH_SOCK=%t/yubikey-agent.sock"
           "SSH_ASKPASS=${pkgs.lxqt.lxqt-openssh-askpass}/bin/lxqt-openssh-askpass"
@@ -166,6 +173,7 @@
           "${sshAdd} -s ${ykcs11}"
         ];
       };
+      Install.WantedBy = ["graphical-session.target"];
     };
 
     systemd.user.services.yubikey-ssh-flush = {
