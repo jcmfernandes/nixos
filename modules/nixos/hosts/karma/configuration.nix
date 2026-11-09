@@ -159,6 +159,11 @@
     # noise on top of each command's output.
     virtualisation.containers.containersConf.settings.engine.compose_warning_logs = false;
 
+    # Don't journal every health_status event. The dev stack's containers
+    # health-check every ~2s, ~400 MiB/day, filling journald's shared cap
+    # and vacuuming system logs (kernel, Wi-Fi) within a day.
+    virtualisation.containers.containersConf.settings.engine.healthcheck_events = false;
+
     # Resolve unqualified image names against docker.io only. The NixOS default
     # is ["docker.io" "quay.io"], and with more than one candidate podman's
     # enforcing short-name mode stops to ask which registry to pull from --
