@@ -67,6 +67,11 @@
     boot = {
       kernelPackages = pkgs.linuxPackages_latest;
 
+      # Fix the Wi-Fi country. Unset (WORLD), ath12k adopts whatever country
+      # neighbouring APs advertise, flapping several times a minute; WORLD
+      # disables 6 GHz, hiding the 6 GHz-only home network until a reload.
+      extraModprobeConfig = "options cfg80211 ieee80211_regdom=PT";
+
       # Let unprivileged users bind from port 80 up (kernel default is 1024).
       # The same work dev stack that needs the mutable /etc/hosts below runs
       # its API gateway container on 80/443, and rootless podman binds those
