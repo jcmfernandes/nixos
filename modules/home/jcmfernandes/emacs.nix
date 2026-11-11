@@ -24,13 +24,21 @@
     # emacsPackagesFor, which rejects a symlinkJoin-wrapped package. It only gave
     # us the binary + a .desktop anyway (config is stowed, no daemon), so we
     # deliver those directly via home.packages + xdg.desktopEntries below.
+    #
+    # epdfinfo is pdf-tools' poppler server. On PATH, the straight.el-installed
+    # pdf-tools finds it via executable-find instead of building it (autotools
+    # plus poppler headers). Copied out of nixpkgs' pdf-tools so the stock emacs
+    # that package builds against stays out of the closure.
+    epdfinfo = pkgs.runCommand "epdfinfo" {} ''
+      install -Dm755 ${pkgs.emacsPackages.pdf-tools}/share/emacs/site-lisp/elpa/pdf-tools-*/epdfinfo $out/bin/epdfinfo
+    '';
     emacs = pkgs.symlinkJoin {
       name = "emacs-native-build";
       paths = [config.jmf.emacs.package];
       nativeBuildInputs = [pkgs.makeWrapper];
       postBuild = ''
         wrapProgram $out/bin/emacs \
-          --prefix PATH : ${lib.makeBinPath (with pkgs; [gcc binutils gnumake pkg-config git])} \
+          --prefix PATH : ${lib.makeBinPath ([epdfinfo] ++ (with pkgs; [gcc binutils gnumake pkg-config git]))} \
           --suffix PKG_CONFIG_PATH : ${lib.makeSearchPathOutput "dev" "lib/pkgconfig" (with pkgs; [enchant glib])}
       '';
     };
