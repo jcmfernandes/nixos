@@ -17,6 +17,7 @@
       # Provides mutool, which Emacs' doc-view uses to render PDFs.
       mupdf
       nautilus
+      papers
       pavucontrol
       qbittorrent
       unrar
