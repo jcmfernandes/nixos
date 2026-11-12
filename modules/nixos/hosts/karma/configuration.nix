@@ -65,7 +65,10 @@
     ];
 
     boot = {
-      kernelPackages = pkgs.linuxPackages_latest;
+      # Pinned below 7.3: the ath12k (WCN7850) firmware hangs about daily on
+      # 7.3.1, even with Wi-Fi power save off, until the driver is reloaded.
+      # 7.2 didn't. Back to linuxPackages_latest once 7.3 is fixed.
+      kernelPackages = pkgs.linuxPackages_7_2;
 
       # Let unprivileged users bind from port 80 up (kernel default is 1024).
       # The same work dev stack that needs the mutable /etc/hosts below runs
