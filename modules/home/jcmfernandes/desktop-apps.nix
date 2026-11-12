@@ -39,7 +39,10 @@
 
     programs.sioyek = {
       enable = true;
-      config.startup_commands = ["toggle_dark_mode"];
+      config = {
+        startup_commands = ["toggle_dark_mode"];
+        should_launch_new_window = "1";
+      };
     };
   };
 }
