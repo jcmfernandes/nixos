@@ -7,44 +7,71 @@
     ykcs11 = "${pkgs.yubico-piv-tool}/lib/libykcs11.so";
     sshAdd = "${pkgs.openssh}/bin/ssh-add";
 
-    # git's gpg.ssh.program and an interactive helper. Points SSH
-    # signing/verification at the dedicated YubiKey ssh-agent (the PIV keys
-    # aren't in any default agent).
+    # pick_agent PUBKEY-FILE...: print "SOCKET TYPE BLOB" for the first agent
+    # holding one of the given public keys. Agents tried, in order:
     #
-    # Exception: in an ssh session carrying a forwarded agent, that agent
-    # already serves the PIV keys from the machine physically holding the
-    # YubiKey, while this host's yubikey-agent.sock is keyless and refuses
-    # every signature -- so honour the inherited socket there.
+    # 1. This ssh session's forwarded agent: it serves the PIV keys from the
+    #    machine physically holding the YubiKey.
+    # 2. The dedicated local YubiKey agent (the PIV keys aren't in any
+    #    default agent).
+    # 3. The forwarded agents of my other live ssh sessions, which sshd
+    #    drops in ~/.ssh/agent/. Lets programs outside the session (desktop
+    #    login, emacs daemon) sign while I'm logged in from the YubiKey's
+    #    machine. No new exposure: those sockets are already mine, 0600.
     #
-    # -S, not -n: the forwarded socket is session-scoped and vanishes with the
+    # -S, not -n: a forwarded socket is session-scoped and vanishes with the
     # session that carried it, so a stale path in the environment is a live
     # possibility (notably under the emacs daemon, which keeps whatever the
     # last client handed it). Requiring an actual socket makes both this and
     # the ssh Match block below fall back rather than aim at a dead path.
+    pickAgent = ''
+      pick_agent() {
+        local s held f type blob _
+        for s in ''${SSH_CONNECTION:+"$SSH_AUTH_SOCK"} \
+                 "$XDG_RUNTIME_DIR/yubikey-agent.sock" "$HOME"/.ssh/agent/s.*; do
+          [ -S "$s" ] || continue
+          held=$(SSH_AUTH_SOCK=$s ${sshAdd} -L 2>/dev/null) || continue
+          for f in "$@"; do
+            [ -r "$f" ] || continue
+            read -r type blob _ < "$f"
+            case $held in
+              *"$blob"*) echo "$s $type $blob"; return 0 ;;
+            esac
+          done
+        done
+        return 1
+      }
+    '';
+
+    # git's gpg.ssh.program and an interactive helper. When signing (-f
+    # KEYFILE), points ssh-keygen at the agent pick_agent finds holding that
+    # key, so it agrees with yk-signing-key. Otherwise (verification, or no
+    # agent holds the key) keeps the old choice: a forwarded agent in this
+    # session, else the dedicated YubiKey agent.
     yk-ssh-keygen = pkgs.writeShellScriptBin "yk-ssh-keygen" ''
-      if [ -n "$SSH_CONNECTION" ] && [ -S "$SSH_AUTH_SOCK" ]; then
-        exec ${pkgs.openssh}/bin/ssh-keygen "$@"
+      ${pickAgent}
+      prev="" keyfile=""
+      for a in "$@"; do
+        [ "$prev" = -f ] && keyfile=$a
+        prev=$a
+      done
+      if [ -n "$keyfile" ] && read -r sock _ < <(pick_agent "$keyfile"); then
+        export SSH_AUTH_SOCK=$sock
+      elif ! { [ -n "$SSH_CONNECTION" ] && [ -S "$SSH_AUTH_SOCK" ]; }; then
+        export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/yubikey-agent.sock
       fi
-      exec env SSH_AUTH_SOCK="''${XDG_RUNTIME_DIR}/yubikey-agent.sock" ${pkgs.openssh}/bin/ssh-keygen "$@"
+      exec ${pkgs.openssh}/bin/ssh-keygen "$@"
     '';
 
     # git's gpg.ssh.defaultKeyCommand: print the first of the given public
-    # keys that the agent holds, so whichever YubiKey is plugged in signs.
-    # Same agent choice as yk-ssh-keygen.
+    # keys that an agent holds, so whichever YubiKey is reachable signs.
     yk-signing-key = pkgs.writeShellScriptBin "yk-signing-key" ''
-      if [ -n "$SSH_CONNECTION" ] && [ -S "$SSH_AUTH_SOCK" ]; then
-        sock=$SSH_AUTH_SOCK
-      else
-        sock=$XDG_RUNTIME_DIR/yubikey-agent.sock
+      ${pickAgent}
+      if read -r _ type blob < <(pick_agent "$@"); then
+        echo "key::$type $blob"
+        exit 0
       fi
-      held=$(SSH_AUTH_SOCK=$sock ${sshAdd} -L) || exit 1
-      for f in "$@"; do
-        read -r type blob _ < "$f"
-        case $held in
-          *"$blob"*) echo "key::$type $blob"; exit 0 ;;
-        esac
-      done
-      echo "yk-signing-key: no key in the agent matches $*" >&2
+      echo "yk-signing-key: no agent holds any of $*" >&2
       exit 1
     '';
 
