@@ -65,7 +65,12 @@
 
     # git's gpg.ssh.defaultKeyCommand: print the first of the given public
     # keys that an agent holds, so whichever YubiKey is reachable signs.
+    #
+    # First prunes dead sockets sshd left behind in ~/.ssh/agent/. ssh-agent
+    # -u only touches this host's sockets older than an hour, so it can't race
+    # a login that is just starting. Silenced: git reads the key from stdout.
     yk-signing-key = pkgs.writeShellScriptBin "yk-signing-key" ''
+      ${pkgs.openssh}/bin/ssh-agent -u >/dev/null 2>&1
       ${pickAgent}
       if read -r _ type blob < <(pick_agent "$@"); then
         echo "key::$type $blob"
