@@ -258,7 +258,18 @@
         # use for it. Without this the PIV keys stop at the first hop: git
         # signing and onward ssh there find a keyless local agent. This is
         # also what makes the Match block above fire on the far side.
-        "moon vivivi karma anuchka".ForwardAgent = true;
+        #
+        # Multiplexed: later sessions to a host ride the first one's
+        # connection. sshd creates one forwarded agent socket per connection,
+        # so this stops ~/.ssh/agent/ on the far side filling up with one per
+        # login. Also spares the YubiKey a signature per session. %C hashes
+        # the path short enough for a unix socket.
+        "moon vivivi karma anuchka" = {
+          ForwardAgent = true;
+          ControlMaster = "auto";
+          ControlPath = "~/.ssh/cm-%C";
+          ControlPersist = "10m";
+        };
 
         # This terminal's TERM (xterm-ghostty) has no terminfo entry on
         # either host, so anything curses-based there renders as garbage.
