@@ -6,12 +6,19 @@
   }: let
     # The agent keeps one PIV login for its lifetime; once gpg's scdaemon
     # (homeModules.gpg) switches the card to OpenPGP, every signature fails
-    # until the keys are reloaded. The patch makes libykpiv notice and
+    # until the keys are reloaded. The first patch makes libykpiv notice and
     # recover with its cached PIN; it is off unless built with
-    # ENABLE_APPLICATION_RECOVERY. Only here: short-lived CLI users don't
-    # need it.
+    # ENABLE_APPLICATION_RECOVERY. The others fix libykpiv's recovery after a
+    # card reset. All are pending upstream. Only here: short-lived CLI users
+    # don't need them.
     yubico-piv-tool = pkgs.yubico-piv-tool.overrideAttrs (old: {
-      patches = (old.patches or []) ++ [./yubikey-ssh/libykpiv-reselect-piv.patch];
+      patches =
+        (old.patches or [])
+        ++ [
+          ./yubikey-ssh/libykpiv-application-recovery.patch
+          ./yubikey-ssh/libykpiv-reset-recovery-failure-cleanup.patch
+          ./yubikey-ssh/libykpiv-reset-recovery-keep-failed-pin-attempts.patch
+        ];
       env = (old.env or {}) // {NIX_CFLAGS_COMPILE = "-DENABLE_APPLICATION_RECOVERY=1";};
     });
     ykcs11 = "${yubico-piv-tool}/lib/libykcs11.so";

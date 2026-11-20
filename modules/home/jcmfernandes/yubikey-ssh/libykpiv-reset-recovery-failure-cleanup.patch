@@ -1,0 +1,52 @@
+diff --git a/lib/ykpiv.c b/lib/ykpiv.c
+index a4b60f3..12c1965 100644
+--- a/lib/ykpiv.c
++++ b/lib/ykpiv.c
+@@ -1118,31 +1118,42 @@ ykpiv_rc _ykpiv_begin_transaction(ykpiv_state *state) {
+ 
+   if(retries) {
+     uint32_t serial = state->serial;
++    ykpiv_version_t ver = state->ver;
+     state->serial = 0;
+     state->ver.major = 0;
+     state->ver.minor = 0;
+     state->ver.patch = 0;
+     ykpiv_rc res;
+     if ((res = _ykpiv_select_application(state, state->scp11_state.security_level)) != YKPIV_OK)
+-      return res;
++      goto Cleanup;
+     if(state->serial != serial) {
+       DBG("Card #%u detected, was expecting card #%u", state->serial, serial);
+-      return YKPIV_GENERIC_ERROR;
++      res = YKPIV_GENERIC_ERROR;
++      goto Cleanup;
+     }
+     if(state->mgm_key) {
+       if((res = _ykpiv_authenticate2(state, state->mgm_key, state->mgm_len)) != YKPIV_OK)
+-        return res;
++        goto Cleanup;
+     }
+     if (state->pin) {
+       size_t pin_len = strlen(state->pin);
+       if((res = _ykpiv_verify(state, state->pin, &pin_len, false, false)) != YKPIV_OK)
+-        return res;
++        goto Cleanup;
+       // De-authenticate always-authenticate keys by running an arbitrary command
+       unsigned char data[80] = {0};
+       unsigned long recv_len = sizeof(data);
+       if((res = _ykpiv_fetch_object(state, YKPIV_OBJ_DISCOVERY, data, &recv_len)) != YKPIV_OK)
+-        return res;
++        goto Cleanup;
+     }
++    return YKPIV_OK;
++Cleanup:
++    // Keep comparing against the expected card on the next reset, rather
++    // than 0, which matches a card whose serial can't be read.
++    state->serial = serial;
++    state->ver = ver;
++    // Callers only end the transaction when this succeeds.
++    _ykpiv_end_transaction(state);
++    return res;
+   }
+ #endif /* ENABLE_IMPLICIT_TRANSACTIONS */
+   return YKPIV_OK;
