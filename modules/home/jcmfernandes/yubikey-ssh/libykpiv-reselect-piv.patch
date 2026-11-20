@@ -1,28 +1,53 @@
+diff --color -ru a/lib/internal.h b/lib/internal.h
+--- a/lib/internal.h
++++ b/lib/internal.h
+@@ -174,6 +174,7 @@
+   ykpiv_version_t ver;
+   uint32_t serial;
+   ykpiv_scp11_state scp11_state;
++  bool scp11_requested;
+ };
+ 
+ union u_APDU {
+diff --color -ru a/lib/ykpiv.c b/lib/ykpiv.c
 --- a/lib/ykpiv.c
 +++ b/lib/ykpiv.c
-@@ -102,6 +102,31 @@
+@@ -102,6 +102,44 @@
  #define ENABLE_APPLICATION_RESELECTION 0
  #endif
  
 +/**
-+ * ENABLE_APPLICATION_RECOVERY - recover from another application being selected
++ * ENABLE_APPLICATION_RECOVERY - recover the PIV login after a failed operation
 + *
-+ * If this is enabled, every public call (prefixed with \r ykpiv_) will check
-+ * that the PIV application is still selected and, if a PIN is cached, still
-+ * verified. If not, it is re-selected and re-authenticated with the cached PIN
-+ * and MGM_KEY, as is done after a card reset.
++ * If this is enabled and a sign, decipher or key agreement operation fails
++ * while the PIV PIN is no longer verified, the PIV application is re-selected,
++ * the device is checked to have the same serial, the cached PIN is verified
++ * again, and the operation is retried once.
 + *
 + * This allows a long-running PIV application to keep its login while another
 + * process shares the device and selects a different application without
 + * resetting it, e.g. GnuPG's scdaemon with pcsc-shared using OpenPGP.
 + *
-+ * A stale cached PIN, e.g. after the PIN was changed by another process,
-+ * costs one PIN attempt: the failed verification clears the cache.
++ * The PIN is only re-verified if it has all its tries left, so failed attempts
++ * by anyone stay visible and a stale cached PIN costs at most one try in
++ * total. This needs PIN metadata, so firmware 5.3 or later; older devices are
++ * never recovered.
 + *
-+ * Requires ENABLE_IMPLICIT_TRANSACTIONS and the PIN cache.
++ * Nothing is recovered without a cached PIN (DISABLE_PIN_CACHE turns this off,
++ * and so do PIN policy never keys used without a login), without a readable
++ * serial, on a connection that requested SCP11, or for PIN policy always keys:
++ * the recovery ends with a command that drops the always-authenticated state,
++ * and removing it would let those keys sign with the cached PIN. Only the PIN
++ * is restored, not the MGM_KEY.
 + *
-+ * This is \b DANGEROUS - with this enabled, slots with the policy
-+ * \p YKPIV_PINPOLICY_ALWAYS will not be accessible.
++ * Checking the state sends commands even when nothing is recovered, leaving
++ * PIV selected. ykpiv_auth_deauthenticate() clears the caches, so a logout in
++ * the same process is not undone; a logout by another process is, on the next
++ * failing operation, and the restored login is usable by every process sharing
++ * the device.
++ *
++ * Requires ENABLE_IMPLICIT_TRANSACTIONS, so the checks and the verification
++ * are not interleaved with other processes.
 + *
 + */
 +#ifndef ENABLE_APPLICATION_RECOVERY
@@ -32,24 +57,117 @@
  
  /**
   * ENABLE_IMPLICIT_TRANSACTIONS - call SCardBeginTransaction for all public API calls
-@@ -1116,6 +1141,20 @@
-     }
-   }
+@@ -118,6 +156,10 @@
+ #define ENABLE_IMPLICIT_TRANSACTIONS 1
+ #endif
+ 
++#if ENABLE_APPLICATION_RECOVERY && !ENABLE_IMPLICIT_TRANSACTIONS
++#error "ENABLE_APPLICATION_RECOVERY requires ENABLE_IMPLICIT_TRANSACTIONS"
++#endif
++
+ /**
+  * Platform specific definitions
+  */
+@@ -1019,6 +1061,7 @@
+   // at this point, card should not equal state->card, to allow _ykpiv_connect() to determine device type
+   if (YKPIV_OK == _ykpiv_connect(state, state->context, card)) {
+     state->scp11_state.security_level = 0;
++    state->scp11_requested = scp11;
+     /*
+       * Select applet.  This is done here instead of in _ykpiv_connect() because
+       * you may not want to select the applet when connecting to a card handle that
+@@ -1726,6 +1769,67 @@
+   return YKPIV_OK;
+ }
  
 +#if ENABLE_APPLICATION_RECOVERY
-+  // Skipped on the first connect, before the serial is known.
-+  if(!retries && state->serial) {
-+    int tries = state->tries;
-+    ykpiv_rc res = _ykpiv_verify(state, NULL, NULL, false, false);
-+    state->tries = tries;
-+    if((res != YKPIV_OK && res != YKPIV_WRONG_PIN && res != YKPIV_PIN_LOCKED) ||
-+       (res == YKPIV_WRONG_PIN && state->pin)) {
-+      DBG("PIV application not selected or not verified on card #%u", state->serial);
-+      retries++;
++/* Called after an operation failed. Returns YKPIV_OK if the PIV login was
++ * lost and has been restored, so the operation is worth retrying. */
++static ykpiv_rc _ykpiv_recover_application(ykpiv_state *state) {
++  ykpiv_rc res;
++  uint32_t serial = state->serial;
++  unsigned char data[256] = {0};
++  unsigned long recv_len = sizeof(data);
++  int total = -1, remaining = -1;
++
++  if (!state->pin || !serial || state->scp11_requested || !is_version_compatible(state, 5, 3, 0)) {
++    return YKPIV_GENERIC_ERROR;
++  }
++
++  int tries = state->tries;
++  res = _ykpiv_verify(state, NULL, NULL, false, false);
++  state->tries = tries;
++  if (res == YKPIV_OK) {
++    // Still logged in: the failure was genuine.
++    return YKPIV_GENERIC_ERROR;
++  }
++
++  // Whatever answered, select PIV and make sure it is the same device.
++  state->serial = 0;
++  res = _ykpiv_select_application(state, false);
++  if (res == YKPIV_OK && state->serial != serial) {
++    DBG("Recovery failed: card #%u, expected #%u", state->serial, serial);
++    res = YKPIV_GENERIC_ERROR;
++  }
++  if (res != YKPIV_OK) {
++    state->serial = serial;
++    return res;
++  }
++
++  // PIN metadata (key reference 0x80): tag 0x06 holds the total and
++  // remaining tries.
++  if ((res = _ykpiv_get_metadata(state, 0x80, data, &recv_len)) != YKPIV_OK) {
++    return res;
++  }
++  for (unsigned long i = 0; i + 2 <= recv_len; i += 2 + data[i + 1]) {
++    if (data[i] == 0x06 && data[i + 1] == 2 && i + 4 <= recv_len) {
++      total = data[i + 2];
++      remaining = data[i + 3];
++    }
++  }
++  if (total < 1 || remaining != total) {
++    DBG("Recovery skipped: %d of %d PIN tries left", remaining, total);
++    return YKPIV_GENERIC_ERROR;
++  }
++
++  size_t pin_len = strlen(state->pin);
++  if ((res = _ykpiv_verify(state, state->pin, &pin_len, false, false)) != YKPIV_OK) {
++    return res;
++  }
++  // De-authenticate always-authenticate keys by running an arbitrary command.
++  // Without this, those keys would sign with the cached PIN on the retry.
++  recv_len = sizeof(data);
++  return _ykpiv_fetch_object(state, YKPIV_OBJ_DISCOVERY, data, &recv_len);
++}
++#endif
++
+ static ykpiv_rc _general_authenticate(ykpiv_state *state,
+     const unsigned char *sign_in, size_t in_len,
+     unsigned char *out, size_t *out_len,
+@@ -1811,6 +1915,15 @@
+   if((res = _ykpiv_transfer_data(state, templ, indata, (unsigned long)(dataptr - indata), data, &recv_len, &sw)) != YKPIV_OK) {
+     return res;
+   }
++#if ENABLE_APPLICATION_RECOVERY
++  if(sw != SW_SUCCESS && _ykpiv_recover_application(state) == YKPIV_OK) {
++    DBG("PIV login restored, retrying");
++    recv_len = sizeof(data);
++    if((res = _ykpiv_transfer_data(state, templ, indata, (unsigned long)(dataptr - indata), data, &recv_len, &sw)) != YKPIV_OK) {
++      return res;
 +    }
 +  }
 +#endif
-+
-   if(retries) {
-     uint32_t serial = state->serial;
-     state->serial = 0;
+   res = ykpiv_translate_sw_ex(__FUNCTION__, sw);
+   if(res != YKPIV_OK) {
+     DBG("Sign command failed");
+@@ -2814,6 +2927,10 @@
+   if (YKPIV_OK != (res = _ykpiv_begin_transaction(state))) return res;
+ 
+   res = _ykpiv_auth_deauthenticate(state);
++#if ENABLE_APPLICATION_RECOVERY
++  _cache_pin(state, NULL, 0);
++  _cache_mgm_key(state, NULL, 0);
++#endif
+ 
+   _ykpiv_end_transaction(state);
+   return res;
