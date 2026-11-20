@@ -48,3 +48,12 @@ resource "njalla_record_cname" "moon_service_internal" {
   content = "moon.internal.hosts.moreirafernandes.com"
   ttl     = var.dns_ttl
 }
+
+# Personal site, served by GitHub Pages from jcmfernandes/jcmfernandes.github.io.
+# The repo's Pages custom domain must match this name.
+resource "njalla_record_cname" "site" {
+  domain  = var.apex_domain
+  name    = "joao"
+  content = "jcmfernandes.github.io"
+  ttl     = var.dns_ttl
+}
