@@ -57,3 +57,9 @@ resource "njalla_record_cname" "site" {
   content = "jcmfernandes.github.io"
   ttl     = var.dns_ttl
 }
+
+resource "njalla_email_forward" "joao" {
+  domain = var.apex_domain
+  from   = "joao"
+  to     = "joao.fernandes@ist.utl.pt"
+}
