@@ -4,7 +4,15 @@
     pkgs,
     ...
   }: let
-    ykcs11 = "${pkgs.yubico-piv-tool}/lib/libykcs11.so";
+    # The agent keeps one PIV login for its lifetime; once gpg's scdaemon
+    # (homeModules.gpg) switches the card to OpenPGP, every signature fails
+    # until the keys are reloaded. The patch makes libykpiv notice and
+    # recover with its cached PIN. Only here: short-lived CLI users don't
+    # need it.
+    yubico-piv-tool = pkgs.yubico-piv-tool.overrideAttrs (old: {
+      patches = (old.patches or []) ++ [./yubikey-ssh/libykpiv-reselect-piv.patch];
+    });
+    ykcs11 = "${yubico-piv-tool}/lib/libykcs11.so";
     sshAdd = "${pkgs.openssh}/bin/ssh-add";
 
     # pick_agent PUBKEY-FILE...: print "SOCKET TYPE BLOB" for the first agent

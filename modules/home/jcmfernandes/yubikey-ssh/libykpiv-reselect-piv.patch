@@ -1,0 +1,27 @@
+--- a/lib/ykpiv.c
++++ b/lib/ykpiv.c
+@@ -1116,6 +1116,24 @@
+     }
+   }
+ 
++  /* Another client sharing the card (scdaemon with pcsc-shared) may have
++     selected a different applet without resetting it, dropping the PIV PIN.
++     Probe, and if PIV is gone, or selected but no longer verified while a
++     PIN is cached, recover as after a reset: reselect and re-verify the
++     cached PIN. A stale cached PIN costs one try: the failed verify clears
++     it. Skipped until the first connect has read the serial. Breaks
++     PIN-policy-always slots, like upstream's ENABLE_APPLICATION_RESELECTION. */
++  if(!retries && state->serial) {
++    int tries = state->tries;
++    ykpiv_rc probe = _ykpiv_verify(state, NULL, NULL, false, false);
++    state->tries = tries;
++    if((probe != YKPIV_OK && probe != YKPIV_WRONG_PIN && probe != YKPIV_PIN_LOCKED) ||
++       (probe == YKPIV_WRONG_PIN && state->pin)) {
++      DBG("PIV application not selected or verified on card #%u, recovering", state->serial);
++      retries++;
++    }
++  }
++
+   if(retries) {
+     uint32_t serial = state->serial;
+     state->serial = 0;
