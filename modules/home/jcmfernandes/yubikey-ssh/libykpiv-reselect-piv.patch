@@ -1,26 +1,54 @@
 --- a/lib/ykpiv.c
 +++ b/lib/ykpiv.c
-@@ -1116,6 +1116,24 @@
+@@ -102,6 +102,31 @@
+ #define ENABLE_APPLICATION_RESELECTION 0
+ #endif
+ 
++/**
++ * ENABLE_APPLICATION_RECOVERY - recover from another application being selected
++ *
++ * If this is enabled, every public call (prefixed with \r ykpiv_) will check
++ * that the PIV application is still selected and, if a PIN is cached, still
++ * verified. If not, it is re-selected and re-authenticated with the cached PIN
++ * and MGM_KEY, as is done after a card reset.
++ *
++ * This allows a long-running PIV application to keep its login while another
++ * process shares the device and selects a different application without
++ * resetting it, e.g. GnuPG's scdaemon with pcsc-shared using OpenPGP.
++ *
++ * A stale cached PIN, e.g. after the PIN was changed by another process,
++ * costs one PIN attempt: the failed verification clears the cache.
++ *
++ * Requires ENABLE_IMPLICIT_TRANSACTIONS and the PIN cache.
++ *
++ * This is \b DANGEROUS - with this enabled, slots with the policy
++ * \p YKPIV_PINPOLICY_ALWAYS will not be accessible.
++ *
++ */
++#ifndef ENABLE_APPLICATION_RECOVERY
++#define ENABLE_APPLICATION_RECOVERY 0
++#endif
++
+ 
+ /**
+  * ENABLE_IMPLICIT_TRANSACTIONS - call SCardBeginTransaction for all public API calls
+@@ -1116,6 +1141,20 @@
      }
    }
  
-+  /* Another client sharing the card (scdaemon with pcsc-shared) may have
-+     selected a different applet without resetting it, dropping the PIV PIN.
-+     Probe, and if PIV is gone, or selected but no longer verified while a
-+     PIN is cached, recover as after a reset: reselect and re-verify the
-+     cached PIN. A stale cached PIN costs one try: the failed verify clears
-+     it. Skipped until the first connect has read the serial. Breaks
-+     PIN-policy-always slots, like upstream's ENABLE_APPLICATION_RESELECTION. */
++#if ENABLE_APPLICATION_RECOVERY
++  // Skipped on the first connect, before the serial is known.
 +  if(!retries && state->serial) {
 +    int tries = state->tries;
-+    ykpiv_rc probe = _ykpiv_verify(state, NULL, NULL, false, false);
++    ykpiv_rc res = _ykpiv_verify(state, NULL, NULL, false, false);
 +    state->tries = tries;
-+    if((probe != YKPIV_OK && probe != YKPIV_WRONG_PIN && probe != YKPIV_PIN_LOCKED) ||
-+       (probe == YKPIV_WRONG_PIN && state->pin)) {
-+      DBG("PIV application not selected or verified on card #%u, recovering", state->serial);
++    if((res != YKPIV_OK && res != YKPIV_WRONG_PIN && res != YKPIV_PIN_LOCKED) ||
++       (res == YKPIV_WRONG_PIN && state->pin)) {
++      DBG("PIV application not selected or not verified on card #%u", state->serial);
 +      retries++;
 +    }
 +  }
++#endif
 +
    if(retries) {
      uint32_t serial = state->serial;
