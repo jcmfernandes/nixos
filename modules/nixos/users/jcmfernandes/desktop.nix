@@ -16,6 +16,7 @@
 
     home-manager.users.jcmfernandes.imports = [
       self.homeModules.yubikey-ssh
+      self.homeModules.gpg
       self.homeModules.noctalia
       self.homeModules.which-key
       self.homeModules.kitty
